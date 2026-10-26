@@ -55,6 +55,12 @@ class ResourceControllerTest(unittest.TestCase):
         self.plan(pid,[self.item("a",priority=30),
                        self.item("b",priority=20),
                        self.item("c",kind="DOCUMENT",priority=10)])
+        # Keep one project worker slot free so GHIDRA exclusivity
+        # (rather than project concurrency) is the limiting factor.
+        with self.db:
+            self.db.execute(
+                "UPDATE auto_scheduler_policy SET concurrency=3 WHERE project_id=?",
+                (pid,))
         first=self.claim(pid)
         self.assertEqual(first["task_key"],"a")
         self.assertEqual(first["resource_class"],"GHIDRA_HEAVY")
