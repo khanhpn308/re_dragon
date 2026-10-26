@@ -565,3 +565,85 @@ def resume(db,pid,note):
     except Exception:
         db.rollback()
         raise
+
+
+def list_projects(db,limit=30):
+    """Agent can recover the active project without any user-supplied ID."""
+    migrate(db)
+    if type(limit) is not int or not 1<=limit<=50:
+        raise ValueError("limit 1..50")
+    data=[dict(r) for r in db.execute(
+        "SELECT id,goal,acceptance,status,binary_path,updated_at "
+        "FROM auto_projects ORDER BY "
+        "CASE WHEN status IN ('ACTIVE','PLANNING','BLOCKED','READY_FOR_FINAL_REVIEW') "
+        "THEN 0 ELSE 1 END, updated_at DESC LIMIT ?",(limit,))]
+    return {"projects":data,"recommended_project_id":data[0]["id"] if data else None,
+            "instruction":"Resume a matching ongoing goal; do not create a duplicate project"}
+
+
+def task_detail(db,pid,key):
+    """Read all per-task evidence/checks/attempts after context compaction."""
+    row=dict(_task(db,pid,key))
+    for col in ("dependencies","evidence_json","artifacts_json","verification_json"):
+        if row.get(col):
+            row[col]=json.loads(row[col])
+    # Never disclose the ownership token to a different agent querying state:
+    row.pop("lease_token",None)
+    return {"task":row,"source_integrity":"Agent-submitted evidence references are not authenticated"}
+
+
+def block_task(db,pid,key,actor,token,reason):
+    """Explicit bounded stop for tool/permission blocker; not a fake success."""
+    reason=txt(reason,"blocker",4000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=_task(db,pid,key)
+        _holder(row,actor,token,"RUNNING")
+        db.execute(
+            "UPDATE auto_tasks SET status='BLOCKED',owner=NULL,lease_token=NULL,"
+            "lease_until=NULL,review_note=?,updated_at=? WHERE id=?",
+            (reason,core.now(),row["id"]))
+        event(db,pid,key,"TASK_BLOCKED",{"actor":actor,"reason":reason})
+        db.commit()
+        return {"task_key":key,"status":"BLOCKED","reason":reason,
+                "decision":"REPLAN_OR_REQUEST_PERMISSION"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def export_report(db,state,pid):
+    """Durable local-only project report; never publishes binaries or evidence."""
+    info=snapshot(db,pid)
+    full=tasks(db,pid)
+    root=Path(state).expanduser().resolve()
+    folder=root/"auto_reports"
+    folder.mkdir(parents=True,exist_ok=True)
+    dest=folder/(pid+".md")
+    lines=["# RE Dragon v0.5 Controller Report", "",
+           "Project: "+pid, "Status: "+info["project"]["status"], "",
+           "## Goal", "", info["project"]["goal"], "",
+           "## Acceptance", "", info["project"]["acceptance"], "",
+           "## Tasks", ""]
+    for t in full:
+        lines+=["### "+t["task_key"]+" — "+t["status"], "",
+            "Title: "+t["title"], "Kind: "+t["kind"],
+            "Acceptance: "+t["acceptance"],
+            "Dependencies: "+", ".join(json.loads(t["dependencies"])),
+            "Producer: "+str(t["producer"] or "none"),
+            "Reviewer: "+str(t["reviewer"] or "none"),
+            "Attempts: "+str(t["tries"]), "",
+            "Reported result:", t["result"] or "none", "",
+            "Evidence refs: "+str(t["evidence_json"] or "[]"),
+            "Artifact refs: "+str(t["artifacts_json"] or "[]"),
+            "Declared checks: "+str(t["verification_json"] or "[]"),
+            "Review note: "+str(t["review_note"] or "none"), ""]
+    lines+=["## Provenance limits", "",
+      "References are supplied by the AI Agent and are not cryptographically authenticated.",
+      "A different reviewer actor string does not prove two independent LLM instances.",
+      "Completion requires real, source-grounded review and bounded project acceptance.", ""]
+    temp=folder/(pid+".tmp")
+    temp.write_text("\n".join(lines),encoding="utf-8")
+    temp.replace(dest)
+    return {"report":str(dest),"state":info["project"]["status"],
+            "publication":"local-only"}

@@ -6,17 +6,17 @@ Canonical repository: https://github.com/khanhpn308/re_dragon
 
 The user provides ONE high-level reverse-engineering goal. Codex/Antigravity is the orchestrator and must repeatedly act on the same goal within the active session. Do not ask the user for separate P3/P4/P5 prompts, manually selected functions or Python commands.
 
-Never create duplicate goal records on reconnect. Read harness_auto_status for the current project and resume its outstanding backlog.
+Never create duplicate goal records on reconnect. Call harness_auto_projects FIRST to rediscover the active project ID, then harness_auto_status and harness_auto_task_detail to resume the outstanding evidence-backed backlog.
 
 ## The continuous controller loop
 
-1. Call harness_auto_start only once with goal, explicit acceptance and a local target if available.
+1. Call harness_auto_projects first to reuse an existing project; otherwise call harness_auto_start once with goal, explicit acceptance and local target if available.
 2. On PLAN from harness_auto_tick, use harness_auto_plan to build a bounded DAG from the high-level goal, including source analysis, implementation, verification, audit and report tasks. Include evidence-based dependencies and clear acceptance criteria.
 3. On EXECUTE, do actual work with REA MCP, local source and allowed Git/terminal tools. Inspect primary evidence. Preserve exact symbols, addresses, proof/test references and limitations. Call harness_auto_submit, then IMMEDIATELY call harness_auto_tick again.
 4. On WAIT with SUBMITTED work, assign a genuinely separate reviewer subagent if the host supports one. Claim with harness_auto_tick(role=reviewer,agent_id=actual_reviewer_id); reviewer must inspect primary evidence, then call harness_auto_review. Different actor labels alone are NOT independent review. If a genuine separate agent is unavailable, leave review pending and disclose the blocker, never fabricate an actor identity.
 5. On REJECT or REWORK, repair, retest and repeat. On contradicted binary evidence, call harness_auto_issue, complete and review the priority audit, call harness_auto_resolve_issue and reexecute the disputed source task. Do not silently preserve dependent approvals.
 6. On BLOCKED, diagnose and replan within bounds, or ask the user only when authorization, scope, credentials or other genuine decisions are required.
-7. On FINAL_REVIEW, compare the original acceptance criteria with primary evidence; request separate project review before harness_auto_final_review. No successful Python test alone proves binary compatibility.
+7. Use harness_auto_task_detail to recover full evidence after context compaction; export handoff via harness_auto_report. If permissions/tools block an owned task, call harness_auto_block_task with the actual blocker. On FINAL_REVIEW, compare the original acceptance criteria with primary evidence; request separate project review before harness_auto_final_review. No successful Python test alone proves binary compatibility.
 8. On YIELD, persist the handoff and report session limit; next active Agent session uses harness_auto_status and continues from checkpoint.
 9. Until STOPPED, YIELD, BLOCKED, ACCEPTED or a real final review gate, continue the loop. Do not end after one milestone.
 

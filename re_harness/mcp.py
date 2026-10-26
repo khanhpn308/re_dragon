@@ -41,6 +41,29 @@ PLAN_STEPS = {"type": "array", "minItems": 1, "maxItems": 20, "items": {
     "additionalProperties": False}}
 TOOLS = [
     {
+        "name":"harness_auto_projects",
+        "description":"DISCOVER/RESUME: list existing goal-level projects; no user-provided project ID needed after Agent restart.",
+        "inputSchema":schema({"limit":INTEGER}),
+    },
+    {
+        "name":"harness_auto_task_detail",
+        "description":"Full durable evidence, test references, history and review note for an existing task; omits secret ownership token.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING},
+           ["project_id","task_key"]),
+    },
+    {
+        "name":"harness_auto_report",
+        "description":"Export a local Markdown status and evidence report for project handoff; does not push raw artifacts to Git.",
+        "inputSchema":schema({"project_id":STRING},["project_id"]),
+    },
+    {
+        "name":"harness_auto_block_task",
+        "description":"Mark an owned in-progress task as genuinely blocked by permission/tool failure, never fake completion.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+           "agent_id":STRING,"claim_token":STRING,"reason":STRING},
+           ["project_id","task_key","agent_id","claim_token","reason"]),
+    },
+    {
         "name":"harness_auto_resolve_issue",
         "description":"After independent audit approval, release disputed original task for re-execution. Never silently restore VERIFIED.",
         "inputSchema":schema({"project_id":STRING,"task_key":STRING,
@@ -291,6 +314,15 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_auto_projects":
+            return autonomy.list_projects(db,args.get("limit",30))
+        if name == "harness_auto_task_detail":
+            return autonomy.task_detail(db,args["project_id"],args["task_key"])
+        if name == "harness_auto_report":
+            return autonomy.export_report(db,state,args["project_id"])
+        if name == "harness_auto_block_task":
+            return autonomy.block_task(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["reason"])
         if name == "harness_auto_resolve_issue":
             return autonomy.resolve_issue(db,args["project_id"],
                 args["task_key"],args["audit_task_key"],args["note"])

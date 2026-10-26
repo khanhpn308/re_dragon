@@ -16,6 +16,7 @@ In Antigravity or Codex, open the re_dragon project and tell the Agent:
 
 ## MCP controller contract
 
+- harness_auto_projects: discover active goals across new Agent sessions without knowing project ID.
 - harness_auto_start: create the goal with bounded acceptance.
 - harness_auto_plan: seed or extend Agent-authored dependency DAG.
 - harness_auto_tick: atomically decide PLAN, EXECUTE, REVIEW, WAIT, BLOCKED, FINAL_REVIEW or YIELD.
@@ -25,10 +26,13 @@ In Antigravity or Codex, open the re_dragon project and tell the Agent:
 - harness_auto_issue: contradiction becomes priority AUDIT and invalidates stale downstream approvals.
 - harness_auto_resolve_issue: after independent audit approval, reopen source for rework.
 - harness_auto_status: read the project, dependencies, blockers, attempts and last decisions on reconnect.
+- harness_auto_task_detail: recover all evidence/artifact/test refs of one task.
+- harness_auto_report: export a local-only durable Markdown report.
+- harness_auto_block_task: mark a real tool/permission blocker instead of fake success.
 - harness_auto_final_review: bounded goal-level acceptance.
 - harness_auto_stop and harness_auto_resume: pause/continue projects.
 
-After each submit, review, issue or plan, the Agent must call harness_auto_tick again in the same live chat. This is the key difference from v0.4.
+The very first action after a new session is harness_auto_projects, followed by harness_auto_status. After each submit, review, issue or plan, the Agent must call harness_auto_tick again in the same live chat. This is the key difference from v0.4.
 
 ## Task lifecycle
 

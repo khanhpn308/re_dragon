@@ -4,7 +4,7 @@ v0.5 implements a goal-level controller for Codex and Antigravity. The user prov
 
 ## Start in the Agent chat
 
-> Read AGENTS.md. Resume the ReturnSaiyan research. Use harness_auto_start if needed, write an evidence-based task DAG, and repeatedly use harness_auto_tick until a real blocker, session budget or final review. Use REA MCP and local tools to do the assigned work, harness_auto_submit to checkpoint, and a genuinely distinct reviewer Agent for harness_auto_review. Replan automatically on contradictions and commit safe code to re_dragon. Do not ask me for P5/P6 prompts or to run Python manually.
+> Read AGENTS.md. Resume the ReturnSaiyan research. Use harness_auto_projects to find existing goals, then harness_auto_start if needed, write an evidence-based task DAG, and repeatedly use harness_auto_tick until a real blocker, session budget or final review. Use REA MCP and local tools to do the assigned work, harness_auto_submit to checkpoint, and a genuinely distinct reviewer Agent for harness_auto_review. Replan automatically on contradictions and commit safe code to re_dragon. Do not ask me for P5/P6 prompts or to run Python manually.
 
 Both REA MCP and the RE Dragon Harness MCP must be connected once to the Agent host.
 

@@ -243,5 +243,44 @@ class AutonomousHarnessTests(unittest.TestCase):
         self.assertEqual(autonomy.snapshot(self.db,pid)["project"]["status"],"PLANNING")
 
 
+    def test_reconnect_agent_lists_existing_active_goal(self):
+        pid=self.goal()
+        self.seed(pid)
+        found=autonomy.list_projects(self.db)
+        self.assertEqual(found["recommended_project_id"],pid)
+        self.assertTrue(any(p["id"]==pid for p in found["projects"]))
+
+    def test_checkpoint_task_detail_retains_evidence_without_lease_secret(self):
+        pid=self.goal()
+        self.seed(pid)
+        claim=self.claim(pid)
+        autonomy.submit(self.db,pid,claim["task_key"],"exec",
+             claim["claim_token"],"Found ELF function",
+             ["REA:0x702abc"],["docs/native.md"],["pytest pass"])
+        found=autonomy.task_detail(self.db,pid,claim["task_key"])["task"]
+        self.assertEqual(found["evidence_json"],["REA:0x702abc"])
+        self.assertEqual(found["verification_json"],["pytest pass"])
+        self.assertNotIn("lease_token",found)
+
+    def test_blocked_task_requires_authorized_claim(self):
+        pid=self.goal()
+        self.seed(pid)
+        first=self.claim(pid)
+        with self.assertRaisesRegex(ValueError,"ownership token"):
+            autonomy.block_task(self.db,pid,"discovery","exec","wrong","network denied")
+        blocked=autonomy.block_task(self.db,pid,"discovery","exec",
+                 first["claim_token"],"Original ELF not accessible")
+        self.assertEqual(blocked["status"],"BLOCKED")
+        self.assertEqual(self.claim(pid)["decision"],"BLOCKED")
+
+    def test_local_report_contains_accepted_goal_and_evidence_disclaimer(self):
+        pid=self.goal()
+        self.seed(pid)
+        result=autonomy.export_report(self.db,self.state,pid)
+        report=Path(result["report"])
+        self.assertTrue(report.is_file())
+        self.assertIn("Restore offline protocol",report.read_text())
+        self.assertIn("not cryptographically authenticated",report.read_text())
+
 if __name__=="__main__":
     unittest.main()
