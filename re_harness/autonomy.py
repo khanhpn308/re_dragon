@@ -213,7 +213,7 @@ def _expire(db,pid):
     now=time.time()
     for row in db.execute(
         "SELECT * FROM auto_tasks WHERE project_id=? "
-        "AND status IN ('RUNNING','REVIEWING') AND lease_until<?",(pid,now)
+        "AND status IN ('RUNNING','REVIEWING','SPLITTING') AND lease_until<?",(pid,now)
     ).fetchall():
         state=("SPLIT_REQUIRED" if row["status"]=="SPLITTING"
                else "PENDING" if row["status"]=="RUNNING" else "SUBMITTED")
@@ -370,7 +370,7 @@ def renew(db,pid,key,actor,token):
     db.execute("BEGIN IMMEDIATE")
     try:
         task=_task(db,pid,key)
-        if task["status"] not in {"RUNNING","REVIEWING"}:
+        if task["status"] not in {"RUNNING","REVIEWING","SPLITTING"}:
             raise ValueError("Task not leased")
         _holder(task,actor,token,task["status"])
         db.execute(

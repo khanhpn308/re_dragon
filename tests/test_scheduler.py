@@ -171,6 +171,28 @@ class ResourceControllerTest(unittest.TestCase):
         self.assertEqual(result["status"],"WAIT_CHILDREN")
         self.assertEqual(set(result["children"]),{"one","two"})
 
+    def test_expired_decomposition_lease_is_reclaimed(self):
+        pid=self.project()
+        self.plan(pid,[self.item("unscoped")])
+        initial=self.claim(pid)
+        autonomy.report_timeout(self.db,pid,"unscoped","executor",
+                                initial["claim_token"],"No scoped target yet")
+        decomposer=self.claim(pid)
+        self.assertEqual(decomposer["decision"],"DECOMPOSE")
+        with self.db:
+            self.db.execute(
+                "UPDATE auto_tasks SET lease_until=0 WHERE project_id=? "
+                "AND task_key='unscoped'",(pid,))
+        next_agent=self.claim(pid,"new-executor","new-session")
+        self.assertEqual(next_agent["decision"],"DECOMPOSE")
+        self.assertNotEqual(next_agent["claim_token"],decomposer["claim_token"])
+        with self.assertRaisesRegex(ValueError,"ownership token"):
+            autonomy.split_task(self.db,pid,"unscoped","executor",
+                                decomposer["claim_token"],
+                                [{"key":"a","title":"A","acceptance":"A","targets":["x"]},
+                                 {"key":"b","title":"B","acceptance":"B","targets":["y"]}],
+                                "Stale decomposition lease")
+
     def test_wrong_token_cannot_inject_split(self):
         pid=self.project()
         self.plan(pid,[self.item("opaque")])
