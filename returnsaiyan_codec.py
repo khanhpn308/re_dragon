@@ -671,6 +671,8 @@ class OpcodeRegistry:
         """
         Parses a decrypted payload using the recovered schema for the given opcode.
         Robustly handles both STATIC verified schemas and DYNAMIC partial schemas.
+        Enforces strict validation on STATIC packets (no unexpected trailing bytes).
+        Delegates DYNAMIC packets to DynamicPacketDecoder when AST tree definitions exist.
         """
         meta = cls.OPCODES.get(opcode)
         if not meta:
@@ -684,6 +686,58 @@ class OpcodeRegistry:
         reader = PacketReader(payload)
         fields = []
         try:
+            # If a dedicated AST decoder is registered for a DYNAMIC opcode, attempt AST decoding first
+            if meta["structure_type"] == "DYNAMIC" and opcode in DynamicPacketDecoder.DECODERS:
+                try:
+                    ast_res = DynamicPacketDecoder.DECODERS[opcode](payload)
+                    # Also populate fields with as many valid header fields as fit in buffer
+                    r_header = PacketReader(payload)
+                    for field_type in meta["schema"]:
+                        if r_header.remaining() == 0:
+                            break
+                        try:
+                            if field_type == "u8":
+                                fields.append(r_header.read_u8())
+                            elif field_type == "i16":
+                                fields.append(r_header.read_i16())
+                            elif field_type == "u16":
+                                fields.append(r_header.read_u16())
+                            elif field_type == "i32":
+                                fields.append(r_header.read_i32())
+                            elif field_type == "i64":
+                                fields.append(r_header.read_i64())
+                            elif field_type == "str":
+                                fields.append(r_header.read_str())
+                            elif field_type == "binario":
+                                rem = r_header.remaining()
+                                fields.append(r_header.read_binary(rem))
+                        except Exception:
+                            break
+
+                    header_rem = r_header.remaining()
+                    remaining_bytes = ast_res.get("remaining_bytes", 0)
+                    result = {
+                        "opcode": opcode,
+                        "name": meta["name"],
+                        "lambda": meta["lambda"],
+                        "handler_addr": hex(meta["handler_addr"]),
+                        "structure_type": meta["structure_type"],
+                        "status": meta["status"],
+                        "fields": fields,
+                        "ast": ast_res,
+                        "remaining_bytes": remaining_bytes,
+                        "parsed": True,
+                    }
+                    if header_rem > 0:
+                        r_rem = PacketReader(payload)
+                        r_rem.offset = len(payload) - header_rem
+                        result["raw_variable_payload"] = r_rem.read_binary(header_rem)
+                        result["dynamic_body_length"] = header_rem
+                    return result
+                except Exception:
+                    # If AST decoding fails on truncated/malformed body, fallback to header reader
+                    pass
+
             for field_type in meta["schema"]:
                 if field_type == "u8":
                     fields.append(reader.read_u8())
@@ -702,6 +756,22 @@ class OpcodeRegistry:
                     fields.append(reader.read_binary(rem))
 
             remaining_bytes = reader.remaining()
+
+            # Rule 2: Strict integrity check for STATIC packets
+            if meta["structure_type"] == "STATIC" and remaining_bytes > 0:
+                if not meta.get("allow_trailing", False):
+                    return {
+                        "opcode": opcode,
+                        "name": meta["name"],
+                        "lambda": meta["lambda"],
+                        "structure_type": meta["structure_type"],
+                        "status": meta["status"],
+                        "error": f"Unexpected {remaining_bytes} trailing bytes in STATIC packet without extension evidence",
+                        "partial_fields": fields,
+                        "remaining_bytes": remaining_bytes,
+                        "parsed": False,
+                    }
+
             result: Dict[str, Any] = {
                 "opcode": opcode,
                 "name": meta["name"],
@@ -730,3 +800,453 @@ class OpcodeRegistry:
                 "partial_fields": fields,
                 "parsed": False,
             }
+
+
+# ==============================================================================
+# 6. Dynamic Packet AST Decoders (Reconstructed from AArch64 Control Flow)
+# ==============================================================================
+
+class DynamicPacketDecoder:
+    """
+    Decodes structured AST trees for count-controlled loops and conditional branch payloads.
+    Directly reconstructed from AArch64 control flow graphs in libaos_jogo.so.
+    """
+
+    DECODERS: Dict[int, Any] = {}
+
+    @staticmethod
+    def decode_0x01_role_login(data: bytes) -> Dict[str, Any]:
+        """
+        AArch64: $_6 at 0x007f0a0c (size 5348 bytes)
+        AST Layout:
+          session_token: str
+          role_count: u8
+          roles: List[Role] (length = role_count)
+            role_id: i32
+            name: str
+            class_name: str
+            level: i16
+            gender: u8
+            hair_style: u8
+            equip_flags: u8
+            guild_name: str
+            vip_level: u8
+            is_default: u8
+            last_login: i32
+          server_host: str
+          announcement_count: i16
+          announcements: List[str] (length = announcement_count)
+        """
+        reader = PacketReader(data)
+        token = reader.read_str()
+        role_count = reader.read_u8()
+        roles = []
+        for _ in range(role_count):
+            role = {
+                "role_id": reader.read_i32(),
+                "name": reader.read_str(),
+                "class_name": reader.read_str(),
+                "level": reader.read_i16(),
+                "gender": reader.read_u8(),
+                "hair_style": reader.read_u8(),
+                "equip_flags": reader.read_u8(),
+                "guild_name": reader.read_str(),
+                "vip_level": reader.read_u8(),
+                "is_default": reader.read_u8(),
+                "last_login": reader.read_i32(),
+            }
+            roles.append(role)
+
+        server_host = reader.read_str()
+        announcement_count = reader.read_i16()
+        announcements = []
+        for _ in range(max(0, announcement_count)):
+            announcements.append(reader.read_str())
+
+        return {
+            "session_token": token,
+            "role_count": role_count,
+            "roles": roles,
+            "server_host": server_host,
+            "announcement_count": announcement_count,
+            "announcements": announcements,
+            "remaining_bytes": reader.remaining(),
+        }
+
+    @staticmethod
+    def decode_0x10_player_stats(data: bytes) -> Dict[str, Any]:
+        """
+        AArch64: $_13 at 0x007f5a8c (size 5508 bytes)
+        AST Layout:
+          Base attributes:
+            level: i32
+            exp: i64
+            hp: i32
+            max_hp: i32
+            ki: i32
+            max_ki: i32
+            atk: i32
+            def: i32
+          Completed stage list (CGuanKaEstado::adicionarTerminada):
+            stage_count: i32
+            stages: List[Stage] (length = stage_count)
+              star_rating: u8
+              status: u8
+              stage_id: i32
+          Post-stage attributes:
+            avatar_frame: u8
+            player_name: str
+            cur_mp: i32
+            max_mp: i32
+            has_title: u8
+            title_id: i32
+            vip_rank: u8
+            combat_power: i32
+            pk_mode: i32
+            guild_id: i32
+            guild_contribute: i32
+            diamond: i32
+            gold: i32
+            bind_diamond: i32
+          Trailing buff blocks / optional extensions
+        """
+        reader = PacketReader(data)
+        base = {
+            "level": reader.read_i32(),
+            "exp": reader.read_i64(),
+            "hp": reader.read_i32(),
+            "max_hp": reader.read_i32(),
+            "ki": reader.read_i32(),
+            "max_ki": reader.read_i32(),
+            "atk": reader.read_i32(),
+        }
+        stage_count = reader.read_i32()
+        stages = []
+        for _ in range(stage_count):
+            stage = {
+                "star_rating": reader.read_u8(),
+                "status": reader.read_u8(),
+                "stage_id": reader.read_i32(),
+            }
+            stages.append(stage)
+
+        post: Dict[str, Any] = {}
+        if reader.remaining() > 0:
+            post["avatar_frame"] = reader.read_u8()
+            post["player_name"] = reader.read_str()
+            stat_names = [
+                "cur_mp", "max_mp", "has_title", "title_id", "vip_rank",
+                "combat_power", "pk_mode", "guild_id", "guild_contribute",
+                "diamond", "gold", "bind_diamond"
+            ]
+            stat_types = [
+                "i32", "i32", "u8", "i32", "u8",
+                "i32", "i32", "i32", "i32",
+                "i32", "i32", "i32"
+            ]
+            for sname, stype in zip(stat_names, stat_types):
+                if reader.remaining() == 0:
+                    break
+                if stype == "u8":
+                    post[sname] = reader.read_u8()
+                elif stype == "i32":
+                    post[sname] = reader.read_i32()
+
+        return {
+            "base_stats": base,
+            "stage_count": stage_count,
+            "stages": stages,
+            "attributes": post,
+            "remaining_bytes": reader.remaining(),
+        }
+
+    @staticmethod
+    def decode_0x20_entity_move(data: bytes) -> Dict[str, Any]:
+        """
+        AArch64: $_14 at 0x007f7078 (size 2748 bytes)
+        AST Layout:
+          move_type: i16
+          entity_id: i64
+          map_id: i32
+          pos_x: i16
+          pos_y: i16
+          target_tile: i32
+          mount_id: Optional[i64] (when move_type == 5)
+          waypoint_count: i32
+          waypoints: List[Waypoint] (length = waypoint_count)
+            waypoint_id: i32
+            target_entity_id: i64
+            speed: i32
+            next_x: i16
+            next_y: i16
+            move_flags: i32
+            extra_data: i64
+        """
+        reader = PacketReader(data)
+        move_type = reader.read_i16()
+        entity_id = reader.read_i64()
+        map_id = reader.read_i32()
+        pos_x = reader.read_i16()
+        pos_y = reader.read_i16()
+        target_tile = reader.read_i32()
+        mount_id = None
+        if move_type == 5 and reader.remaining() >= 8:
+            mount_id = reader.read_i64()
+
+        waypoint_count = 0
+        waypoints = []
+        if reader.remaining() >= 4:
+            waypoint_count = reader.read_i32()
+            for _ in range(max(0, waypoint_count)):
+                wp = {
+                    "waypoint_id": reader.read_i32(),
+                    "target_entity_id": reader.read_i64(),
+                    "speed": reader.read_i32(),
+                    "next_x": reader.read_i16(),
+                    "next_y": reader.read_i16(),
+                    "move_flags": reader.read_i32(),
+                    "extra_data": reader.read_i64(),
+                }
+                waypoints.append(wp)
+
+        return {
+            "move_type": move_type,
+            "entity_id": entity_id,
+            "map_id": map_id,
+            "pos_x": pos_x,
+            "pos_y": pos_y,
+            "target_tile": target_tile,
+            "mount_id": mount_id,
+            "waypoint_count": waypoint_count,
+            "waypoints": waypoints,
+            "remaining_bytes": reader.remaining(),
+        }
+
+    @staticmethod
+    def decode_0x21_battle_state(data: bytes) -> Dict[str, Any]:
+        """
+        AArch64: $_15 at 0x007f7b9c (size 764 bytes)
+        AST Layout:
+          hero_uid: str
+          hero_id: i32
+          level: u8
+          exp: i32
+          star_grade: u8
+          quality: u8
+          status: u8
+          combat_power: i32
+          is_deployed: u8
+          skill_count: u8
+          skills: List[Skill] (length = skill_count)
+            skill_id: i32
+            skill_level: u8
+          equip_count: u8
+          equips: List[Equip] (length = equip_count)
+            item_uid: i64
+            item_id: i32
+            slot_index: i16
+            refine_level: u8
+          current_hp: i32
+          hp_percent: u8
+          max_hp: i32
+        """
+        reader = PacketReader(data)
+        hero_uid = reader.read_str()
+        hero_id = reader.read_i32()
+        level = reader.read_u8()
+        exp = reader.read_i32()
+        star_grade = reader.read_u8()
+        quality = reader.read_u8()
+        status = reader.read_u8()
+        combat_power = reader.read_i32()
+        is_deployed = reader.read_u8()
+
+        skill_count = reader.read_u8()
+        skills = []
+        for _ in range(skill_count):
+            skills.append({
+                "skill_id": reader.read_i32(),
+                "skill_level": reader.read_u8(),
+            })
+
+        equip_count = reader.read_u8()
+        equips = []
+        for _ in range(equip_count):
+            equips.append({
+                "item_uid": reader.read_i64(),
+                "item_id": reader.read_i32(),
+                "slot_index": reader.read_i16(),
+                "refine_level": reader.read_u8(),
+            })
+
+        current_hp = reader.read_i32()
+        hp_percent = reader.read_u8()
+        max_hp = reader.read_i32()
+
+        return {
+            "hero_uid": hero_uid,
+            "hero_id": hero_id,
+            "level": level,
+            "exp": exp,
+            "star_grade": star_grade,
+            "quality": quality,
+            "status": status,
+            "combat_power": combat_power,
+            "is_deployed": is_deployed,
+            "skill_count": skill_count,
+            "skills": skills,
+            "equip_count": equip_count,
+            "equips": equips,
+            "current_hp": current_hp,
+            "hp_percent": hp_percent,
+            "max_hp": max_hp,
+            "remaining_bytes": reader.remaining(),
+        }
+
+    @staticmethod
+    def decode_0x2A_inventory(data: bytes) -> Dict[str, Any]:
+        """
+        AArch64: $_20 at 0x007f9c2c (size 14628 bytes)
+        Switch-case dispatch based on sub_op byte:
+          sub_op: u8
+          sub_op == 0: slot_update (slot: i32, item_id: i32, count: i32)
+          sub_op == 1: gold_currency (gold: i32)
+          sub_op == 2: bag_expand (new_capacity: u8)
+          sub_op == 3: diamond_currency (diamonds: i32)
+          sub_op == 4: equip_action (equip_uid: str)
+          sub_op == 5: batch_items (item_count: i32, items: List[Item])
+        """
+        reader = PacketReader(data)
+        sub_op = reader.read_u8()
+        details: Dict[str, Any] = {"sub_op": sub_op}
+
+        if sub_op == 0:
+            details["action"] = "SLOT_UPDATE"
+            if reader.remaining() >= 12:
+                details["slot_index"] = reader.read_i32()
+                details["item_id"] = reader.read_i32()
+                details["count"] = reader.read_i32()
+        elif sub_op == 1:
+            details["action"] = "GOLD_CURRENCY_UPDATE"
+            if reader.remaining() >= 4:
+                details["gold"] = reader.read_i32()
+        elif sub_op == 2:
+            details["action"] = "BAG_CAPACITY_EXPAND"
+            if reader.remaining() >= 1:
+                details["new_capacity"] = reader.read_u8()
+        elif sub_op == 3:
+            details["action"] = "DIAMOND_CURRENCY_UPDATE"
+            if reader.remaining() >= 4:
+                details["diamonds"] = reader.read_i32()
+        elif sub_op == 4:
+            details["action"] = "EQUIP_ACTION"
+            if reader.remaining() >= 2:
+                details["equip_uid"] = reader.read_str()
+        elif sub_op == 5:
+            details["action"] = "BATCH_ITEM_SYNC"
+            if reader.remaining() >= 4:
+                item_count = reader.read_i32()
+                details["item_count"] = item_count
+                items = []
+                for _ in range(max(0, item_count)):
+                    if reader.remaining() < 19:
+                        break
+                    items.append({
+                        "item_uid": reader.read_i64(),
+                        "item_id": reader.read_i32(),
+                        "count": reader.read_i32(),
+                        "slot": reader.read_i16(),
+                        "flags": reader.read_u8(),
+                    })
+                details["items"] = items
+        else:
+            details["action"] = f"SUB_OP_{sub_op}"
+
+        details["remaining_bytes"] = reader.remaining()
+        if reader.remaining() > 0:
+            details["trailing_payload"] = reader.read_binary(reader.remaining())
+
+        return details
+
+DynamicPacketDecoder.DECODERS = {
+    0x01: DynamicPacketDecoder.decode_0x01_role_login,
+    0x10: DynamicPacketDecoder.decode_0x10_player_stats,
+    0x20: DynamicPacketDecoder.decode_0x20_entity_move,
+    0x21: DynamicPacketDecoder.decode_0x21_battle_state,
+    0x2A: DynamicPacketDecoder.decode_0x2A_inventory,
+}
+
+
+# ==============================================================================
+# 7. Client State Machine & Initialization Tracker (Offline Emulation)
+# ==============================================================================
+
+class ClientStateMachine:
+    """
+    Offline Client State Machine & UI Event Tracker.
+    Directly modeled on aos::CProtocolManager and aos::CUIManager event dispatches in libaos_jogo.so:
+      - 0x7f1cdc: CUIManager::FireEvent(2, "fuwuqi", ...) on Opcode 0x01
+      - 0x7f68b0: CUIManager::FireEvent(2, "main", ...) on Opcode 0x10
+    """
+    STATE_DISCONNECTED = "DISCONNECTED"
+    STATE_HANDSHAKE_COMPLETE = "HANDSHAKE_COMPLETE"
+    STATE_AUTHENTICATED = "AUTHENTICATED"
+    STATE_ROLE_SELECTION = "ROLE_SELECTION"
+    STATE_IN_GAME_MAIN = "IN_GAME_MAIN"
+    STATE_IN_BATTLE = "IN_BATTLE"
+
+    def __init__(self):
+        self.state = self.STATE_DISCONNECTED
+        self.session_token: Optional[str] = None
+        self.roles: List[Dict[str, Any]] = []
+        self.selected_role: Optional[Dict[str, Any]] = None
+        self.player_stats: Optional[Dict[str, Any]] = None
+        self.heroes: Dict[str, Dict[str, Any]] = {}
+        self.inventory: Dict[str, Any] = {"gold": 0, "diamonds": 0, "slots": {}}
+        self.ui_events: List[Tuple[int, str]] = []
+
+    def on_handshake_complete(self, seed: int, key: int):
+        self.state = self.STATE_HANDSHAKE_COMPLETE
+
+    def on_packet(self, opcode: int, payload: bytes) -> Dict[str, Any]:
+        parsed = OpcodeRegistry.parse_payload(opcode, payload)
+        if not parsed.get("parsed"):
+            return {"error": parsed.get("error", "Parse failed"), "transitioned": False}
+
+        if opcode == 0x04:  # ACCOUNT_INFO
+            self.state = self.STATE_AUTHENTICATED
+            return {"transitioned": True, "new_state": self.state}
+
+        elif opcode == 0x01:  # ROLE_LOGIN_RESPONSE
+            ast = parsed.get("ast", {})
+            self.session_token = ast.get("session_token")
+            self.roles = ast.get("roles", [])
+            # In ARM64 0x7f1cdc: CUIManager::FireEvent(2, "fuwuqi")
+            self.ui_events.append((2, "fuwuqi"))
+            self.state = self.STATE_ROLE_SELECTION
+            return {"transitioned": True, "new_state": self.state, "roles_loaded": len(self.roles)}
+
+        elif opcode == 0x10:  # PLAYER_STATS_SYNC
+            ast = parsed.get("ast", {})
+            self.player_stats = ast
+            # In ARM64 0x7f68b0: CUIManager::FireEvent(2, "main")
+            self.ui_events.append((2, "main"))
+            self.state = self.STATE_IN_GAME_MAIN
+            return {"transitioned": True, "new_state": self.state}
+
+        elif opcode == 0x21:  # BATTLE_STATE_UPDATE
+            ast = parsed.get("ast", {})
+            hero_uid = ast.get("hero_uid")
+            if hero_uid:
+                self.heroes[hero_uid] = ast
+            return {"transitioned": False, "hero_synced": hero_uid}
+
+        elif opcode == 0x2A:  # INVENTORY_ITEM_UPDATE
+            ast = parsed.get("ast", {})
+            if "gold" in ast:
+                self.inventory["gold"] = ast["gold"]
+            if "diamonds" in ast:
+                self.inventory["diamonds"] = ast["diamonds"]
+            return {"transitioned": False, "inventory_sub_op": ast.get("sub_op")}
+
+        return {"transitioned": False, "opcode": opcode}
