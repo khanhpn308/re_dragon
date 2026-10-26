@@ -152,5 +152,16 @@ class AgentOrchestrationTests(unittest.TestCase):
         self.assertEqual(output["checks"][0]["state"],"FAIL")
         self.assertFalse(output["ready_for_review"])
 
+    def test_unbound_target_never_passes_identity_gate(self):
+        ident=investigation.begin(
+            self.db, "Investigate unknown client binary without a selected ELF"
+        )["investigation_id"]
+        investigation.set_plan(self.db, ident, [
+            {"title": "Find input", "acceptance": "Identify the exact binary"}
+        ])
+        verdict=investigation.review(self.db, ident)
+        self.assertEqual(verdict["checks"][0]["state"], "FAIL")
+        self.assertFalse(verdict["ready_for_review"])
+
 if __name__=="__main__":
     unittest.main()

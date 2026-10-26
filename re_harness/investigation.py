@@ -344,7 +344,7 @@ def review(db, ident):
         "SELECT receipt_status,rea_evidence_id FROM rea_observations "
         "WHERE investigation_id=?", (ident,),
     ).fetchall()
-    binary_ok = row["binary_sha256"] is None or (
+    binary_ok = bool(row["binary_sha256"] and row["binary_path"]) and (
         Path(row["binary_path"]).is_file() and
         core.sha256(row["binary_path"]) == row["binary_sha256"]
     )
