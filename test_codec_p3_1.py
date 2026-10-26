@@ -32,7 +32,7 @@ EXPECTED_27_MANIFEST = {
     0x07: ("$_9", 0x007f5060, 0x014f1060, "STATIC", "VERIFIED", ["u8", "str"]),
     0x08: ("$_10", 0x007f5604, 0x014f10e0, "STATIC", "VERIFIED", ["u8"]),
     0x0A: ("$_11", 0x007f5690, 0x014f1160, "STATIC", "VERIFIED", ["str"]),
-    0x10: ("$_13", 0x007f5a8c, 0x014f1260, "DYNAMIC", "PARTIAL", ["i32", "i64", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "u8", "i32", "u8", "str"]),
+    0x10: ("$_13", 0x007f5a8c, 0x014f1260, "DYNAMIC", "PARTIAL", ["i32", "i64", "i32", "i32", "i32", "i32", "i32"]),
     0x12: ("$_12", 0x007f57b0, 0x014f11e0, "STATIC", "VERIFIED", ["u8", "str"]),
     0x20: ("$_14", 0x007f7078, 0x014f12e0, "DYNAMIC", "PARTIAL", ["i16", "i64", "i32", "i16", "i16", "i32", "i64"]),
     0x21: ("$_15", 0x007f7b9c, 0x014f1360, "DYNAMIC", "PARTIAL", ["str", "i32", "u8", "i32", "u8", "u8", "u8", "i32", "u8"]),
@@ -103,24 +103,41 @@ def test_audited_13_opcodes_reconciliation():
     b01 = bytearray()
     b01.extend(pack_str("Welcome back Saiyan!"))
     b01.append(2)  # 2 characters in list
-    # Character 1: i32, str, str, i16, u8...
+    # Character 1: i32, str, str, i16, u8, u8, u8, str, u8, u8, i32
     b01.extend(struct.pack(">i", 1001))
     b01.extend(pack_str("Goku"))
     b01.extend(pack_str("Warrior"))
     b01.extend(struct.pack(">h", 90))
+    b01.append(1)  # gender
+    b01.append(2)  # hair_style
+    b01.append(7)  # equip_flags
+    b01.extend(pack_str("Z-Fighters"))  # guild_name
+    b01.append(10) # vip_level
+    b01.append(1)  # is_default
+    b01.extend(struct.pack(">i", 1700000000)) # last_login
     # Character 2:
     b01.extend(struct.pack(">i", 1002))
     b01.extend(pack_str("Vegeta"))
     b01.extend(pack_str("Prince"))
     b01.extend(struct.pack(">h", 88))
+    b01.append(1)  # gender
+    b01.append(1)  # hair_style
+    b01.append(5)  # equip_flags
+    b01.extend(pack_str("RoyalArmy"))  # guild_name
+    b01.append(10) # vip_level
+    b01.append(0)  # is_default
+    b01.extend(struct.pack(">i", 1699990000)) # last_login
+    # Server Host & Announcements
+    b01.extend(pack_str("gateway.returnsaiyan.com"))
+    b01.extend(struct.pack(">h", 0))  # announcement_count = 0
 
     res01 = OpcodeRegistry.parse_payload(0x01, bytes(b01))
     assert res01["parsed"] is True
     assert res01["structure_type"] == "DYNAMIC"
     assert res01["status"] == "PARTIAL"
     assert res01["fields"] == ["Welcome back Saiyan!", 2]
-    assert "raw_variable_payload" in res01
-    assert res01["dynamic_body_length"] > 0
+    assert "ast" in res01
+    assert res01["ast"]["role_count"] == 2
 
     # 3. Opcode 0x04 (Account Info): STATIC, exactly 2 strings
     b04 = pack_str("session_tok_998877") + pack_str("usr_goku_01")
@@ -143,7 +160,7 @@ def test_audited_13_opcodes_reconciliation():
     assert res0A["structure_type"] == "STATIC"
     assert res0A["fields"] == ["ACCOUNT_CREATED_SUCCESS"]
 
-    # 6. Opcode 0x10 (Player Stats Sync): DYNAMIC, header 13 fields + trailing buff blocks
+    # 6. Opcode 0x10 (Player Stats Sync): DYNAMIC, 7 base stats + stage progress loop
     b10 = bytearray()
     b10.extend(struct.pack(">i", 100))        # level
     b10.extend(struct.pack(">q", 5000000))    # exp
@@ -152,14 +169,12 @@ def test_audited_13_opcodes_reconciliation():
     b10.extend(struct.pack(">i", 12000))      # ki
     b10.extend(struct.pack(">i", 12000))      # max_ki
     b10.extend(struct.pack(">i", 3500))       # atk
-    b10.extend(struct.pack(">i", 2100))       # def
-    b10.append(1)                             # transform_state
-    b10.append(5)                             # buff_count
-    b10.extend(struct.pack(">i", 120))        # speed
-    b10.append(3)                             # aura_type
-    b10.extend(pack_str("Super Saiyan 3"))    # form_name
-    # Dynamic trailing buff blocks (e.g. 5 buffs * 8 bytes = 40 bytes)
-    b10.extend(b"\xAA" * 40)
+    b10.extend(struct.pack(">i", 0))          # stage_count = 0
+    # Post-stage attributes
+    b10.append(1)                             # avatar_frame
+    b10.extend(pack_str("Super Saiyan 3"))    # player_name
+    b10.extend(struct.pack(">i", 12000))      # cur_mp
+    b10.extend(struct.pack(">i", 12000))      # max_mp
 
     res10 = OpcodeRegistry.parse_payload(0x10, bytes(b10))
     assert res10["parsed"] is True
@@ -167,8 +182,8 @@ def test_audited_13_opcodes_reconciliation():
     assert res10["status"] == "PARTIAL"
     assert res10["fields"][0] == 100
     assert res10["fields"][1] == 5000000
-    assert res10["fields"][12] == "Super Saiyan 3"
-    assert res10["dynamic_body_length"] == 40
+    assert len(res10["fields"]) == 7
+    assert res10["ast"]["attributes"]["player_name"] == "Super Saiyan 3"
 
     # 7. Opcode 0x12 (Entity Spawn Position): STATIC, 2 fields [u8, str]
     b12 = bytearray([0x01]) + pack_str("Map_Namek_Zone_4")
@@ -177,25 +192,32 @@ def test_audited_13_opcodes_reconciliation():
     assert res12["structure_type"] == "STATIC"
     assert res12["fields"] == [1, "Map_Namek_Zone_4"]
 
-    # 8. Opcode 0x21 (Battle State Update): DYNAMIC, header 9 fields + dynamic battle units
+    # 8. Opcode 0x21 (Battle State Update): DYNAMIC, header 9 fields + hero skills & equipment loops
     b21 = bytearray()
-    b21.extend(pack_str("TournamentOfPower_Arena"))
-    b21.extend(struct.pack(">i", 1))    # round
-    b21.append(10)                       # active_units
-    b21.extend(struct.pack(">i", 120))  # timer
-    b21.append(1)                        # weather
-    b21.append(0)                        # bgm_id
-    b21.append(2)                        # teams_count
-    b21.extend(struct.pack(">i", 9999)) # score
-    b21.append(0)                        # sudden_death
-    # Dynamic battle entity payload
-    b21.extend(b"\xFF\xFE\xFD\xFC" * 16)
+    b21.extend(pack_str("hero_uid_1001"))
+    b21.extend(struct.pack(">i", 1))    # hero_id (Goku)
+    b21.append(10)                      # level
+    b21.extend(struct.pack(">i", 120))  # exp
+    b21.append(1)                       # star_grade
+    b21.append(0)                       # quality
+    b21.append(2)                       # status
+    b21.extend(struct.pack(">i", 9999)) # combat_power
+    b21.append(0)                       # is_deployed
+    # AST continuation:
+    b21.append(0)                       # skill_count = 0
+    b21.append(0)                       # equip_count = 0
+    b21.extend(struct.pack(">i", 5000)) # current_hp
+    b21.append(100)                     # hp_percent
+    b21.extend(struct.pack(">i", 5000)) # max_hp
+    # Trailing dynamic bytes:
+    b21.extend(b"\xFF\xFE\xFD\xFC" * 4)
 
     res21 = OpcodeRegistry.parse_payload(0x21, bytes(b21))
     assert res21["parsed"] is True
     assert res21["structure_type"] == "DYNAMIC"
-    assert res21["fields"][0] == "TournamentOfPower_Arena"
-    assert res21["dynamic_body_length"] == 64
+    assert res21["fields"][0] == "hero_uid_1001"
+    assert res21["remaining_bytes"] == 16
+    assert res21["dynamic_body_length"] == 27
 
     # 9. Opcode 0x25 (Skill Cast Event): STATIC, 6 fields: i64, i32, i16, i16, u8, i32
     b25 = bytearray()
@@ -212,17 +234,19 @@ def test_audited_13_opcodes_reconciliation():
 
     # 10. Opcode 0x2A (Inventory Item Update): DYNAMIC, header [u8, i32, i32, i32] + item slots
     b2A = bytearray()
-    b2A.append(1)                            # bag_type (Bag 1)
-    b2A.extend(struct.pack(">i", 50))        # max_slots
-    b2A.extend(struct.pack(">i", 3))         # used_slots
-    b2A.extend(struct.pack(">i", 1000000))   # gold
+    b2A.append(0)                            # sub_op: 0 (SLOT_UPDATE)
+    b2A.extend(struct.pack(">i", 50))        # slot_index
+    b2A.extend(struct.pack(">i", 3))         # item_id
+    b2A.extend(struct.pack(">i", 1000000))   # count
     # 3 dynamic item slot definitions
     b2A.extend(b"\x01\x02\x03\x04" * 12)
 
     res2A = OpcodeRegistry.parse_payload(0x2A, bytes(b2A))
     assert res2A["parsed"] is True
     assert res2A["structure_type"] == "DYNAMIC"
-    assert res2A["fields"] == [1, 50, 3, 1000000]
+    assert res2A["fields"] == [0, 50, 3, 1000000]
+    assert res2A["ast"]["action"] == "SLOT_UPDATE"
+    assert res2A["ast"]["slot_index"] == 50
     assert res2A["dynamic_body_length"] == 48
 
     # 11. Opcode 0x2C (Guild Member Info): STATIC, 8 fields: i64, u8, i16, i32, i32, str, i64, i16

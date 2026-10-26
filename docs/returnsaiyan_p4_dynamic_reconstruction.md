@@ -168,37 +168,37 @@ The complete test suite runs across 53 unit tests (`test_codec_p2.py`, `test_cod
 
 ---
 
-## 6. Epistemic Ledger: 18 STATIC vs 9 DYNAMIC
+## 6. Epistemic Ledger: 18 STATIC vs 9 DYNAMIC (Reconciled AArch64 Ground Truth)
 
-| Opcode | Packet Name | Type | Status | Disassembly Proof & Boundaries |
-| :---: | :--- | :---: | :---: | :--- |
-| `0x00` | `LOGIN_AUTH_ACK` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` at `0x7f05c4` |
-| `0x01` | `ROLE_LOGIN_RESPONSE` | DYNAMIC | PARTIAL | AST decoder: session token, role loop (`0x7f0af4`), server host, announcements loop (`0x7f0df0`) |
-| `0x04` | `ACCOUNT_INFO` | STATIC | VERIFIED | Fixed 2 fields: `[str, str]` at `0x7f08ac` |
-| `0x05` | `SERVER_LIST_DATA` | DYNAMIC | PARTIAL | Server cluster list loop at `0x7f16f0` |
-| `0x07` | `ROLE_CREATE_RESPONSE` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` at `0x7f2324` |
-| `0x08` | `CHANGE_PSW_RESULT` | STATIC | VERIFIED | Fixed 1 field: `[u8]` at `0x7f28c8` |
-| `0x0A` | `REGISTER_ACCOUNT_ACK` | STATIC | VERIFIED | Fixed 1 field: `[str]` at `0x7f2b18` |
-| `0x10` | `PLAYER_STATS_SYNC` | DYNAMIC | PARTIAL | AST decoder: 7 base stats, stage loop (`0x7f5b5c`), post-stage attributes |
-| `0x12` | `ENTITY_SPAWN_POS` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` at `0x7f6cf4` |
-| `0x20` | `ENTITY_MOVE_SYNC` | DYNAMIC | PARTIAL | AST decoder: movement header, mount conditional (`0x7f7180`), waypoints loop (`0x7f7718`) |
-| `0x21` | `BATTLE_STATE_UPDATE` | DYNAMIC | PARTIAL | AST decoder: hero header, skill loop (`0x7f7c84`), equip loop (`0x7f7cc8`), hp tail |
-| `0x25` | `SKILL_CAST_EVENT` | STATIC | VERIFIED | Fixed 6 fields: `[i64, i32, i16, i16, u8, i32]` at `0x7f7f00` |
-| `0x26` | `RESOURCE_TRANSFER` | STATIC | VERIFIED | Fixed 4 fields: `[str, u8, str, u8]` at `0x7f8058` |
-| `0x27` | `HEARTBEAT_PING` | STATIC | VERIFIED | Fixed 1 field: `[i32]` at `0x7f85c8` |
-| `0x28` | `HEARTBEAT_PONG` | STATIC | VERIFIED | Fixed 1 field: `[i32]` at `0x7f94c4` |
-| `0x29` | `CHAT_MESSAGE_UPDATE` | STATIC | VERIFIED | Fixed 8 fields: `[i64, str, u8, str, str, u8, str, str]` at `0x75eca4` |
-| `0x2A` | `INVENTORY_ITEM_UPDATE` | DYNAMIC | PARTIAL | AST decoder: `sub_op: u8` switch table dispatch (`0x7f9ca0`) |
-| `0x2B` | `QUEST_PROGRESS_UPDATE`| DYNAMIC | PARTIAL | Quest tracker loops at `0x7fd6fc` |
-| `0x2C` | `GUILD_MEMBER_INFO` | STATIC | VERIFIED | Fixed 10 fields: `[i64, str, u8, i32, i32, u8, u8, i32, str, u8]` at `0x80203c` |
-| `0x2D` | `FRIEND_LIST_DATA` | DYNAMIC | PARTIAL | Friend list array loop at `0x800350` |
-| `0x2E` | `MAIL_INBOX_LIST` | DYNAMIC | PARTIAL | Mail item array loop at `0x8004f0` |
-| `0x2F` | `LEADERBOARD_DATA` | STATIC | VERIFIED | Fixed 4 fields: `[str, u8, i32, i32]` at `0x8006d8` |
-| `0x30` | `PARTY_INFO` | STATIC | VERIFIED | Fixed 2 fields: `[u8, u8]` at `0x800864` |
-| `0x31` | `SUB_ACTION_STATUS` | STATIC | VERIFIED | Fixed 2 fields: `[i32, str]` at `0x806184` |
-| `0x32` | `TOAST_NOTIFICATION` | DYNAMIC | PARTIAL | Toast notification attributes at `0x800f04` |
-| `0x33` | `FRIEND_STATUS_UPDATE` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` at `0x801828` |
-| `0x43` | `MARKET_TRADE_ORDER` | STATIC | VERIFIED | Fixed 8 fields: `[u8, u8, i32, u8, u8, u8, u8, i32]` at `0x801bac` |
+| Opcode | Packet Name (Certainty) | Lambda | Handler Addr | Vtable Addr | Type | Status | Reconciled Schema & Semantics |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `0x00` | `MSG_BOX_NOTICE` (INFERRED) | `$_5` | `0x7f06c8` | `0x14f0e60` | STATIC | VERIFIED | Fixed 1 field: `[str]` (Notice prompt at `0x7f06fc`) |
+| `0x01` | `ROLE_LOGIN_RESPONSE` (VERIFIED) | `$_6` | `0x7f0a0c` | `0x14f0ee0` | DYNAMIC | PARTIAL | Header `[str, u8]` + role loop (`0x7f0af4`) + announcements (`0x7f0df0`) |
+| `0x04` | `ACCOUNT_INFO` (INFERRED) | `$_7` | `0x7f4ba4` | `0x14f0f60` | STATIC | VERIFIED | Fixed 2 fields: `[str, str]` (Session token, account) |
+| `0x05` | `SERVER_REDIRECT` (INFERRED) | `$_8` | `0x7f4de4` | `0x14f0fe0` | STATIC | VERIFIED | Fixed 1 field: `[str]` (Redirect host string at `0x7f4e78`) |
+| `0x07` | `SYSTEM_PROMPT` (INFERRED) | `$_9` | `0x7f5060` | `0x14f1060` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` (Code + prompt string) |
+| `0x08` | `CHANGE_PSW_RESULT` (INFERRED) | `$_10` | `0x7f5604` | `0x14f10e0` | STATIC | VERIFIED | Fixed 1 field: `[u8]` (Tail-call LeitorPacote::u8) |
+| `0x0A` | `REG_ACCOUNT_RESULT` (INFERRED) | `$_11` | `0x7f5690` | `0x14f1160` | STATIC | VERIFIED | Fixed 1 field: `[str]` (Registration notice string) |
+| `0x10` | `PLAYER_STATS_SYNC` (VERIFIED) | `$_13` | `0x7f5a8c` | `0x14f1260` | DYNAMIC | PARTIAL | 7 base stats + stage loop (`0x7f5b5c`) + post-stage attrs |
+| `0x12` | `ENTITY_SPAWN_POSITION` (INFERRED) | `$_12` | `0x7f57b0` | `0x14f11e0` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` (Zone type + spawn pos string) |
+| `0x20` | `ENTITY_MOVE_SYNC` (INFERRED) | `$_14` | `0x7f7078` | `0x14f12e0` | DYNAMIC | PARTIAL | Header + mount conditional (`0x7f7180`) + waypoints loop (`0x7f7718`) |
+| `0x21` | `BATTLE_STATE_UPDATE` (INFERRED) | `$_15` | `0x7f7b9c` | `0x14f1360` | DYNAMIC | PARTIAL | Header + skill loop (`0x7f7c84`) + equip loop (`0x7f7cc8`) + hp tail |
+| `0x25` | `SKILL_CAST_EVENT` (INFERRED) | `$_16` | `0x7f7f00` | `0x14f13e0` | STATIC | VERIFIED | Fixed 6 fields: `[i64, i32, i16, i16, u8, i32]` |
+| `0x26` | `RESOURCE_TRANSFER` (INFERRED) | `$_17` | `0x7f8058` | `0x14f1460` | STATIC | VERIFIED | Fixed 4 fields: `[str, u8, str, u8]` |
+| `0x27` | `HEARTBEAT_PING` (INFERRED) | `$_18` | `0x7f85c8` | `0x14f14e0` | STATIC | VERIFIED | Fixed 1 field: `[i32]` |
+| `0x28` | `HEARTBEAT_PONG` (INFERRED) | `$_19` | `0x7f94c4` | `0x14f1560` | STATIC | VERIFIED | Fixed 1 field: `[i32]` |
+| `0x29` | `CHAT_MESSAGE_UPDATE` (VERIFIED) | `chat_$_1` | `0x75eca4` | `0x14efa88` | STATIC | VERIFIED | Fixed 8 fields: `[i64, str, u8, str, str, u8, str, str]` |
+| `0x2A` | `INVENTORY_ITEM_UPDATE` (INFERRED) | `$_20` | `0x7f9c2c` | `0x14f15e0` | DYNAMIC | PARTIAL | Sub-op switch jump table (`0x7f9ca0`, 41 entries) |
+| `0x2B` | `QUEST_PROGRESS_UPDATE` (INFERRED) | `$_21` | `0x7fd6fc` | `0x14f16d0` | DYNAMIC | PARTIAL | Header `[str, u8, u8, i32, i32]` + quest loops (13 calls) |
+| `0x2C` | `GUILD_MEMBER_INFO` (INFERRED) | `$_28` | `0x80203c` | `0x14f1a50` | STATIC | VERIFIED | Fixed 8 fields: `[i64, u8, i16, i32, i32, str, i64, i16]` |
+| `0x2D` | `SPECIAL_ACTION_NOTIFY` (INFERRED) | `$_22` | `0x7fed18` | `0x14f1750` | DYNAMIC | PARTIAL | Header `[u8, u8]` + action loop + tail `[str, i32]` |
+| `0x2E` | `ACTION_STATUS_CONFIRM` (INFERRED) | `$_23` | `0x7ffc28` | `0x14f17d0` | STATIC | VERIFIED | Fixed 6 fields: `[u8, str, str, str, str, str]` |
+| `0x2F` | `MAIL_ATTACHMENT_UPDATE` (INFERRED) | `$_29` | `0x803800` | `0x14f1ad0` | DYNAMIC | PARTIAL | Header `[u8, u8, str]` + mail item attachments loop |
+| `0x30` | `PARTY_INFO` (INFERRED) | `$_24` | `0x800864` | `0x14f1850` | STATIC | VERIFIED | Fixed 2 fields: `[u8, u8]` |
+| `0x31` | `SUB_ACTION_STATUS` (INFERRED) | `$_30` | `0x806184` | `0x14f1b50` | STATIC | VERIFIED | Fixed 2 fields: `[i32, str]` |
+| `0x32` | `TOAST_NOTIFICATION` (INFERRED) | `$_25` | `0x800f04` | `0x14f18d0` | DYNAMIC | PARTIAL | Header `[u8, u8, u8, u8, u8, i32, u8]` + toast text |
+| `0x33` | `FRIEND_STATUS_UPDATE` (INFERRED) | `$_26` | `0x801828` | `0x14f1950` | STATIC | VERIFIED | Fixed 2 fields: `[u8, str]` |
+| `0x43` | `MARKET_TRADE_ORDER` (INFERRED) | `$_27` | `0x801bac` | `0x14f19d0` | STATIC | VERIFIED | Fixed 8 fields: `[u8, u8, i32, u8, u8, u8, u8, i32]` |
 
 ---
 
@@ -206,4 +206,4 @@ The complete test suite runs across 53 unit tests (`test_codec_p2.py`, `test_cod
 
 1. **Server Greeting Bytes 0..2:** Client ignores the first 3 bytes before the seed. Inferred to be unencrypted length header `[0x00, 0x05, 0x00]`, but server source remains unverified.
 2. **Sub-Actions 6..40 in Opcode 0x2A:** Jump table supports 41 entries. Sub-ops 0..5 are reconstructed; sub-ops 6..40 remain unexercised and are captured via raw payload fallback.
-3. **Dynamic Opcodes 0x05, 0x2B, 0x2D, 0x2E, 0x32:** Loop counters and nested item schemas identified, but full AST classes remain `PARTIAL` pending priority demand.
+3. **Dynamic Opcodes 0x2B, 0x2D, 0x2F, 0x32:** Loop counters and nested item schemas identified, but full AST classes remain `PARTIAL` pending priority demand.

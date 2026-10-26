@@ -378,8 +378,308 @@ class StreamDecoder:
 
 
 # ==============================================================================
-# 5. Opcode Registry & Schema Parsers (Reconciled with AArch64 Machine Code)
+# 5. Opcode Registry & Canonical Manifest (Reconciled with AArch64 Machine Code)
 # ==============================================================================
+
+CANONICAL_OPCODE_MANIFEST: Dict[int, Dict[str, Any]] = {
+    0x00: {
+        "name": "MSG_BOX_NOTICE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_5",
+        "handler_addr": 0x007f06c8,
+        "vtable_addr": 0x014f0e60,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["str"],
+        "description": "Server announcement notice dialog (1 str call at 0x7f06fc)",
+    },
+    0x01: {
+        "name": "ROLE_LOGIN_RESPONSE",
+        "name_certainty": "VERIFIED",
+        "lambda": "$_6",
+        "handler_addr": 0x007f0a0c,
+        "vtable_addr": 0x014f0ee0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["str", "u8"],
+        "description": "Role selection & login response (session token + role loop + server host + announcements)",
+    },
+    0x04: {
+        "name": "ACCOUNT_INFO",
+        "name_certainty": "INFERRED",
+        "lambda": "$_7",
+        "handler_addr": 0x007f4ba4,
+        "vtable_addr": 0x014f0f60,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["str", "str"],
+        "description": "Account token & credential validation",
+    },
+    0x05: {
+        "name": "SERVER_REDIRECT",
+        "name_certainty": "INFERRED",
+        "lambda": "$_8",
+        "handler_addr": 0x007f4de4,
+        "vtable_addr": 0x014f0fe0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["str"],
+        "description": "Server redirection host string (1 str call at 0x7f4e78)",
+    },
+    0x07: {
+        "name": "SYSTEM_PROMPT",
+        "name_certainty": "INFERRED",
+        "lambda": "$_9",
+        "handler_addr": 0x007f5060,
+        "vtable_addr": 0x014f1060,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "str"],
+        "description": "System popup prompt with prompt type code",
+    },
+    0x08: {
+        "name": "CHANGE_PSW_RESULT",
+        "name_certainty": "INFERRED",
+        "lambda": "$_10",
+        "handler_addr": 0x007f5604,
+        "vtable_addr": 0x014f10e0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8"],
+        "description": "Change password response status code (tail-call LeitorPacote::u8)",
+    },
+    0x0A: {
+        "name": "REG_ACCOUNT_RESULT",
+        "name_certainty": "INFERRED",
+        "lambda": "$_11",
+        "handler_addr": 0x007f5690,
+        "vtable_addr": 0x014f1160,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["str"],
+        "description": "Account registration response message",
+    },
+    0x10: {
+        "name": "PLAYER_STATS_SYNC",
+        "name_certainty": "VERIFIED",
+        "lambda": "$_13",
+        "handler_addr": 0x007f5a8c,
+        "vtable_addr": 0x014f1260,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["i32", "i64", "i32", "i32", "i32", "i32", "i32"],
+        "description": "Player base attributes (7 base stats: level, exp, hp, max_hp, ki, max_ki, atk) + stage progress loop",
+    },
+    0x12: {
+        "name": "ENTITY_SPAWN_POSITION",
+        "name_certainty": "INFERRED",
+        "lambda": "$_12",
+        "handler_addr": 0x007f57b0,
+        "vtable_addr": 0x014f11e0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "str"],
+        "description": "Entity map zone spawn coordinates",
+    },
+    0x20: {
+        "name": "ENTITY_MOVE_SYNC",
+        "name_certainty": "INFERRED",
+        "lambda": "$_14",
+        "handler_addr": 0x007f7078,
+        "vtable_addr": 0x014f12e0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["i16", "i64", "i32", "i16", "i16", "i32", "i64"],
+        "description": "Entity movement synchronization trajectory",
+    },
+    0x21: {
+        "name": "BATTLE_STATE_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_15",
+        "handler_addr": 0x007f7b9c,
+        "vtable_addr": 0x014f1360,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["str", "i32", "u8", "i32", "u8", "u8", "u8", "i32", "u8"],
+        "description": "Battle environment header with entity & effect loops (20 calls)",
+    },
+    0x25: {
+        "name": "SKILL_CAST_EVENT",
+        "name_certainty": "INFERRED",
+        "lambda": "$_16",
+        "handler_addr": 0x007f7f00,
+        "vtable_addr": 0x014f13e0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i64", "i32", "i16", "i16", "u8", "i32"],
+        "description": "Skill invocation event (caster, skill, coords, level, timestamp)",
+    },
+    0x26: {
+        "name": "RESOURCE_TRANSFER",
+        "name_certainty": "INFERRED",
+        "lambda": "$_17",
+        "handler_addr": 0x007f8058,
+        "vtable_addr": 0x014f1460,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["str", "u8", "str", "u8"],
+        "description": "Resource asset manifest metadata",
+    },
+    0x27: {
+        "name": "HEARTBEAT_PING",
+        "name_certainty": "INFERRED",
+        "lambda": "$_18",
+        "handler_addr": 0x007f85c8,
+        "vtable_addr": 0x014f14e0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i32"],
+        "description": "Heartbeat Ping (timestamp)",
+    },
+    0x28: {
+        "name": "HEARTBEAT_PONG",
+        "name_certainty": "INFERRED",
+        "lambda": "$_19",
+        "handler_addr": 0x007f94c4,
+        "vtable_addr": 0x014f1560,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i32"],
+        "description": "Heartbeat Pong (timestamp echo)",
+    },
+    0x29: {
+        "name": "CHAT_MESSAGE_UPDATE",
+        "name_certainty": "VERIFIED",
+        "lambda": "chat_$_1",
+        "handler_addr": 0x0075eca4,
+        "vtable_addr": 0x014efa88,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i64", "str", "u8", "str", "str", "u8", "str", "str"],
+        "description": "Chat message update from CChatManager::receberChatUpdate",
+    },
+    0x2A: {
+        "name": "INVENTORY_ITEM_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_20",
+        "handler_addr": 0x007f9c2c,
+        "vtable_addr": 0x014f15e0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["u8", "i32", "i32", "i32"],
+        "description": "Inventory container header with slot item array (41 calls)",
+    },
+    0x2B: {
+        "name": "QUEST_PROGRESS_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_21",
+        "handler_addr": 0x007fd6fc,
+        "vtable_addr": 0x014f16d0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["str", "u8", "u8", "i32", "i32"],
+        "description": "Quest progress tracking with objective lists (13 calls)",
+    },
+    0x2C: {
+        "name": "GUILD_MEMBER_INFO",
+        "name_certainty": "INFERRED",
+        "lambda": "$_28",
+        "handler_addr": 0x0080203c,
+        "vtable_addr": 0x014f1a50,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i64", "u8", "i16", "i32", "i32", "str", "i64", "i16"],
+        "description": "Guild member information record",
+    },
+    0x2D: {
+        "name": "SPECIAL_ACTION_NOTIFY",
+        "name_certainty": "INFERRED",
+        "lambda": "$_22",
+        "handler_addr": 0x007fed18,
+        "vtable_addr": 0x014f1750,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["u8", "u8", "i32", "i32", "i16"],
+        "description": "Special action / event dispatch notification (10 calls)",
+    },
+    0x2E: {
+        "name": "ACTION_STATUS_CONFIRM",
+        "name_certainty": "INFERRED",
+        "lambda": "$_23",
+        "handler_addr": 0x007ffc28,
+        "vtable_addr": 0x014f17d0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "str", "str", "str", "str", "str"],
+        "description": "Action status code with 5 string parameters",
+    },
+    0x2F: {
+        "name": "MAIL_ATTACHMENT_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_29",
+        "handler_addr": 0x00803800,
+        "vtable_addr": 0x014f1ad0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["u8", "u8", "str"],
+        "description": "Mailbox header with dynamic mail items loop (41 calls)",
+    },
+    0x30: {
+        "name": "PARTY_TEAM_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_24",
+        "handler_addr": 0x00800864,
+        "vtable_addr": 0x014f1850,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "u8"],
+        "description": "Party member count and team state",
+    },
+    0x31: {
+        "name": "SUB_ACTION_STATUS",
+        "name_certainty": "INFERRED",
+        "lambda": "$_30",
+        "handler_addr": 0x00806184,
+        "vtable_addr": 0x014f1b50,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["i32", "str"],
+        "description": "Sub-action error code and diagnostic string",
+    },
+    0x32: {
+        "name": "TOAST_NOTIFICATION",
+        "name_certainty": "INFERRED",
+        "lambda": "$_25",
+        "handler_addr": 0x00800f04,
+        "vtable_addr": 0x014f18d0,
+        "structure_type": "DYNAMIC",
+        "status": "PARTIAL",
+        "schema": ["u8", "u8", "u8", "u8", "u8", "i32", "u8"],
+        "description": "Toast notification popup attributes (18 calls)",
+    },
+    0x33: {
+        "name": "FRIEND_STATUS_UPDATE",
+        "name_certainty": "INFERRED",
+        "lambda": "$_26",
+        "handler_addr": 0x00801828,
+        "vtable_addr": 0x014f1950,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "str"],
+        "description": "Friend online status and nickname",
+    },
+    0x43: {
+        "name": "MARKET_TRADE_ORDER",
+        "name_certainty": "INFERRED",
+        "lambda": "$_27",
+        "handler_addr": 0x00801bac,
+        "vtable_addr": 0x014f19d0,
+        "structure_type": "STATIC",
+        "status": "VERIFIED",
+        "schema": ["u8", "u8", "i32", "u8", "u8", "u8", "u8", "i32"],
+        "description": "Market auction transaction status",
+    },
+}
 
 class OpcodeRegistry:
     """
@@ -393,286 +693,18 @@ class OpcodeRegistry:
                            or branch-dependent payload attributes.
     """
 
-    OPCODES: Dict[int, Dict[str, Any]] = {
-        0x00: {
-            "name": "MSG_BOX_NOTICE",
-            "lambda": "$_5",
-            "handler_addr": 0x007f06c8,
-            "vtable_addr": 0x014f0e60,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["str"],
-            "description": "Server announcement notice dialog",
-        },
-        0x01: {
-            "name": "ROLE_LOGIN_RESPONSE",
-            "lambda": "$_6",
-            "handler_addr": 0x007f0a0c,
-            "vtable_addr": 0x014f0ee0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["str", "u8"],
-            "description": "Login message & role list (header + character array loop)",
-        },
-        0x04: {
-            "name": "ACCOUNT_INFO",
-            "lambda": "$_7",
-            "handler_addr": 0x007f4ba4,
-            "vtable_addr": 0x014f0f60,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["str", "str"],
-            "description": "Account token & credential validation",
-        },
-        0x05: {
-            "name": "SERVER_REDIRECT",
-            "lambda": "$_8",
-            "handler_addr": 0x007f4de4,
-            "vtable_addr": 0x014f0fe0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["str"],
-            "description": "Server redirection host string",
-        },
-        0x07: {
-            "name": "SYSTEM_PROMPT",
-            "lambda": "$_9",
-            "handler_addr": 0x007f5060,
-            "vtable_addr": 0x014f1060,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "str"],
-            "description": "System popup prompt with prompt type code",
-        },
-        0x08: {
-            "name": "CHANGE_PSW_RESULT",
-            "lambda": "$_10",
-            "handler_addr": 0x007f5604,
-            "vtable_addr": 0x014f10e0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8"],
-            "description": "Change password response status code (tail-call LeitorPacote::u8)",
-        },
-        0x0A: {
-            "name": "REG_ACCOUNT_RESULT",
-            "lambda": "$_11",
-            "handler_addr": 0x007f5690,
-            "vtable_addr": 0x014f1160,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["str"],
-            "description": "Account registration response message",
-        },
-        0x10: {
-            "name": "PLAYER_STATS_SYNC",
-            "lambda": "$_13",
-            "handler_addr": 0x007f5a8c,
-            "vtable_addr": 0x014f1260,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["i32", "i64", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "u8", "i32", "u8", "str"],
-            "description": "Player base attributes followed by conditional buff branches (62 calls)",
-        },
-        0x12: {
-            "name": "ENTITY_SPAWN_POSITION",
-            "lambda": "$_12",
-            "handler_addr": 0x007f57b0,
-            "vtable_addr": 0x014f11e0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "str"],
-            "description": "Entity map zone spawn coordinates",
-        },
-        0x20: {
-            "name": "ENTITY_MOVE_SYNC",
-            "lambda": "$_14",
-            "handler_addr": 0x007f7078,
-            "vtable_addr": 0x014f12e0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["i16", "i64", "i32", "i16", "i16", "i32", "i64"],
-            "description": "Entity movement synchronization trajectory",
-        },
-        0x21: {
-            "name": "BATTLE_STATE_UPDATE",
-            "lambda": "$_15",
-            "handler_addr": 0x007f7b9c,
-            "vtable_addr": 0x014f1360,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["str", "i32", "u8", "i32", "u8", "u8", "u8", "i32", "u8"],
-            "description": "Battle environment header with entity & effect loops (20 calls)",
-        },
-        0x25: {
-            "name": "SKILL_CAST_EVENT",
-            "lambda": "$_16",
-            "handler_addr": 0x007f7f00,
-            "vtable_addr": 0x014f13e0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i64", "i32", "i16", "i16", "u8", "i32"],
-            "description": "Skill invocation event (caster, skill, coords, level, timestamp)",
-        },
-        0x26: {
-            "name": "RESOURCE_TRANSFER",
-            "lambda": "$_17",
-            "handler_addr": 0x007f8058,
-            "vtable_addr": 0x014f1460,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["str", "u8", "str", "u8"],
-            "description": "Resource asset manifest metadata",
-        },
-        0x27: {
-            "name": "HEARTBEAT_PING",
-            "lambda": "$_18",
-            "handler_addr": 0x007f85c8,
-            "vtable_addr": 0x014f14e0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i32"],
-            "description": "Heartbeat Ping (timestamp)",
-        },
-        0x28: {
-            "name": "HEARTBEAT_PONG",
-            "lambda": "$_19",
-            "handler_addr": 0x007f94c4,
-            "vtable_addr": 0x014f1560,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i32"],
-            "description": "Heartbeat Pong (timestamp echo)",
-        },
-        0x29: {
-            "name": "CHAT_MESSAGE_UPDATE",
-            "lambda": "chat_$_1",
-            "handler_addr": 0x0075eca4,
-            "vtable_addr": 0x014efa88,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i64", "str", "u8", "str", "str", "u8", "str", "str"],
-            "description": "Chat message update from CChatManager::receberChatUpdate",
-        },
-        0x2A: {
-            "name": "INVENTORY_ITEM_UPDATE",
-            "lambda": "$_20",
-            "handler_addr": 0x007f9c2c,
-            "vtable_addr": 0x014f15e0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["u8", "i32", "i32", "i32"],
-            "description": "Inventory container header with slot item array (41 calls)",
-        },
-        0x2B: {
-            "name": "QUEST_PROGRESS_UPDATE",
-            "lambda": "$_21",
-            "handler_addr": 0x007fd6fc,
-            "vtable_addr": 0x014f16d0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["str", "u8", "u8", "i32", "i32"],
-            "description": "Quest progress tracking with objective lists (13 calls)",
-        },
-        0x2C: {
-            "name": "GUILD_MEMBER_INFO",
-            "lambda": "$_28",
-            "handler_addr": 0x0080203c,
-            "vtable_addr": 0x014f1a50,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i64", "u8", "i16", "i32", "i32", "str", "i64", "i16"],
-            "description": "Guild member information record",
-        },
-        0x2D: {
-            "name": "SPECIAL_ACTION_NOTIFY",
-            "lambda": "$_22",
-            "handler_addr": 0x007fed18,
-            "vtable_addr": 0x014f1750,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["u8", "u8", "i32", "i32", "i16"],
-            "description": "Special action / event dispatch notification (10 calls)",
-        },
-        0x2E: {
-            "name": "ACTION_STATUS_CONFIRM",
-            "lambda": "$_23",
-            "handler_addr": 0x007ffc28,
-            "vtable_addr": 0x014f17d0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "str", "str", "str", "str", "str"],
-            "description": "Action status code with 5 string parameters",
-        },
-        0x2F: {
-            "name": "MAIL_ATTACHMENT_UPDATE",
-            "lambda": "$_29",
-            "handler_addr": 0x00803800,
-            "vtable_addr": 0x014f1ad0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["u8", "u8", "str"],
-            "description": "Mailbox header with dynamic mail items loop (41 calls)",
-        },
-        0x30: {
-            "name": "PARTY_TEAM_UPDATE",
-            "lambda": "$_24",
-            "handler_addr": 0x00800864,
-            "vtable_addr": 0x014f1850,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "u8"],
-            "description": "Party member count and team state",
-        },
-        0x31: {
-            "name": "SUB_ACTION_STATUS",
-            "lambda": "$_30",
-            "handler_addr": 0x00806184,
-            "vtable_addr": 0x014f1b50,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["i32", "str"],
-            "description": "Sub-action error code and diagnostic string",
-        },
-        0x32: {
-            "name": "TOAST_NOTIFICATION",
-            "lambda": "$_25",
-            "handler_addr": 0x00800f04,
-            "vtable_addr": 0x014f18d0,
-            "structure_type": "DYNAMIC",
-            "status": "PARTIAL",
-            "schema": ["u8", "u8", "u8", "u8", "u8", "i32", "u8"],
-            "description": "Toast notification popup attributes (18 calls)",
-        },
-        0x33: {
-            "name": "FRIEND_STATUS_UPDATE",
-            "lambda": "$_26",
-            "handler_addr": 0x00801828,
-            "vtable_addr": 0x014f1950,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "str"],
-            "description": "Friend online status and nickname",
-        },
-        0x43: {
-            "name": "MARKET_TRADE_ORDER",
-            "lambda": "$_27",
-            "handler_addr": 0x00801bac,
-            "vtable_addr": 0x014f19d0,
-            "structure_type": "STATIC",
-            "status": "VERIFIED",
-            "schema": ["u8", "u8", "i32", "u8", "u8", "u8", "u8", "i32"],
-            "description": "Market auction transaction status",
-        },
-    }
+    OPCODES: Dict[int, Dict[str, Any]] = CANONICAL_OPCODE_MANIFEST
 
     @classmethod
     def parse_payload(cls, opcode: int, payload: bytes) -> Dict[str, Any]:
         """
-        Parses a decrypted payload using the recovered schema for the given opcode.
-        Robustly handles both STATIC verified schemas and DYNAMIC partial schemas.
-        Enforces strict validation on STATIC packets (no unexpected trailing bytes).
-        Delegates DYNAMIC packets to DynamicPacketDecoder when AST tree definitions exist.
+        Parses a decrypted payload using the canonical manifest.
+        Enforces strict integrity:
+          - STATIC: Must match schema unconditionally. Trailing bytes reject the packet as MALFORMED.
+          - DYNAMIC with AST decoder: AST decoder failure (IndexError, struct.error, ValueError)
+            marks packet as MALFORMED (no silent fallback).
+            COMPLETE if all bytes consumed; PARTIAL if valid dynamic payload leaves unparsed data.
+          - DYNAMIC without AST decoder: Parses verified header prefix; marks parse_status as PARTIAL.
         """
         meta = cls.OPCODES.get(opcode)
         if not meta:
@@ -680,64 +712,83 @@ class OpcodeRegistry:
                 "opcode": opcode,
                 "raw_hex": payload.hex(),
                 "parsed": False,
+                "status": "UNKNOWN",
+                "parse_status": "MALFORMED",
                 "error": f"Opcode 0x{opcode:02X} not registered in protocol dispatch table"
             }
 
+        # 1. DYNAMIC Opcode with dedicated AST Decoder
+        if meta["structure_type"] == "DYNAMIC" and opcode in DynamicPacketDecoder.DECODERS:
+            try:
+                ast_res = DynamicPacketDecoder.DECODERS[opcode](payload)
+            except (IndexError, struct.error, ValueError) as e:
+                return {
+                    "opcode": opcode,
+                    "name": meta["name"],
+                    "name_certainty": meta.get("name_certainty", "INFERRED"),
+                    "lambda": meta["lambda"],
+                    "handler_addr": hex(meta["handler_addr"]),
+                    "structure_type": meta["structure_type"],
+                    "status": "MALFORMED",
+                    "parse_status": "MALFORMED",
+                    "parsed": False,
+                    "error": f"Malformed or truncated dynamic AST payload in opcode 0x{opcode:02X}: {e}",
+                }
+
+            # Extract header fields for backwards compatibility
+            fields = []
+            r_header = PacketReader(payload)
+            for field_type in meta["schema"]:
+                if r_header.remaining() == 0:
+                    break
+                try:
+                    if field_type == "u8":
+                        fields.append(r_header.read_u8())
+                    elif field_type == "i16":
+                        fields.append(r_header.read_i16())
+                    elif field_type == "u16":
+                        fields.append(r_header.read_u16())
+                    elif field_type == "i32":
+                        fields.append(r_header.read_i32())
+                    elif field_type == "i64":
+                        fields.append(r_header.read_i64())
+                    elif field_type == "str":
+                        fields.append(r_header.read_str())
+                    elif field_type == "binario":
+                        rem = r_header.remaining()
+                        fields.append(r_header.read_binary(rem))
+                except Exception:
+                    break
+
+            header_rem = r_header.remaining()
+            remaining_bytes = ast_res.get("remaining_bytes", 0)
+            parse_status = "COMPLETE" if remaining_bytes == 0 else "PARTIAL"
+
+            result = {
+                "opcode": opcode,
+                "name": meta["name"],
+                "name_certainty": meta.get("name_certainty", "INFERRED"),
+                "lambda": meta["lambda"],
+                "handler_addr": hex(meta["handler_addr"]),
+                "structure_type": meta["structure_type"],
+                "status": meta["status"],
+                "parse_status": parse_status,
+                "fields": fields,
+                "ast": ast_res,
+                "remaining_bytes": remaining_bytes,
+                "parsed": True,
+            }
+            if header_rem > 0:
+                r_rem = PacketReader(payload)
+                r_rem.offset = len(payload) - header_rem
+                result["raw_variable_payload"] = r_rem.read_binary(header_rem)
+                result["dynamic_body_length"] = header_rem
+            return result
+
+        # 2. STATIC or DYNAMIC without AST Decoder
         reader = PacketReader(payload)
         fields = []
         try:
-            # If a dedicated AST decoder is registered for a DYNAMIC opcode, attempt AST decoding first
-            if meta["structure_type"] == "DYNAMIC" and opcode in DynamicPacketDecoder.DECODERS:
-                try:
-                    ast_res = DynamicPacketDecoder.DECODERS[opcode](payload)
-                    # Also populate fields with as many valid header fields as fit in buffer
-                    r_header = PacketReader(payload)
-                    for field_type in meta["schema"]:
-                        if r_header.remaining() == 0:
-                            break
-                        try:
-                            if field_type == "u8":
-                                fields.append(r_header.read_u8())
-                            elif field_type == "i16":
-                                fields.append(r_header.read_i16())
-                            elif field_type == "u16":
-                                fields.append(r_header.read_u16())
-                            elif field_type == "i32":
-                                fields.append(r_header.read_i32())
-                            elif field_type == "i64":
-                                fields.append(r_header.read_i64())
-                            elif field_type == "str":
-                                fields.append(r_header.read_str())
-                            elif field_type == "binario":
-                                rem = r_header.remaining()
-                                fields.append(r_header.read_binary(rem))
-                        except Exception:
-                            break
-
-                    header_rem = r_header.remaining()
-                    remaining_bytes = ast_res.get("remaining_bytes", 0)
-                    result = {
-                        "opcode": opcode,
-                        "name": meta["name"],
-                        "lambda": meta["lambda"],
-                        "handler_addr": hex(meta["handler_addr"]),
-                        "structure_type": meta["structure_type"],
-                        "status": meta["status"],
-                        "fields": fields,
-                        "ast": ast_res,
-                        "remaining_bytes": remaining_bytes,
-                        "parsed": True,
-                    }
-                    if header_rem > 0:
-                        r_rem = PacketReader(payload)
-                        r_rem.offset = len(payload) - header_rem
-                        result["raw_variable_payload"] = r_rem.read_binary(header_rem)
-                        result["dynamic_body_length"] = header_rem
-                    return result
-                except Exception:
-                    # If AST decoding fails on truncated/malformed body, fallback to header reader
-                    pass
-
             for field_type in meta["schema"]:
                 if field_type == "u8":
                     fields.append(reader.read_u8())
@@ -757,48 +808,61 @@ class OpcodeRegistry:
 
             remaining_bytes = reader.remaining()
 
-            # Rule 2: Strict integrity check for STATIC packets
-            if meta["structure_type"] == "STATIC" and remaining_bytes > 0:
-                if not meta.get("allow_trailing", False):
+            if meta["structure_type"] == "STATIC":
+                if remaining_bytes > 0:
                     return {
                         "opcode": opcode,
                         "name": meta["name"],
-                        "lambda": meta["lambda"],
-                        "structure_type": meta["structure_type"],
-                        "status": meta["status"],
-                        "error": f"Unexpected {remaining_bytes} trailing bytes in STATIC packet without extension evidence",
-                        "partial_fields": fields,
-                        "remaining_bytes": remaining_bytes,
+                        "name_certainty": meta.get("name_certainty", "INFERRED"),
+                        "structure_type": "STATIC",
+                        "status": "MALFORMED",
+                        "parse_status": "MALFORMED",
                         "parsed": False,
+                        "error": f"Integrity error: {remaining_bytes} unexpected trailing bytes in STATIC packet 0x{opcode:02X}"
                     }
+                return {
+                    "opcode": opcode,
+                    "name": meta["name"],
+                    "name_certainty": meta.get("name_certainty", "INFERRED"),
+                    "lambda": meta["lambda"],
+                    "handler_addr": hex(meta["handler_addr"]),
+                    "structure_type": "STATIC",
+                    "status": "VERIFIED",
+                    "parse_status": "COMPLETE",
+                    "fields": fields,
+                    "remaining_bytes": 0,
+                    "parsed": True,
+                }
+            else:
+                # DYNAMIC without dedicated AST decoder
+                result = {
+                    "opcode": opcode,
+                    "name": meta["name"],
+                    "name_certainty": meta.get("name_certainty", "INFERRED"),
+                    "lambda": meta["lambda"],
+                    "handler_addr": hex(meta["handler_addr"]),
+                    "structure_type": "DYNAMIC",
+                    "status": "PARTIAL",
+                    "parse_status": "PARTIAL",
+                    "fields": fields,
+                    "remaining_bytes": remaining_bytes,
+                    "parsed": True,
+                }
+                if remaining_bytes > 0:
+                    result["raw_variable_payload"] = reader.read_binary(remaining_bytes)
+                    result["dynamic_body_length"] = remaining_bytes
+                return result
 
-            result: Dict[str, Any] = {
-                "opcode": opcode,
-                "name": meta["name"],
-                "lambda": meta["lambda"],
-                "handler_addr": hex(meta["handler_addr"]),
-                "structure_type": meta["structure_type"],
-                "status": meta["status"],
-                "fields": fields,
-                "remaining_bytes": remaining_bytes,
-                "parsed": True,
-            }
-
-            if meta["structure_type"] == "DYNAMIC" and remaining_bytes > 0:
-                result["raw_variable_payload"] = reader.read_binary(remaining_bytes)
-                result["dynamic_body_length"] = remaining_bytes
-
-            return result
-        except Exception as e:
+        except (IndexError, struct.error, ValueError) as e:
             return {
                 "opcode": opcode,
                 "name": meta["name"],
-                "lambda": meta["lambda"],
+                "name_certainty": meta.get("name_certainty", "INFERRED"),
                 "structure_type": meta["structure_type"],
-                "status": meta["status"],
-                "error": str(e),
-                "partial_fields": fields,
+                "status": "MALFORMED",
+                "parse_status": "MALFORMED",
                 "parsed": False,
+                "error": f"Truncated packet buffer or decoding error in opcode 0x{opcode:02X}: {e}",
             }
 
 
@@ -840,6 +904,9 @@ class DynamicPacketDecoder:
         reader = PacketReader(data)
         token = reader.read_str()
         role_count = reader.read_u8()
+        if role_count * 18 > reader.remaining():
+            raise IndexError(f"role_count {role_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+
         roles = []
         for _ in range(role_count):
             role = {
@@ -859,8 +926,13 @@ class DynamicPacketDecoder:
 
         server_host = reader.read_str()
         announcement_count = reader.read_i16()
+        if announcement_count < 0:
+            raise IndexError(f"Negative announcement_count {announcement_count}")
+        if announcement_count * 2 > reader.remaining():
+            raise IndexError(f"announcement_count {announcement_count} exceeds remaining buffer capacity")
+
         announcements = []
-        for _ in range(max(0, announcement_count)):
+        for _ in range(announcement_count):
             announcements.append(reader.read_str())
 
         return {
@@ -886,7 +958,6 @@ class DynamicPacketDecoder:
             ki: i32
             max_ki: i32
             atk: i32
-            def: i32
           Completed stage list (CGuanKaEstado::adicionarTerminada):
             stage_count: i32
             stages: List[Stage] (length = stage_count)
@@ -921,6 +992,11 @@ class DynamicPacketDecoder:
             "atk": reader.read_i32(),
         }
         stage_count = reader.read_i32()
+        if stage_count < 0:
+            raise IndexError(f"Negative stage_count {stage_count}")
+        if stage_count * 6 > reader.remaining():
+            raise IndexError(f"stage_count {stage_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+
         stages = []
         for _ in range(stage_count):
             stage = {
@@ -990,24 +1066,27 @@ class DynamicPacketDecoder:
         pos_y = reader.read_i16()
         target_tile = reader.read_i32()
         mount_id = None
-        if move_type == 5 and reader.remaining() >= 8:
+        if move_type == 5:
             mount_id = reader.read_i64()
 
-        waypoint_count = 0
+        waypoint_count = reader.read_i32()
+        if waypoint_count < 0:
+            raise IndexError(f"Negative waypoint_count {waypoint_count}")
+        if waypoint_count * 11 > reader.remaining():
+            raise IndexError(f"waypoint_count {waypoint_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+
         waypoints = []
-        if reader.remaining() >= 4:
-            waypoint_count = reader.read_i32()
-            for _ in range(max(0, waypoint_count)):
-                wp = {
-                    "waypoint_id": reader.read_i32(),
-                    "target_entity_id": reader.read_i64(),
-                    "speed": reader.read_i32(),
-                    "next_x": reader.read_i16(),
-                    "next_y": reader.read_i16(),
-                    "move_flags": reader.read_i32(),
-                    "extra_data": reader.read_i64(),
-                }
-                waypoints.append(wp)
+        for _ in range(waypoint_count):
+            wp = {
+                "waypoint_id": reader.read_i32(),
+                "target_entity_id": reader.read_i64(),
+                "speed": reader.read_i32(),
+                "next_x": reader.read_i16(),
+                "next_y": reader.read_i16(),
+                "move_flags": reader.read_i32(),
+                "extra_data": reader.read_i64(),
+            }
+            waypoints.append(wp)
 
         return {
             "move_type": move_type,
@@ -1062,6 +1141,9 @@ class DynamicPacketDecoder:
         is_deployed = reader.read_u8()
 
         skill_count = reader.read_u8()
+        if skill_count * 5 > reader.remaining():
+            raise IndexError(f"skill_count {skill_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+
         skills = []
         for _ in range(skill_count):
             skills.append({
@@ -1070,6 +1152,9 @@ class DynamicPacketDecoder:
             })
 
         equip_count = reader.read_u8()
+        if equip_count * 15 > reader.remaining():
+            raise IndexError(f"equip_count {equip_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+
         equips = []
         for _ in range(equip_count):
             equips.append({
@@ -1122,43 +1207,39 @@ class DynamicPacketDecoder:
 
         if sub_op == 0:
             details["action"] = "SLOT_UPDATE"
-            if reader.remaining() >= 12:
-                details["slot_index"] = reader.read_i32()
-                details["item_id"] = reader.read_i32()
-                details["count"] = reader.read_i32()
+            details["slot_index"] = reader.read_i32()
+            details["item_id"] = reader.read_i32()
+            details["count"] = reader.read_i32()
         elif sub_op == 1:
             details["action"] = "GOLD_CURRENCY_UPDATE"
-            if reader.remaining() >= 4:
-                details["gold"] = reader.read_i32()
+            details["gold"] = reader.read_i32()
         elif sub_op == 2:
             details["action"] = "BAG_CAPACITY_EXPAND"
-            if reader.remaining() >= 1:
-                details["new_capacity"] = reader.read_u8()
+            details["new_capacity"] = reader.read_u8()
         elif sub_op == 3:
             details["action"] = "DIAMOND_CURRENCY_UPDATE"
-            if reader.remaining() >= 4:
-                details["diamonds"] = reader.read_i32()
+            details["diamonds"] = reader.read_i32()
         elif sub_op == 4:
             details["action"] = "EQUIP_ACTION"
-            if reader.remaining() >= 2:
-                details["equip_uid"] = reader.read_str()
+            details["equip_uid"] = reader.read_str()
         elif sub_op == 5:
             details["action"] = "BATCH_ITEM_SYNC"
-            if reader.remaining() >= 4:
-                item_count = reader.read_i32()
-                details["item_count"] = item_count
-                items = []
-                for _ in range(max(0, item_count)):
-                    if reader.remaining() < 19:
-                        break
-                    items.append({
-                        "item_uid": reader.read_i64(),
-                        "item_id": reader.read_i32(),
-                        "count": reader.read_i32(),
-                        "slot": reader.read_i16(),
-                        "flags": reader.read_u8(),
-                    })
-                details["items"] = items
+            item_count = reader.read_i32()
+            if item_count < 0:
+                raise IndexError(f"Negative item_count {item_count}")
+            if item_count * 19 > reader.remaining():
+                raise IndexError(f"item_count {item_count} exceeds remaining buffer capacity ({reader.remaining()} bytes)")
+            details["item_count"] = item_count
+            items = []
+            for _ in range(item_count):
+                items.append({
+                    "item_uid": reader.read_i64(),
+                    "item_id": reader.read_i32(),
+                    "count": reader.read_i32(),
+                    "slot": reader.read_i16(),
+                    "flags": reader.read_u8(),
+                })
+            details["items"] = items
         else:
             details["action"] = f"SUB_OP_{sub_op}"
 
@@ -1178,15 +1259,24 @@ DynamicPacketDecoder.DECODERS = {
 
 
 # ==============================================================================
-# 7. Client State Machine & Initialization Tracker (Offline Emulation)
+# 7. Client State Machine & Initialization Tracker (Offline Emulation Hardened)
 # ==============================================================================
 
 class ClientStateMachine:
     """
-    Offline Client State Machine & UI Event Tracker.
+    Offline Client State Machine & UI Event Tracker (Hardened).
     Directly modeled on aos::CProtocolManager and aos::CUIManager event dispatches in libaos_jogo.so:
       - 0x7f1cdc: CUIManager::FireEvent(2, "fuwuqi", ...) on Opcode 0x01
       - 0x7f68b0: CUIManager::FireEvent(2, "main", ...) on Opcode 0x10
+
+    Strict Preconditions:
+      - DISCONNECTED: No packet reception allowed. Only on_handshake_complete.
+      - HANDSHAKE_COMPLETE: Only 0x04 (Authentication) or 0x01 (Token Resume).
+      - AUTHENTICATED: Only 0x01 (Role Login Response).
+      - ROLE_SELECTION: Only 0x10 (Player Stats Sync) to enter world.
+      - IN_GAME_MAIN: In-game packet routing (0x20, 0x2A, 0x25, etc.). 0x21 transitions to IN_BATTLE.
+      - IN_BATTLE: Combat packet routing.
+      - Opcode 0x05 (SERVER_REDIRECT): Triggers rollback to DISCONNECTED with target redirect host.
     """
     STATE_DISCONNECTED = "DISCONNECTED"
     STATE_HANDSHAKE_COMPLETE = "HANDSHAKE_COMPLETE"
@@ -1204,49 +1294,185 @@ class ClientStateMachine:
         self.heroes: Dict[str, Dict[str, Any]] = {}
         self.inventory: Dict[str, Any] = {"gold": 0, "diamonds": 0, "slots": {}}
         self.ui_events: List[Tuple[int, str]] = []
+        self.redirect_host: Optional[str] = None
 
-    def on_handshake_complete(self, seed: int, key: int):
+    def disconnect(self):
+        """Rollback client state to DISCONNECTED and clear ephemeral session."""
+        self.state = self.STATE_DISCONNECTED
+        self.session_token = None
+        self.roles = []
+        self.selected_role = None
+        self.player_stats = None
+        self.heroes = {}
+        self.inventory = {"gold": 0, "diamonds": 0, "slots": {}}
+        self.ui_events = []
+        self.redirect_host = None
+
+    def on_handshake_complete(self, seed: int, key: int) -> Dict[str, Any]:
+        """Processes handshake greeting seed and key derivation."""
+        if self.state != self.STATE_DISCONNECTED:
+            self.disconnect()
         self.state = self.STATE_HANDSHAKE_COMPLETE
+        return {"transitioned": True, "new_state": self.state}
 
     def on_packet(self, opcode: int, payload: bytes) -> Dict[str, Any]:
+        """
+        Processes an incoming decrypted network packet with strict precondition checking.
+        """
+        # Precondition check: DISCONNECTED client cannot receive packets
+        if self.state == self.STATE_DISCONNECTED:
+            return {
+                "transitioned": False,
+                "error": f"Precondition failed: Client is DISCONNECTED; packet 0x{opcode:02X} rejected",
+                "code": "ERR_NOT_CONNECTED",
+                "state": self.state,
+            }
+
         parsed = OpcodeRegistry.parse_payload(opcode, payload)
         if not parsed.get("parsed"):
-            return {"error": parsed.get("error", "Parse failed"), "transitioned": False}
+            return {
+                "transitioned": False,
+                "error": parsed.get("error", "Parse failed"),
+                "parse_status": parsed.get("parse_status", "MALFORMED"),
+                "code": "ERR_PARSE_FAILED",
+                "state": self.state,
+            }
 
-        if opcode == 0x04:  # ACCOUNT_INFO
-            self.state = self.STATE_AUTHENTICATED
-            return {"transitioned": True, "new_state": self.state}
+        # Handling SERVER_REDIRECT (0x05): Server redirect triggers disconnect & redirect
+        if opcode == 0x05:
+            fields = parsed.get("fields", [])
+            redirect_host = fields[0] if fields else "unknown"
+            self.redirect_host = redirect_host
+            self.state = self.STATE_DISCONNECTED
+            return {
+                "transitioned": True,
+                "new_state": self.STATE_DISCONNECTED,
+                "redirect_host": redirect_host,
+                "action": "RECONNECT_REQUIRED",
+            }
 
-        elif opcode == 0x01:  # ROLE_LOGIN_RESPONSE
-            ast = parsed.get("ast", {})
-            self.session_token = ast.get("session_token")
-            self.roles = ast.get("roles", [])
-            # In ARM64 0x7f1cdc: CUIManager::FireEvent(2, "fuwuqi")
-            self.ui_events.append((2, "fuwuqi"))
-            self.state = self.STATE_ROLE_SELECTION
-            return {"transitioned": True, "new_state": self.state, "roles_loaded": len(self.roles)}
+        # State-specific transition rules:
+        if self.state == self.STATE_HANDSHAKE_COMPLETE:
+            if opcode == 0x04:  # ACCOUNT_INFO -> AUTHENTICATED
+                self.state = self.STATE_AUTHENTICATED
+                return {"transitioned": True, "new_state": self.state}
+            elif opcode == 0x01:  # Direct token resume -> ROLE_SELECTION
+                ast = parsed.get("ast", {})
+                self.session_token = ast.get("session_token")
+                self.roles = ast.get("roles", [])
+                self.ui_events.append((2, "fuwuqi"))
+                self.state = self.STATE_ROLE_SELECTION
+                return {"transitioned": True, "new_state": self.state, "roles_loaded": len(self.roles)}
+            elif opcode in (0x00, 0x07, 0x08, 0x0A, 0x27, 0x28):
+                return {"transitioned": False, "state": self.state}
+            else:
+                return {
+                    "transitioned": False,
+                    "error": f"Precondition failed: Opcode 0x{opcode:02X} ({parsed.get('name')}) invalid in state {self.state}",
+                    "code": "ERR_PRECONDITION_FAILED",
+                    "state": self.state,
+                }
 
-        elif opcode == 0x10:  # PLAYER_STATS_SYNC
-            ast = parsed.get("ast", {})
-            self.player_stats = ast
-            # In ARM64 0x7f68b0: CUIManager::FireEvent(2, "main")
-            self.ui_events.append((2, "main"))
-            self.state = self.STATE_IN_GAME_MAIN
-            return {"transitioned": True, "new_state": self.state}
+        elif self.state == self.STATE_AUTHENTICATED:
+            if opcode == 0x01:  # ROLE_LOGIN_RESPONSE -> ROLE_SELECTION
+                ast = parsed.get("ast", {})
+                self.session_token = ast.get("session_token")
+                self.roles = ast.get("roles", [])
+                self.ui_events.append((2, "fuwuqi"))
+                self.state = self.STATE_ROLE_SELECTION
+                return {"transitioned": True, "new_state": self.state, "roles_loaded": len(self.roles)}
+            elif opcode == 0x04:  # Repeated account info
+                return {"transitioned": False, "state": self.state}
+            elif opcode in (0x00, 0x07, 0x08, 0x0A, 0x27, 0x28):
+                return {"transitioned": False, "state": self.state}
+            else:
+                return {
+                    "transitioned": False,
+                    "error": f"Precondition failed: Opcode 0x{opcode:02X} ({parsed.get('name')}) invalid in state {self.state}",
+                    "code": "ERR_PRECONDITION_FAILED",
+                    "state": self.state,
+                }
 
-        elif opcode == 0x21:  # BATTLE_STATE_UPDATE
-            ast = parsed.get("ast", {})
-            hero_uid = ast.get("hero_uid")
-            if hero_uid:
-                self.heroes[hero_uid] = ast
-            return {"transitioned": False, "hero_synced": hero_uid}
+        elif self.state == self.STATE_ROLE_SELECTION:
+            if opcode == 0x10:  # PLAYER_STATS_SYNC -> IN_GAME_MAIN
+                ast = parsed.get("ast", {})
+                self.player_stats = ast
+                self.ui_events.append((2, "main"))
+                self.state = self.STATE_IN_GAME_MAIN
+                return {"transitioned": True, "new_state": self.state}
+            elif opcode == 0x01:  # Role list update / refresh
+                ast = parsed.get("ast", {})
+                self.roles = ast.get("roles", [])
+                return {"transitioned": False, "state": self.state, "roles_loaded": len(self.roles)}
+            elif opcode in (0x00, 0x07, 0x27, 0x28):
+                return {"transitioned": False, "state": self.state}
+            else:
+                return {
+                    "transitioned": False,
+                    "error": f"Precondition failed: Opcode 0x{opcode:02X} ({parsed.get('name')}) invalid in state {self.state}",
+                    "code": "ERR_PRECONDITION_FAILED",
+                    "state": self.state,
+                }
 
-        elif opcode == 0x2A:  # INVENTORY_ITEM_UPDATE
-            ast = parsed.get("ast", {})
-            if "gold" in ast:
-                self.inventory["gold"] = ast["gold"]
-            if "diamonds" in ast:
-                self.inventory["diamonds"] = ast["diamonds"]
-            return {"transitioned": False, "inventory_sub_op": ast.get("sub_op")}
+        elif self.state == self.STATE_IN_GAME_MAIN:
+            if opcode == 0x21:  # BATTLE_STATE_UPDATE
+                ast = parsed.get("ast", {})
+                hero_uid = ast.get("hero_uid")
+                if hero_uid:
+                    self.heroes[hero_uid] = ast
+                return {"transitioned": False, "state": self.state, "hero_synced": hero_uid}
+            elif opcode == 0x2A:  # Inventory update
+                ast = parsed.get("ast", {})
+                if "gold" in ast:
+                    self.inventory["gold"] = ast["gold"]
+                if "diamonds" in ast:
+                    self.inventory["diamonds"] = ast["diamonds"]
+                return {"transitioned": False, "state": self.state, "inventory_sub_op": ast.get("sub_op")}
+            elif opcode == 0x10:  # Stat refresh in-game
+                ast = parsed.get("ast", {})
+                self.player_stats = ast
+                return {"transitioned": False, "state": self.state}
+            elif opcode in (0x20, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x43, 0x00, 0x07):
+                return {"transitioned": False, "state": self.state}
+            else:
+                return {
+                    "transitioned": False,
+                    "error": f"Precondition failed: Unexpected opcode 0x{opcode:02X} in state {self.state}",
+                    "code": "ERR_PRECONDITION_FAILED",
+                    "state": self.state,
+                }
 
-        return {"transitioned": False, "opcode": opcode}
+        elif self.state == self.STATE_IN_BATTLE:
+            if opcode == 0x21:  # Combat update
+                ast = parsed.get("ast", {})
+                hero_uid = ast.get("hero_uid")
+                if hero_uid:
+                    self.heroes[hero_uid] = ast
+                return {"transitioned": False, "state": self.state, "hero_synced": hero_uid}
+            elif opcode == 0x2A:  # Inventory update during battle
+                ast = parsed.get("ast", {})
+                if "gold" in ast:
+                    self.inventory["gold"] = ast["gold"]
+                if "diamonds" in ast:
+                    self.inventory["diamonds"] = ast["diamonds"]
+                return {"transitioned": False, "state": self.state, "inventory_sub_op": ast.get("sub_op")}
+            elif opcode == 0x10 or opcode == 0x20:
+                # Returning to main world navigation
+                self.state = self.STATE_IN_GAME_MAIN
+                return {"transitioned": True, "new_state": self.state}
+            elif opcode in (0x25, 0x26, 0x27, 0x28, 0x29, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x43, 0x00, 0x07):
+                return {"transitioned": False, "state": self.state}
+            else:
+                return {
+                    "transitioned": False,
+                    "error": f"Precondition failed: Unexpected opcode 0x{opcode:02X} in state {self.state}",
+                    "code": "ERR_PRECONDITION_FAILED",
+                    "state": self.state,
+                }
+
+        return {
+            "transitioned": False,
+            "status": "UNKNOWN",
+            "error": f"Unrecognized state {self.state}",
+            "code": "ERR_UNKNOWN_STATE",
+        }
