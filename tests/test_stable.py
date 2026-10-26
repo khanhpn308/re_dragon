@@ -167,5 +167,54 @@ class StableTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             core.create_plan(self.db,self.binary,path,rea_bin=str(self.rea))
 
+    def test_timeout_terminates_child_and_saves_failed_attempt(self):
+        run=self.plan()
+        os.environ["MOCK_SLEEP"]="15"
+        self.addCleanup(os.environ.pop,"MOCK_SLEEP",None)
+        result=stable.work(self.db,self.state,run,steps=1,timeout=1,retries=0)
+        self.assertEqual(result["status"],"failed")
+        task=core.get_tasks(self.db,run)[0]
+        self.assertEqual(task["exit_code"],124)
+        self.assertIsNotNone(core.latest_artifact(self.db,task["id"]))
+
+    def test_concurrent_workers_do_not_repeat_a_task(self):
+        import threading
+        run=self.plan()
+        os.environ["MOCK_SLEEP"]="0.25"
+        self.addCleanup(os.environ.pop,"MOCK_SLEEP",None)
+        barrier=threading.Barrier(2)
+        errors=[]
+        def worker():
+            try:
+                with core.database(self.state) as db:
+                    barrier.wait(timeout=5)
+                    stable.work(db,self.state,run,steps=3,capacity=1)
+            except Exception as exc:
+                errors.append(repr(exc))
+        threads=[threading.Thread(target=worker) for _ in range(2)]
+        for thread in threads: thread.start()
+        for thread in threads: thread.join(timeout=15)
+        self.assertFalse(errors,errors)
+        self.assertTrue(all(not thread.is_alive() for thread in threads))
+        self.assertEqual([t["attempts"] for t in core.get_tasks(self.db,run)],[1,1])
+
+    def test_stdio_mcp_round_trip(self):
+        import subprocess
+        import sys
+        queries=[
+            {"jsonrpc":"2.0","id":1,"method":"initialize",
+             "params":{"protocolVersion":"2025-03-26","capabilities":{}}},
+            {"jsonrpc":"2.0","id":2,"method":"tools/list"},
+            {"jsonrpc":"2.0","id":3,"method":"tools/call",
+             "params":{"name":"harness_list_runs","arguments":{}}}
+        ]
+        result=subprocess.run([sys.executable,"-m","re_harness.mcp","--state-dir",
+                               str(self.state)],input="\n".join(map(json.dumps,queries))+"\n",
+                              text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        replies=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual([item["id"] for item in replies],[1,2,3])
+        self.assertFalse(replies[-1]["result"]["isError"])
+
 if __name__=="__main__":
     unittest.main()
