@@ -1,3 +1,3 @@
-"""REA reverse-engineering harness MVP."""
+"""REA reverse-engineering harness — stable orchestration."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

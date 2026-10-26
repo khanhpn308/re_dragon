@@ -1,31 +1,33 @@
-# AGENTS.md — re_dragon
+# AGENTS.md — RE Dragon
 
-Use this repository as the sole versioned source for all RE Dragon harness code. Do not commit APKs, SO/ELF binaries, proprietary assets, account credentials, raw packet dumps, generated Ghidra databases or local evidence.
+Canonical source repository: https://github.com/khanhpn308/re_dragon
 
-## Project purpose
+## Mission
 
-Restore/understand ReturnSaiyan Android client networking from inspectable native binaries. Prioritize evidence-bound claims rather than speculative packet formats.
+Analyze local ReturnSaiyan Android native binaries with REA and Ghidra. Preserve evidence and avoid unsupported protocol claims.
 
-## MVP tools
+## Execution
 
-- Run in WSL2 from the repository root.
-- CLI: python3 -m re_harness {plan,run,execute,resume,status,add-function,claim,validate,report,doctor}
-- MCP: python3 -m re_harness.mcp ; exposes the local task registry to Codex/Antigravity.
-- REA CLI is used by the harness engine; use existing REA MCP separately when a live REA provider session is more suitable.
-- Workflow: workflows/network-handshake.json
-- Local state: .re_harness_mvp/ (ignored by git)
+- Use WSL2 Ubuntu with local ELF and REA installed.
+- Plan: python3 -m re_harness plan --binary ./libaos_jogo.so
+- Work: python3 -m re_harness worker --run-id ID --max-steps 1 --capacity 1
+- Resume: python3 -m re_harness resume --run-id ID
+- Graph: python3 -m re_harness graph-start --run-id ID --root EXACT_SYMBOL_OR_ADDRESS
+- Candidates: python3 -m re_harness evidence --run-id ID
+- Recover: python3 -m re_harness recover --run-id ID
+- Validate/report: python3 -m re_harness validate --run-id ID and report --run-id ID
+- MCP: python3 -m re_harness.mcp
 
-## Agent protocol
+## Multi-Agent rules
 
-1. Create a task plan for the exact local binary; do not fabricate its checksum.
-2. Run only read-only static operations by default.
-3. Inspect returned Evidence JSON, not just exit code, before writing claims.
-4. Preserve function symbol/address, procedure-selection ambiguity, evidence task key and limitations.
-5. Label every claim VERIFIED, INFERRED or UNKNOWN. VERIFIED requires source-linked evidence, symbol/address and rationale; G4 still needs human/agent semantic review.
-6. On interruption, use resume; do not re-run completed steps merely for appearance.
-7. Write findings to local evidence and Markdown report, then commit only safe textual source/config/curated summaries to re_dragon.
-8. Never route unapproved network requests to a third-party game server or capture user tokens/passwords.
+1. Share one SQLite state directory and use identical engine capacity (default 1).
+2. Claim tasks through the harness, not parallel unmanaged REA runs.
+3. Do not reclaim leases from still-running native processes.
+4. Review raw REA Evidence including coverage and limitations before scientific claims.
+5. Static call edges and symbol candidates are hypotheses, not runtime truth.
+6. Mark VERIFIED, INFERRED and UNKNOWN distinctly; G4 requires semantic review.
+7. Do not contact game servers or capture credentials without explicit scope.
+8. Commit code, workflow JSON and safe curated reports only. Never commit APK/SO, secrets, packet captures or raw evidence.
+9. Prioritize delivered code as requested; do not claim unrun tests passed.
 
-## Working agreement
-
-The user prioritizes delivering working code over additional test scaffolding. Do not assert runtime tests have passed when they have not been run. Keep the scope anchored to Reverse Engineering and the existing WSL2 + REA/Ghidra environment.
+Reference: docs/STABLE.md.

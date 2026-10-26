@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core
+from . import core, stable
 
 
 def schema(properties=None, required=None):
@@ -69,6 +69,37 @@ TOOLS = [
         "inputSchema": schema({"run_id": STRING}, ["run_id"]),
     },
     {
+        "name": "harness_worker",
+        "description": "Execute bounded leased work with SQLite heartbeat and safe recovery.",
+        "inputSchema": schema({"run_id": STRING, "steps": INTEGER,
+                               "timeout": INTEGER, "retries": INTEGER,
+                               "capacity": INTEGER}, ["run_id"]),
+    },
+    {
+        "name": "harness_graph_start",
+        "description": "Queue bounded static call graph discovery from exact symbol/address.",
+        "inputSchema": schema({"run_id": STRING, "root": STRING,
+                               "depth": INTEGER, "max_nodes": INTEGER},
+                              ["run_id", "root"]),
+    },
+    {
+        "name": "harness_get_graph",
+        "description": "Read candidate static graph with explicit coverage caveat.",
+        "inputSchema": schema({"run_id": STRING, "root": STRING,
+                               "limit": INTEGER}, ["run_id"]),
+    },
+    {
+        "name": "harness_evidence_index",
+        "description": "Read bounded symbol/address candidate index, not full raw evidence.",
+        "inputSchema": schema({"run_id": STRING, "task_key": STRING,
+                               "limit": INTEGER}, ["run_id"]),
+    },
+    {
+        "name": "harness_recover",
+        "description": "Release expired worker/engine leases only if process is gone.",
+        "inputSchema": schema({"run_id": STRING}),
+    },
+    {
         "name": "harness_render_report",
         "description": "Generate Markdown report for a run under .re_harness_mvp/reports.",
         "inputSchema": schema({"run_id": STRING}, ["run_id"]),
@@ -80,16 +111,33 @@ def call_tool(name, args, state):
     if not isinstance(args, dict):
         raise ValueError("Tool arguments must be a JSON object")
     with core.database(state) as db:
+        stable.migrate(db)
         if name == "harness_create_plan":
             return {"run_id": core.create_plan(
                 db, args["binary_path"],
                 args.get("workflow_path", core.DEFAULT_WORKFLOW),
             )}
         if name == "harness_execute_step":
-            # Bounded one-step invocation; clients must set adequate tool timeout.
-            return core.execute(db, state, args["run_id"], max_steps=1,
-                                retries=args.get("retries", 0),
-                                timeout=args.get("timeout", 900))
+            return stable.work(db, state, args["run_id"], steps=1,
+                               retries=args.get("retries", 1),
+                               timeout=args.get("timeout", 900))
+        if name == "harness_worker":
+            return stable.work(db, state, args["run_id"],
+                               steps=args.get("steps", 1),
+                               timeout=args.get("timeout", 900),
+                               retries=args.get("retries", 2),
+                               capacity=args.get("capacity", 1))
+        if name == "harness_graph_start":
+            return stable.add_graph(db, args["run_id"], args["root"],
+                                    args.get("depth", 2), args.get("max_nodes", 30))
+        if name == "harness_get_graph":
+            return stable.graph(db, args["run_id"], args.get("root"),
+                                args.get("limit", 200))
+        if name == "harness_evidence_index":
+            return stable.observations(db, args["run_id"], args.get("task_key"),
+                                       args.get("limit", 200))
+        if name == "harness_recover":
+            return stable.recover(db, args.get("run_id"))
         if name == "harness_list_runs":
             return core.status(db)
         if name == "harness_get_run":
@@ -127,7 +175,7 @@ def process(req, state):
         return {"jsonrpc": "2.0", "id": rid, "result": {
             "protocolVersion": client_version,
             "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": {"name": "re-dragon-harness", "version": "0.2.0"},
+            "serverInfo": {"name": "re-dragon-harness", "version": "0.3.0"},
         }}
     if method == "ping":
         return {"jsonrpc": "2.0", "id": rid, "result": {}}
