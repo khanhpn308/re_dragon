@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation
+from . import core, stable, agent_api, investigation, autonomy
 
 
 def schema(properties=None, required=None):
@@ -25,11 +25,104 @@ def schema(properties=None, required=None):
 STRING = {"type": "string"}
 INTEGER = {"type": "integer"}
 STRINGS = {"type": "array", "items": STRING, "maxItems": 100}
+AUTO_WORK = {"type":"array","minItems":1,"maxItems":50,"items":{
+  "type":"object",
+  "properties":{
+    "key": STRING,"title":STRING,"acceptance":STRING,
+    "kind":{"type":"string","enum":sorted(autonomy.WORK)},
+    "priority":INTEGER,"depends_on":STRINGS
+  },
+  "required":["key","title","acceptance"],
+  "additionalProperties":False
+}}
 PLAN_STEPS = {"type": "array", "minItems": 1, "maxItems": 20, "items": {
     "type": "object", "required": ["title", "acceptance"],
     "properties": {"title": STRING, "acceptance": STRING},
     "additionalProperties": False}}
 TOOLS = [
+    {
+        "name":"harness_auto_resolve_issue",
+        "description":"After independent audit approval, release disputed original task for re-execution. Never silently restore VERIFIED.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+          "audit_task_key":STRING,"note":STRING},
+          ["project_id","task_key","audit_task_key","note"]),
+    },
+    {
+        "name":"harness_auto_resume",
+        "description":"Resume a stopped or blocked goal using durable backlog, without starting from P1.",
+        "inputSchema":schema({"project_id":STRING,"note":STRING},
+          ["project_id","note"]),
+    },
+    {
+        "name": "harness_auto_start",
+        "description": "START HERE ONCE for a high-level project goal. Agent creates backlog then repeatedly loops harness_auto_tick to completion. No user prompts between phases.",
+        "inputSchema": schema({"goal":STRING,"acceptance":STRING,"binary_path":STRING},
+                              ["goal","acceptance"]),
+    },
+    {
+        "name": "harness_auto_plan",
+        "description": "AI Agent decomposes the goal to a dependency DAG. Can extend the plan after evidence-driven discoveries; no manual P1/P2/P3 prompts.",
+        "inputSchema": schema({"project_id":STRING,"tasks":AUTO_WORK},
+                              ["project_id","tasks"]),
+    },
+    {
+        "name": "harness_auto_tick",
+        "description": "AUTONOMOUS ORCHESTRATOR LOOP: atomic decision PLAN/EXECUTE/REVIEW/WAIT/BLOCKED/FINAL_REVIEW/YIELD. After each submit/review/issue, call again in same Agent conversation until explicit stop. REVIEW requires distinct actor ID.",
+        "inputSchema": schema({"project_id":STRING,"agent_id":STRING,
+             "session_id":STRING,"role":{"type":"string","enum":["executor","reviewer"]},
+             "max_turns":INTEGER},["project_id","agent_id","session_id"]),
+    },
+    {
+        "name":"harness_auto_renew",
+        "description":"Heartbeat current Agent task lease before it expires.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+          "agent_id":STRING,"claim_token":STRING},
+          ["project_id","task_key","agent_id","claim_token"]),
+    },
+    {
+        "name":"harness_auto_submit",
+        "description":"Submit completed task with evidence/artifact references and checks. This queues independent review, never auto-approves claims.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+          "agent_id":STRING,"claim_token":STRING,"summary":STRING,
+          "evidence":STRINGS,"artifacts":STRINGS,"checks":STRINGS},
+          ["project_id","task_key","agent_id","claim_token","summary",
+           "evidence","artifacts","checks"]),
+    },
+    {
+        "name":"harness_auto_review",
+        "description":"Independent review only. Reviewer must be a different actor from producer, and must inspect original evidence; reject unsupported findings.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+          "agent_id":STRING,"claim_token":STRING,
+          "verdict":{"type":"string","enum":["APPROVE","REJECT"]},
+          "rationale":STRING,"evidence_checked":STRINGS},
+          ["project_id","task_key","agent_id","claim_token","verdict",
+           "rationale","evidence_checked"]),
+    },
+    {
+        "name":"harness_auto_issue",
+        "description":"Evidence-driven replanning: detect a contradicted prior finding, invalidate dependent verified tasks and queue high-priority audit, avoiding repeated manual prompts.",
+        "inputSchema":schema({"project_id":STRING,"task_key":STRING,
+          "issue":STRING,"evidence":STRINGS},
+          ["project_id","task_key","issue","evidence"]),
+    },
+    {
+        "name":"harness_auto_status",
+        "description":"Resume across Agent sessions: project goal, remaining DAG, blockers, actors and decision/event history.",
+        "inputSchema":schema({"project_id":STRING},["project_id"]),
+    },
+    {
+        "name":"harness_auto_final_review",
+        "description":"Project-level acceptance after every task passed a different-actor review; acceptance itself requires external independent judgment.",
+        "inputSchema":schema({"project_id":STRING,"reviewer":STRING,
+          "decision":{"type":"string","enum":["ACCEPT","REOPEN"]},
+          "note":STRING},["project_id","reviewer","decision","note"]),
+    },
+    {
+        "name":"harness_auto_stop",
+        "description":"Explicitly stop the controller and persist reason.",
+        "inputSchema":schema({"project_id":STRING,"reason":STRING},
+                             ["project_id","reason"]),
+    },
     {
         "name": "harness_begin_investigation",
         "description": "Start an agent-owned natural-language research goal. Agent calls REA MCP directly; Python only checkpoints state.",
@@ -197,6 +290,42 @@ def call_tool(name, args, state):
     with core.database(state) as db:
         stable.migrate(db)
         investigation.migrate(db)
+        autonomy.migrate(db)
+        if name == "harness_auto_resolve_issue":
+            return autonomy.resolve_issue(db,args["project_id"],
+                args["task_key"],args["audit_task_key"],args["note"])
+        if name == "harness_auto_resume":
+            return autonomy.resume(db,args["project_id"],args["note"])
+        if name == "harness_auto_start":
+            return autonomy.start(db,args["goal"],args["acceptance"],
+                                  args.get("binary_path"))
+        if name == "harness_auto_plan":
+            return autonomy.plan(db,args["project_id"],args["tasks"])
+        if name == "harness_auto_tick":
+            return autonomy.tick(db,args["project_id"],args["agent_id"],
+                                 args["session_id"],args.get("role","executor"),
+                                 args.get("max_turns",autonomy.MAX_TURNS))
+        if name == "harness_auto_renew":
+            return autonomy.renew(db,args["project_id"],args["task_key"],
+                                  args["agent_id"],args["claim_token"])
+        if name == "harness_auto_submit":
+            return autonomy.submit(db,args["project_id"],args["task_key"],
+               args["agent_id"],args["claim_token"],args["summary"],
+               args["evidence"],args["artifacts"],args["checks"])
+        if name == "harness_auto_review":
+            return autonomy.review(db,args["project_id"],args["task_key"],
+               args["agent_id"],args["claim_token"],args["verdict"],
+               args["rationale"],args["evidence_checked"])
+        if name == "harness_auto_issue":
+            return autonomy.report_issue(db,args["project_id"],args["task_key"],
+               args["issue"],args["evidence"])
+        if name == "harness_auto_status":
+            return autonomy.snapshot(db,args["project_id"])
+        if name == "harness_auto_final_review":
+            return autonomy.final_review(db,args["project_id"],args["reviewer"],
+               args["decision"],args["note"])
+        if name == "harness_auto_stop":
+            return autonomy.pause(db,args["project_id"],args["reason"])
         if name == "harness_begin_investigation":
             return investigation.begin(db, args["goal"], args.get("agent", "codex-or-antigravity"),
                                        args.get("binary_path"))
@@ -294,7 +423,7 @@ def process(req, state):
         return {"jsonrpc": "2.0", "id": rid, "result": {
             "protocolVersion": client_version,
             "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": {"name": "re-dragon-harness", "version": "0.4.0"},
+            "serverInfo": {"name": "re-dragon-harness", "version": "0.5.0"},
         }}
     if method == "ping":
         return {"jsonrpc": "2.0", "id": rid, "result": {}}

@@ -1,3 +1,3 @@
-"""REA reverse-engineering harness — Agent-first orchestration."""
+"""REA reverse-engineering harness — Agent-driven orchestration."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

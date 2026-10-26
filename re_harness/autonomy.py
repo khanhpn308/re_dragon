@@ -1,0 +1,567 @@
+"""v0.5 goal-level Agent orchestration control plane (SQLite; MCP-facing).
+
+The LLM host (Codex/Antigravity) performs reasoning and calls REA MCP,
+writes code/tests and invokes these APIs repeatedly. This module cannot
+invoke the LLM by itself or continue when the host session has ended.
+
+Run states persist across model sessions; reviews are assigned to an actor
+different from the producer, but identity is host-reported (not attested).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+import time
+import uuid
+from pathlib import Path
+
+from . import core
+
+WORK = {"ANALYZE", "IMPLEMENT", "TEST", "AUDIT", "DOCUMENT"}
+MAX_TASKS = 250
+MAX_PLAN_BATCH = 50
+LEASE_SECONDS = 1200
+MAX_ATTEMPTS = 3
+MAX_TURNS = 80
+
+
+def ident():
+    return uuid.uuid4().hex[:16]
+
+
+def txt(value, name, limit=3000):
+    if not isinstance(value, str) or not value.strip() or len(value) > limit:
+        raise ValueError(f"{name} must be nonempty text (max {limit} chars)")
+    return value.strip()
+
+
+def json_arr(value, name, maxlen=25):
+    if not isinstance(value, list) or len(value) > maxlen or any(
+        not isinstance(x, str) or not x.strip() or len(x) > 512 for x in value
+    ):
+        raise ValueError(f"{name} must be a list of at most {maxlen} nonempty strings")
+    return list(dict.fromkeys(value))
+
+
+def migrate(db):
+    db.executescript("""
+      CREATE TABLE IF NOT EXISTS auto_projects (
+        id TEXT PRIMARY KEY, goal TEXT NOT NULL, acceptance TEXT NOT NULL,
+        binary_path TEXT, binary_sha256 TEXT, status TEXT NOT NULL,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS auto_tasks (
+        id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES auto_projects(id),
+        task_key TEXT NOT NULL, title TEXT NOT NULL, acceptance TEXT NOT NULL,
+        kind TEXT NOT NULL, priority INTEGER NOT NULL, dependencies TEXT NOT NULL,
+        status TEXT NOT NULL, tries INTEGER NOT NULL DEFAULT 0,
+        producer TEXT, owner TEXT, lease_token TEXT, lease_until REAL,
+        result TEXT, evidence_json TEXT, artifacts_json TEXT,
+        verification_json TEXT, reviewer TEXT, review_note TEXT,
+        parent_issue TEXT, updated_at TEXT NOT NULL,
+        UNIQUE(project_id,task_key)
+      );
+      CREATE TABLE IF NOT EXISTS auto_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id TEXT NOT NULL, task_key TEXT, event TEXT NOT NULL,
+        details TEXT NOT NULL, timestamp TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS auto_sessions (
+        project_id TEXT NOT NULL, session_id TEXT NOT NULL,
+        turns INTEGER NOT NULL DEFAULT 0, last_seen TEXT NOT NULL,
+        PRIMARY KEY(project_id,session_id)
+      );
+    """)
+    db.commit()
+
+
+def event(db, project, key, name, details=None):
+    db.execute(
+        "INSERT INTO auto_events(project_id,task_key,event,details,timestamp) "
+        "VALUES(?,?,?,?,?)",
+        (project,key,name,json.dumps(details or {},ensure_ascii=False),core.now())
+    )
+
+
+def project(db, pid):
+    row=db.execute("SELECT * FROM auto_projects WHERE id=?",(pid,)).fetchone()
+    if not row:
+        raise ValueError("Unknown project_id")
+    return row
+
+
+def tasks(db,pid):
+    return db.execute("SELECT * FROM auto_tasks WHERE project_id=? "
+                      "ORDER BY priority DESC, updated_at ASC,task_key",(pid,)).fetchall()
+
+
+def start(db,goal,acceptance,binary_path=None):
+    migrate(db)
+    goal=txt(goal,"goal",12000)
+    acceptance=txt(acceptance,"acceptance",8000)
+    binary, digest=None,None
+    if binary_path is not None:
+        binary=Path(txt(binary_path,"binary_path",4096)).expanduser().resolve()
+        if not binary.is_file():
+            raise ValueError("Local binary does not exist")
+        digest=core.sha256(binary)
+        binary=str(binary)
+    pid=ident()
+    with db:
+        db.execute("INSERT INTO auto_projects VALUES(?,?,?,?,?,?,?,?)",
+                   (pid,goal,acceptance,binary,digest,"PLANNING",
+                    core.now(),core.now()))
+        event(db,pid,None,"GOAL_ACCEPTED",{"has_binary":bool(binary)})
+    return {"project_id":pid,"decision":"PLAN","next_tool":"harness_auto_plan",
+            "goal":goal,"acceptance":acceptance,"binary_sha256":digest,
+            "instructions":"Agent decomposes goal into bounded dependency tasks. "
+                           "Do not ask the user to choose project phases."}
+
+
+def _validate_batch(raw, previous):
+    if not isinstance(raw,list) or not 1<=len(raw)<=MAX_PLAN_BATCH:
+        raise ValueError("Plan must have 1-50 tasks")
+    all_keys=set(previous)
+    entries=[]
+    for item in raw:
+        if not isinstance(item,dict):
+            raise ValueError("Each task must be an object")
+        key=txt(item.get("key"),"task key",80)
+        if not all(c.isalnum() or c in "-_" for c in key):
+            raise ValueError("Task key may only contain letters/numbers/_/-")
+        if key in all_keys:
+            raise ValueError("Duplicate task key "+key)
+        all_keys.add(key)
+        kind=item.get("kind","ANALYZE")
+        if kind not in WORK:
+            raise ValueError("Invalid task kind")
+        deps=json_arr(item.get("depends_on",[]),"depends_on")
+        prio=item.get("priority",10)
+        if type(prio) is not int or not 0<=prio<=100:
+            raise ValueError("Priority must be an integer in 0..100")
+        entries.append({"key":key,"title":txt(item.get("title"),"title",250),
+             "acceptance":txt(item.get("acceptance"),"acceptance",3000),
+             "kind":kind,"depends_on":deps,"priority":prio})
+    for item in entries:
+        if item["key"] in item["depends_on"]:
+            raise ValueError("Self dependency")
+        if any(key not in all_keys for key in item["depends_on"]):
+            raise ValueError("Unknown dependency for "+item["key"])
+    graph={**previous,**{x["key"]:x["depends_on"] for x in entries}}
+    visited=set()
+    visiting=set()
+    def visit(name):
+        if name in visiting:
+            raise ValueError("Dependency cycle at "+name)
+        if name in visited:
+            return
+        visiting.add(name)
+        for dep in graph[name]:
+            visit(dep)
+        visiting.remove(name)
+        visited.add(name)
+    for node in graph:
+        visit(node)
+    return entries
+
+
+def plan(db,pid,raw):
+    migrate(db)
+    pr=project(db,pid)
+    if pr["status"] in {"STOPPED","READY_FOR_FINAL_REVIEW","ACCEPTED"}:
+        raise ValueError("Project is stopped or awaiting final review")
+    old={r["task_key"]:json.loads(r["dependencies"]) for r in tasks(db,pid)}
+    items=_validate_batch(raw,old)
+    if len(old)+len(items)>MAX_TASKS:
+        raise ValueError("Task budget exceeded")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        for item in items:
+            db.execute(
+                "INSERT INTO auto_tasks(id,project_id,task_key,title,acceptance,"
+                "kind,priority,dependencies,status,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (ident(),pid,item["key"],item["title"],item["acceptance"],
+                 item["kind"],item["priority"],json.dumps(item["depends_on"]),
+                 "PENDING",core.now()))
+        db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? WHERE id=?",
+                   (core.now(),pid))
+        event(db,pid,None,"PLAN_EXTENDED",{"keys":[x["key"] for x in items]})
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {"project_id":pid,"added":[x["key"] for x in items],
+            "decision":"CONTINUE","next_tool":"harness_auto_tick"}
+
+
+def _expire(db,pid):
+    """Agent claims are idempotent work leases, not OS process leases."""
+    now=time.time()
+    for row in db.execute(
+        "SELECT * FROM auto_tasks WHERE project_id=? "
+        "AND status IN ('RUNNING','REVIEWING') AND lease_until<?",(pid,now)
+    ).fetchall():
+        state="PENDING" if row["status"]=="RUNNING" else "SUBMITTED"
+        if row["status"]=="RUNNING" and row["tries"]>=MAX_ATTEMPTS:
+            state="BLOCKED"
+        db.execute(
+            "UPDATE auto_tasks SET status=?,owner=NULL,lease_token=NULL,"
+            "lease_until=NULL,updated_at=? WHERE id=?",
+            (state,core.now(),row["id"]))
+        event(db,pid,row["task_key"],"LEASE_EXPIRED",{"state":state})
+
+
+def _status_counts(all_tasks):
+    return {key:sum(t["status"]==key for t in all_tasks) for key in
+            ("PENDING","RUNNING","SUBMITTED","REVIEWING",
+             "VERIFIED","REWORK","DISPUTED","BLOCKED")}
+
+
+def _result(db,pid,decision,**payload):
+    db.execute("UPDATE auto_projects SET status=?,updated_at=? WHERE id=?",
+               ({"FINAL_REVIEW":"READY_FOR_FINAL_REVIEW",
+                 "PLAN":"PLANNING","BLOCKED":"BLOCKED",
+                 "YIELD":"ACTIVE"}.get(decision,"ACTIVE"),core.now(),pid))
+    event(db,pid,payload.get("task_key"),"CONTROLLER_DECISION",{"decision":decision})
+    return {"project_id":pid,"decision":decision,**payload}
+
+
+def tick(db,pid,agent_id,session_id,role="executor",max_turns=MAX_TURNS):
+    """Atomic control decision and task reservation for an active LLM session.
+
+    Call repeatedly AFTER each outcome; host agent actually performs the work.
+    Independent review can only be approved by a different actor identity.
+    """
+    migrate(db)
+    actor=txt(agent_id,"agent_id",128)
+    session=txt(session_id,"session_id",128)
+    if role not in {"executor","reviewer"}:
+        raise ValueError("role must be executor or reviewer")
+    if type(max_turns) is not int or not 1<=max_turns<=MAX_TURNS:
+        raise ValueError("max_turns out of range")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        pr=project(db,pid)
+        if pr["status"] in {"STOPPED","ACCEPTED"}:
+            outcome={"project_id":pid,"decision":pr["status"]}
+        else:
+            db.execute("INSERT OR IGNORE INTO auto_sessions VALUES(?,?,0,?)",
+                       (pid,session,core.now()))
+            n=db.execute(
+                "SELECT turns FROM auto_sessions WHERE project_id=? AND session_id=?",
+                (pid,session)).fetchone()[0]
+            if n>=max_turns:
+                outcome={"project_id":pid,"decision":"YIELD",
+                         "reason":"Session turn budget reached; resume using the same goal in a new Agent session.",
+                         "resume_tool":"harness_auto_tick"}
+            else:
+                db.execute("UPDATE auto_sessions SET turns=turns+1,last_seen=? "
+                           "WHERE project_id=? AND session_id=?",(core.now(),pid,session))
+                _expire(db,pid)
+                current=tasks(db,pid)
+                if not current:
+                    outcome=_result(db,pid,"PLAN",instruction="Agent creates the initial DAG via harness_auto_plan")
+                else:
+                    verified={r["task_key"] for r in current if r["status"]=="VERIFIED"}
+                    choice=None
+                    for row in current:
+                        if role=="reviewer":
+                            eligible=row["status"]=="SUBMITTED" and row["producer"]!=actor
+                        else:
+                            eligible=(row["status"] in {"PENDING","REWORK"} and
+                                row["tries"]<MAX_ATTEMPTS and
+                                all(x in verified for x in json.loads(row["dependencies"])))
+                        if eligible:
+                            choice=row
+                            break
+                    if choice:
+                        token=ident()
+                        state="REVIEWING" if role=="reviewer" else "RUNNING"
+                        db.execute(
+                            "UPDATE auto_tasks SET status=?,owner=?,lease_token=?,"
+                            "lease_until=?,tries=tries+?,updated_at=? WHERE id=?",
+                            (state,actor,token,time.time()+LEASE_SECONDS,
+                             0 if role=="reviewer" else 1,core.now(),choice["id"]))
+                        event(db,pid,choice["task_key"],"CLAIMED",
+                              {"role":role,"actor":actor})
+                        outcome=_result(db,pid,"REVIEW" if role=="reviewer" else "EXECUTE",
+                            task_key=choice["task_key"],title=choice["title"],
+                            kind=choice["kind"],acceptance=choice["acceptance"],
+                            depends_on=json.loads(choice["dependencies"]),
+                            claim_token=token,
+                            instructions=("Review independently, inspect primary evidence/tests. "
+                                "Reject unsupported VERIFIED claims. Do not repeat the executor's claims."
+                                if role=="reviewer" else
+                                "Execute this task via available tools; gather evidence, tests and artifacts. "
+                                "Call harness_auto_submit, then call harness_auto_tick again."))
+                    elif all(r["status"]=="VERIFIED" for r in current):
+                        outcome=_result(db,pid,"FINAL_REVIEW",completed=len(current),
+                                        note="All task reviews approved; semantic/source authenticity "
+                                             "and project-level acceptance still need confirmation.")
+                    elif any(r["status"]=="BLOCKED" for r in current) and not any(
+                             r["status"] in {"RUNNING","REVIEWING","SUBMITTED"} for r in current):
+                        outcome=_result(db,pid,"BLOCKED",counts=_status_counts(current),
+                            instruction="Agent triages blockers, replans bounded repair tasks, "
+                                        "or requests user decision if permissions/scope are missing.")
+                    else:
+                        outcome=_result(db,pid,"WAIT",counts=_status_counts(current),
+                            instruction=("Review pending work with distinct reviewer actor."
+                                if any(r["status"]=="SUBMITTED" for r in current)
+                                else "Waiting on active workers, unresolved prerequisites or disputed findings."))
+        db.commit()
+        return outcome
+    except Exception:
+        db.rollback()
+        raise
+
+
+def _task(db,pid,key):
+    row=db.execute(
+        "SELECT * FROM auto_tasks WHERE project_id=? AND task_key=?",(pid,key)
+    ).fetchone()
+    if not row:
+        raise ValueError("Unknown task_key")
+    return row
+
+
+def _holder(row,actor,token,state):
+    if row["status"]!=state or row["owner"]!=actor or row["lease_token"]!=token:
+        raise ValueError("Task state or ownership token mismatch")
+    if row["lease_until"] is None or row["lease_until"]<=time.time():
+        raise ValueError("Claim expired; get a fresh decision from harness_auto_tick")
+
+
+def renew(db,pid,key,actor,token):
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        task=_task(db,pid,key)
+        if task["status"] not in {"RUNNING","REVIEWING"}:
+            raise ValueError("Task not leased")
+        _holder(task,actor,token,task["status"])
+        db.execute(
+            "UPDATE auto_tasks SET lease_until=?,updated_at=? WHERE id=?",
+            (time.time()+LEASE_SECONDS,core.now(),task["id"]))
+        db.commit()
+        return {"renewed":True,"lease_seconds":LEASE_SECONDS}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def submit(db,pid,key,actor,token,summary,evidence,artifacts,checks):
+    summary=txt(summary,"summary",12000)
+    sources=json_arr(evidence,"evidence",40)
+    files=json_arr(artifacts,"artifacts",40)
+    validations=json_arr(checks,"checks",40)
+    if not sources and not files:
+        raise ValueError("Submission requires evidence references or artifact paths")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=_task(db,pid,key)
+        _holder(row,actor,token,"RUNNING")
+        db.execute("UPDATE auto_tasks SET status='SUBMITTED',producer=?,result=?,"
+                   "evidence_json=?,artifacts_json=?,verification_json=?,"
+                   "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+                   (actor,summary,json.dumps(sources),json.dumps(files),
+                    json.dumps(validations),core.now(),row["id"]))
+        event(db,pid,key,"SUBMITTED",{"producer":actor,"evidence_count":len(sources),
+                                    "artifact_count":len(files)})
+        db.commit()
+        return {"task_key":key,"status":"SUBMITTED","next":"Independent reviewer via harness_auto_tick(role=reviewer)"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def review(db,pid,key,actor,token,verdict,rationale,evidence_checked):
+    rationale=txt(rationale,"rationale",8000)
+    checked=json_arr(evidence_checked,"evidence_checked",40)
+    if verdict not in {"APPROVE","REJECT"}:
+        raise ValueError("Review verdict must be APPROVE or REJECT")
+    if verdict=="APPROVE" and not checked:
+        raise ValueError("Approval requires inspected primary evidence references")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=_task(db,pid,key)
+        _holder(row,actor,token,"REVIEWING")
+        if actor==row["producer"]:
+            raise ValueError("Producer cannot review own task")
+        updated="VERIFIED" if verdict=="APPROVE" else (
+            "BLOCKED" if row["tries"]>=MAX_ATTEMPTS else "REWORK")
+        db.execute(
+            "UPDATE auto_tasks SET status=?,reviewer=?,review_note=?,"
+            "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+            (updated,actor,rationale,core.now(),row["id"]))
+        event(db,pid,key,"REVIEW_"+verdict,{"actor":actor,
+              "evidence_checked":checked,"state":updated})
+        db.commit()
+        return {"task_key":key,"status":updated,
+                "decision":"CONTINUE" if updated=="VERIFIED" else "REPLAN"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def report_issue(db,pid,key,summary,evidence):
+    """Evidence-driven replanning: add high-priority audit, invalidate dependents."""
+    summary=txt(summary,"issue",5000)
+    refs=json_arr(evidence,"evidence",40)
+    if not refs:
+        raise ValueError("Contradiction requires evidence references")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        origin=_task(db,pid,key)
+        digest=hashlib.sha256((key+"|"+summary).encode()).hexdigest()[:10]
+        audit_key="audit-"+digest
+        existing=db.execute(
+            "SELECT task_key FROM auto_tasks WHERE project_id=? AND task_key=?",
+            (pid,audit_key)).fetchone()
+        if existing:
+            db.commit()
+            return {"created":False,"audit_task_key":audit_key}
+        if len(tasks(db,pid))>=MAX_TASKS:
+            raise ValueError("Task budget exceeded")
+        # Keep evidence history; revoke prior VERIFIED status without deleting it.
+        db.execute(
+            "UPDATE auto_tasks SET status='DISPUTED',updated_at=? "
+            "WHERE id=? AND status='VERIFIED'",(core.now(),origin["id"]))
+        # Any downstream task needs re-evaluation after conflict resolution.
+        allrows=tasks(db,pid)
+        affected={key}
+        changed=True
+        while changed:
+            changed=False
+            for row in allrows:
+                if row["task_key"] not in affected and any(
+                    d in affected for d in json.loads(row["dependencies"])
+                ):
+                    affected.add(row["task_key"])
+                    changed=True
+        for dep in affected-{key}:
+            row=_task(db,pid,dep)
+            if row["status"]=="VERIFIED":
+                db.execute(
+                    "UPDATE auto_tasks SET status='REWORK',"
+                    "tries=0,updated_at=? WHERE id=?",(core.now(),row["id"]))
+        db.execute(
+            "INSERT INTO auto_tasks(id,project_id,task_key,title,acceptance,kind,"
+            "priority,dependencies,status,parent_issue,updated_at)"
+            " VALUES(?,?,?,?,?,'AUDIT',100,'[]','PENDING',?,?)",
+            (ident(),pid,audit_key,"Resolve contradiction in "+key,
+             "Inspect original evidence; document conflict and repair path: "+
+             summary,key,core.now()))
+        event(db,pid,key,"CONTRADICTION",{"audit":audit_key,"evidence":refs,
+                                       "affected":sorted(affected)})
+        db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? WHERE id=?",
+                   (core.now(),pid))
+        db.commit()
+        return {"created":True,"audit_task_key":audit_key,"invalidated":sorted(affected),
+                "decision":"REPLAN","next_tool":"harness_auto_tick"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def snapshot(db,pid):
+    migrate(db)
+    row=project(db,pid)
+    arr=tasks(db,pid)
+    return {"project":dict(row),"counts":_status_counts(arr),
+        "tasks":[{"key":x["task_key"],"title":x["title"],
+                  "kind":x["kind"],"status":x["status"],
+                  "dependencies":json.loads(x["dependencies"]),
+                  "tries":x["tries"],"producer":x["producer"],
+                  "reviewer":x["reviewer"],"review_note":x["review_note"]}
+                 for x in arr],
+        "latest_events":[dict(x) for x in db.execute(
+            "SELECT task_key,event,details,timestamp FROM auto_events "
+            "WHERE project_id=? ORDER BY id DESC LIMIT 15",(pid,))],
+        "resume_instruction":"Continue agent-driven harness_auto_tick loop; "
+                             "never ask user to write phase-by-phase prompts."}
+
+
+def final_review(db,pid,reviewer,decision,note):
+    """Project-level acceptance needs human confirmation or separate reviewer."""
+    reviewer=txt(reviewer,"reviewer",128)
+    note=txt(note,"note",7000)
+    if decision not in {"ACCEPT","REOPEN"}:
+        raise ValueError("Expected ACCEPT or REOPEN")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=project(db,pid)
+        if row["status"] not in {"READY_FOR_FINAL_REVIEW","ACTIVE"}:
+            raise ValueError("Project is not awaiting final acceptance")
+        arr=tasks(db,pid)
+        if not arr or any(t["status"]!="VERIFIED" for t in arr):
+            raise ValueError("All tasks must have passed independent review")
+        if row["binary_path"] and (
+            not Path(row["binary_path"]).is_file() or
+            core.sha256(row["binary_path"])!=row["binary_sha256"]
+        ):
+            raise ValueError("Pinned binary changed")
+        outcome="ACCEPTED" if decision=="ACCEPT" else "ACTIVE"
+        db.execute("UPDATE auto_projects SET status=?,updated_at=? WHERE id=?",
+                   (outcome,core.now(),pid))
+        event(db,pid,None,"PROJECT_"+decision,
+              {"reviewer":reviewer,"note":note,
+               "authenticity":"not attested by harness"})
+        db.commit()
+        return {"status":outcome,"decision":decision,"note":note,
+                "warning":"Host actor identity and evidence content are not independently attested"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def pause(db,pid,reason):
+    reason=txt(reason,"reason",3000)
+    with db:
+        project(db,pid)
+        db.execute("UPDATE auto_projects SET status='STOPPED',updated_at=? WHERE id=?",
+                   (core.now(),pid))
+        event(db,pid,None,"STOPPED",{"reason":reason})
+    return {"status":"STOPPED","reason":reason}
+
+
+def resolve_issue(db,pid,source_key,audit_key,note):
+    """Review-approved audit unlocks re-analysis, never silently restores VERIFIED."""
+    note=txt(note,"resolution",5000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        source=_task(db,pid,source_key)
+        audit=_task(db,pid,audit_key)
+        if audit["parent_issue"]!=source_key or audit["status"]!="VERIFIED":
+            raise ValueError("Audit task must independently pass review first")
+        if source["status"]!="DISPUTED":
+            raise ValueError("Original task is not disputed")
+        db.execute(
+            "UPDATE auto_tasks SET status='REWORK',tries=0,"
+            "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+            (core.now(),source["id"]))
+        event(db,pid,source_key,"AUDIT_RESOLVED",
+              {"audit_task":audit_key,"next":"rerun original","note":note})
+        db.commit()
+        return {"source_task":source_key,"status":"REWORK","decision":"CONTINUE",
+                "note":"Re-execute original task and obtain fresh independent review"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def resume(db,pid,note):
+    """Explicitly re-enable a paused project; never revoke final acceptance."""
+    note=txt(note,"resume note",2000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=project(db,pid)
+        if row["status"] not in {"STOPPED","BLOCKED"}:
+            raise ValueError("Resume permitted only for STOPPED or BLOCKED projects")
+        db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? WHERE id=?",
+                   (core.now(),pid))
+        event(db,pid,None,"RESUMED",{"note":note})
+        db.commit()
+        return {"status":"ACTIVE","next_tool":"harness_auto_tick"}
+    except Exception:
+        db.rollback()
+        raise
