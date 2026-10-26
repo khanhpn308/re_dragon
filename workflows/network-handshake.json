@@ -1,0 +1,58 @@
+{
+  "name": "return-saiyan-network-handshake",
+  "description": "Read-only native symbol discovery for network initialization, handshake and packet processing",
+  "steps": [
+    {
+      "key": "binary-inventory",
+      "operation": "inspect"
+    },
+    {
+      "key": "protocol-manager",
+      "operation": "search",
+      "selector": "CProtocolManager",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    },
+    {
+      "key": "connection",
+      "operation": "search",
+      "selector": "Conexao",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    },
+    {
+      "key": "network",
+      "operation": "search",
+      "selector": "CGameNetwork",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    },
+    {
+      "key": "receive",
+      "operation": "search",
+      "selector": "threadRecepcao",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    },
+    {
+      "key": "key-derivation",
+      "operation": "search",
+      "selector": "gerarChaveSecreta",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    },
+    {
+      "key": "dispatch",
+      "operation": "search",
+      "selector": "registrarTratadores",
+      "depends_on": [
+        "binary-inventory"
+      ]
+    }
+  ]
+}
