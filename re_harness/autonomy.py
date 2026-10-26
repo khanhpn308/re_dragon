@@ -16,7 +16,7 @@ import time
 import uuid
 from pathlib import Path
 
-from . import core
+from . import core, scheduler
 
 WORK = {"ANALYZE", "IMPLEMENT", "TEST", "AUDIT", "DOCUMENT"}
 MAX_TASKS = 250
@@ -77,6 +77,7 @@ def migrate(db):
     for col in ("owner_session","producer_session","reviewer_session"):
         if col not in cols:
             db.execute("ALTER TABLE auto_tasks ADD COLUMN "+col+" TEXT")
+    scheduler.migrate(db)
     db.commit()
 
 
@@ -144,7 +145,9 @@ def _validate_batch(raw, previous):
         prio=item.get("priority",10)
         if type(prio) is not int or not 0<=prio<=100:
             raise ValueError("Priority must be an integer in 0..100")
-        entries.append({"key":key,"title":txt(item.get("title"),"title",250),
+        spec=scheduler.normalize(kind,item.get("resource_class"),item.get("targets",[]))
+        entries.append({"resource_class":spec["profile"],"targets":spec["targets"],
+                        "key":key,"title":txt(item.get("title"),"title",250),
              "acceptance":txt(item.get("acceptance"),"acceptance",3000),
              "kind":kind,"depends_on":deps,"priority":prio})
     for item in entries:
@@ -181,6 +184,7 @@ def plan(db,pid,raw):
         raise ValueError("Task budget exceeded")
     db.execute("BEGIN IMMEDIATE")
     try:
+        scheduler.ensure_policy(db,pid)
         for item in items:
             db.execute(
                 "INSERT INTO auto_tasks(id,project_id,task_key,title,acceptance,"
@@ -188,7 +192,12 @@ def plan(db,pid,raw):
                 (ident(),pid,item["key"],item["title"],item["acceptance"],
                  item["kind"],item["priority"],json.dumps(item["depends_on"]),
                  "PENDING",core.now()))
+        for item in items:
+            task=db.execute("SELECT id FROM auto_tasks WHERE project_id=? AND task_key=?",
+                            (pid,item["key"])).fetchone()
+            scheduler.attach(db,task["id"],item["kind"],item["resource_class"],item["targets"])
         db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? WHERE id=?",
+
                    (core.now(),pid))
         event(db,pid,None,"PLAN_EXTENDED",{"keys":[x["key"] for x in items]})
         db.commit()
@@ -206,7 +215,8 @@ def _expire(db,pid):
         "SELECT * FROM auto_tasks WHERE project_id=? "
         "AND status IN ('RUNNING','REVIEWING') AND lease_until<?",(pid,now)
     ).fetchall():
-        state="PENDING" if row["status"]=="RUNNING" else "SUBMITTED"
+        state=("SPLIT_REQUIRED" if row["status"]=="SPLITTING"
+               else "PENDING" if row["status"]=="RUNNING" else "SUBMITTED")
         if row["status"]=="RUNNING" and row["tries"]>=MAX_ATTEMPTS:
             state="BLOCKED"
         db.execute(
@@ -218,7 +228,7 @@ def _expire(db,pid):
 
 def _status_counts(all_tasks):
     return {key:sum(t["status"]==key for t in all_tasks) for key in
-            ("PENDING","RUNNING","SUBMITTED","REVIEWING",
+            ("PENDING","RUNNING","SUBMITTED","REVIEWING","SPLIT_REQUIRED","SPLITTING","WAIT_CHILDREN",
              "VERIFIED","REWORK","DISPUTED","BLOCKED")}
 
 
@@ -232,11 +242,7 @@ def _result(db,pid,decision,**payload):
 
 
 def tick(db,pid,agent_id,session_id,role="executor",max_turns=MAX_TURNS):
-    """Atomic control decision and task reservation for an active LLM session.
-
-    Call repeatedly AFTER each outcome; host agent actually performs the work.
-    Independent review can only be approved by a different actor identity.
-    """
+    """Atomically schedule one admissible task, or request decomposition."""
     migrate(db)
     actor=txt(agent_id,"agent_id",128)
     session=txt(session_id,"session_id",128)
@@ -257,64 +263,86 @@ def tick(db,pid,agent_id,session_id,role="executor",max_turns=MAX_TURNS):
                 (pid,session)).fetchone()[0]
             if n>=max_turns:
                 outcome={"project_id":pid,"decision":"YIELD",
-                         "reason":"Session turn budget reached; resume using the same goal in a new Agent session.",
+                         "reason":"Session decision budget reached; preserve project for resumption.",
                          "resume_tool":"harness_auto_tick"}
             else:
                 db.execute("UPDATE auto_sessions SET turns=turns+1,last_seen=? "
                            "WHERE project_id=? AND session_id=?",(core.now(),pid,session))
                 _expire(db,pid)
+                unlocked=scheduler.unlock_parents(db,pid)
+                for key in unlocked:
+                    event(db,pid,key,"CHILDREN_VERIFIED_PARENT_UNLOCKED",{})
                 current=tasks(db,pid)
                 if not current:
-                    outcome=_result(db,pid,"PLAN",instruction="Agent creates the initial DAG via harness_auto_plan")
+                    outcome=_result(db,pid,"PLAN",
+                           instruction="Agent composes a bounded dependency DAG with resource classes.")
                 else:
                     verified={r["task_key"] for r in current if r["status"]=="VERIFIED"}
-                    choice=None
+                    chosen=None
+                    decision=None
+                    denied=[]
                     for row in current:
                         if role=="reviewer":
                             eligible=(row["status"]=="SUBMITTED" and row["producer"]!=actor
                                 and row["producer_session"] is not None
                                 and row["producer_session"]!=session)
                         else:
-                            eligible=(row["status"] in {"PENDING","REWORK"} and
-                                row["tries"]<MAX_ATTEMPTS and
+                            eligible=(row["status"] in {"PENDING","REWORK","SPLIT_REQUIRED"} and
+                                (row["tries"]<MAX_ATTEMPTS or row["status"]=="SPLIT_REQUIRED") and
                                 all(x in verified for x in json.loads(row["dependencies"])))
-                        if eligible:
-                            choice=row
+                        if not eligible:
+                            continue
+                        if role=="executor" and row["status"]=="SPLIT_REQUIRED":
+                            chosen=row
+                            decision="DECOMPOSE"
                             break
-                    if choice:
+                        allowed,why,spec=scheduler.capacity(db,pid,row)
+                        if not allowed:
+                            denied.append({"task_key":row["task_key"],"reason":why})
+                            continue
+                        chosen=row
+                        decision="REVIEW" if role=="reviewer" else "EXECUTE"
+                        break
+                    if chosen:
                         token=ident()
-                        state="REVIEWING" if role=="reviewer" else "RUNNING"
+                        state=("SPLITTING" if decision=="DECOMPOSE" else
+                               "REVIEWING" if decision=="REVIEW" else "RUNNING")
                         db.execute(
                             "UPDATE auto_tasks SET status=?,owner=?,owner_session=?,lease_token=?,"
                             "lease_until=?,tries=tries+?,updated_at=? WHERE id=?",
                             (state,actor,session,token,time.time()+LEASE_SECONDS,
-                             0 if role=="reviewer" else 1,core.now(),choice["id"]))
-                        event(db,pid,choice["task_key"],"CLAIMED",
-                              {"role":role,"actor":actor})
-                        outcome=_result(db,pid,"REVIEW" if role=="reviewer" else "EXECUTE",
-                            task_key=choice["task_key"],title=choice["title"],
-                            kind=choice["kind"],acceptance=choice["acceptance"],
-                            depends_on=json.loads(choice["dependencies"]),
-                            claim_token=token,
-                            instructions=("Review independently, inspect primary evidence/tests. "
-                                "Reject unsupported VERIFIED claims. Do not repeat the executor's claims."
-                                if role=="reviewer" else
-                                "Execute this task via available tools; gather evidence, tests and artifacts. "
-                                "Call harness_auto_submit, then call harness_auto_tick again."))
-                    elif all(r["status"]=="VERIFIED" for r in current):
+                             1 if decision=="EXECUTE" else 0,core.now(),chosen["id"]))
+                        info=scheduler.spec_for(db,chosen)
+                        event(db,pid,chosen["task_key"],"CLAIMED",
+                              {"role":role,"actor":actor,"decision":decision,
+                               "resource_class":info["profile"]})
+                        outcome=_result(db,pid,decision,
+                            task_key=chosen["task_key"],title=chosen["title"],
+                            kind=chosen["kind"],acceptance=chosen["acceptance"],
+                            depends_on=json.loads(chosen["dependencies"]),
+                            claim_token=token,resource_class=info["profile"],
+                            target_scopes=info["targets"],
+                            instructions=("Supply evidence-grounded child scopes via harness_auto_split; "
+                              "never merely increase timeout." if decision=="DECOMPOSE" else
+                              "Check original evidence independently; do not impersonate reviewer."
+                              if decision=="REVIEW" else
+                              "Run only this bounded work item. On timeout call harness_auto_timeout; "
+                              "on success submit and immediately tick again."))
+                    elif all(row["status"]=="VERIFIED" for row in current):
                         outcome=_result(db,pid,"FINAL_REVIEW",completed=len(current),
-                                        note="All task reviews approved; semantic/source authenticity "
-                                             "and project-level acceptance still need confirmation.")
-                    elif any(r["status"]=="BLOCKED" for r in current) and not any(
-                             r["status"] in {"RUNNING","REVIEWING","SUBMITTED"} for r in current):
+                              note="Semantic and primary source verification still required.")
+                    elif any(row["status"]=="BLOCKED" for row in current) and not any(
+                          row["status"] in {"RUNNING","REVIEWING","SUBMITTED","SPLITTING"}
+                          for row in current):
                         outcome=_result(db,pid,"BLOCKED",counts=_status_counts(current),
-                            instruction="Agent triages blockers, replans bounded repair tasks, "
-                                        "or requests user decision if permissions/scope are missing.")
+                            resource_wait=denied,
+                            instruction="Agent triages blocked scopes without unbounded retry.")
                     else:
                         outcome=_result(db,pid,"WAIT",counts=_status_counts(current),
-                            instruction=("Review pending work with distinct reviewer actor."
-                                if any(r["status"]=="SUBMITTED" for r in current)
-                                else "Waiting on active workers, unresolved prerequisites or disputed findings."))
+                            resource_wait=denied,
+                            instruction=("Insufficient reserved resources; do not oversubscribe Ghidra."
+                                         if denied else
+                                         "Check pending independent reviews or active worker leases."))
         db.commit()
         return outcome
     except Exception:
@@ -399,6 +427,7 @@ def review(db,pid,key,actor,token,verdict,rationale,evidence_checked):
             "UPDATE auto_tasks SET status=?,reviewer=?,reviewer_session=?,review_note=?,"
             "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
             (updated,actor,row["owner_session"],rationale,core.now(),row["id"]))
+        scheduler.feedback(db,pid,key,"PASS" if verdict=="APPROVE" else "REJECT")
         event(db,pid,key,"REVIEW_"+verdict,{"actor":actor,
               "evidence_checked":checked,"state":updated})
         db.commit()
@@ -655,3 +684,155 @@ def export_report(db,state,pid):
     temp.replace(dest)
     return {"report":str(dest),"state":info["project"]["status"],
             "publication":"local-only"}
+
+
+def _split_children(db,pid,parent,specs,reason):
+    """Insert grounded, bounded scopes atomically. Parent is NOT auto-approved."""
+    if not 2<=len(specs)<=8:
+        raise ValueError("Split requires 2..8 smaller child tasks")
+    if len(tasks(db,pid))+len(specs)>MAX_TASKS:
+        raise ValueError("Project task budget exceeded")
+    parent_spec=scheduler.spec_for(db,parent)
+    if parent_spec["split_depth"]>=scheduler.MAX_SPLIT_DEPTH:
+        raise ValueError("Maximum split depth reached; must BLOCK rather than loop")
+    deps=json.loads(parent["dependencies"])
+    previous={r["task_key"]:json.loads(r["dependencies"]) for r in tasks(db,pid)}
+    proposed=[]
+    all_targets=[]
+    for child in specs:
+        if not isinstance(child,dict):
+            raise ValueError("Split child must be an object")
+        scopes=scheduler.targets(child.get("targets",[]))
+        if not scopes:
+            raise ValueError("Split child needs bounded, evidence-grounded targets")
+        all_targets+=scopes
+        proposed.append({
+            "key":txt(child.get("key"),"child_key",80),
+            "title":txt(child.get("title"),"child_title",250),
+            "acceptance":txt(child.get("acceptance"),"child_acceptance",3000),
+            "priority":int(child.get("priority",parent["priority"])),
+            "kind":child.get("kind",parent["kind"]),
+            "resource_class":child.get("resource_class",parent_spec["profile"]),
+            "targets":scopes,"depends_on":deps,
+        })
+    if len(set(all_targets))!=len(all_targets):
+        raise ValueError("Child target scopes overlap")
+    if parent_spec["targets"] and set(all_targets)!=set(parent_spec["targets"]):
+        raise ValueError("Children must partition every parent target exactly")
+    validated=_validate_batch(proposed,previous)
+    for child in validated:
+        ident_task=ident()
+        db.execute(
+            "INSERT INTO auto_tasks(id,project_id,task_key,title,acceptance,"
+            "kind,priority,dependencies,status,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (ident_task,pid,child["key"],child["title"],child["acceptance"],
+             child["kind"],child["priority"],json.dumps(child["depends_on"]),
+             "PENDING",core.now()))
+        scheduler.attach(db,ident_task,child["kind"],child["resource_class"],
+                         child["targets"],parent_spec["split_depth"]+1,
+                         parent["task_key"])
+    db.execute(
+        "UPDATE auto_tasks SET status='WAIT_CHILDREN',owner=NULL,owner_session=NULL,"
+        "lease_token=NULL,lease_until=NULL,tries=0,updated_at=? WHERE id=?",
+        (core.now(),parent["id"]))
+    event(db,pid,parent["task_key"],"TASK_SPLIT",{
+        "reason":reason,"depth":parent_spec["split_depth"]+1,
+        "children":[x["key"] for x in validated]})
+    return {"parent_task_key":parent["task_key"],"status":"WAIT_CHILDREN",
+            "children":[x["key"] for x in validated],
+            "decision":"CONTINUE","next_tool":"harness_auto_tick",
+            "integration_rule":"Parent must be synthesized and independently reviewed after all children pass"}
+
+
+def report_timeout(db,pid,key,actor,token,diagnostic):
+    """Timeout never extends native analysis duration; halves scoped tasks."""
+    diagnostic=txt(diagnostic,"diagnostic",3000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        parent=_task(db,pid,key)
+        _holder(parent,actor,token,"RUNNING")
+        spec=scheduler.spec_for(db,parent)
+        adaptive=scheduler.feedback(db,pid,key,"TIMEOUT")
+        if spec["split_depth"]>=scheduler.MAX_SPLIT_DEPTH:
+            state="BLOCKED"
+        elif len(spec["targets"])>=2:
+            chunks=scheduler.groups(spec["targets"])
+            children=[]
+            for i,part in enumerate(chunks,1):
+                children.append({"key":scheduler.task_group_key(key,spec["split_depth"]+1,i),
+                    "title":parent["title"]+" — partition "+str(i),
+                    "acceptance":parent["acceptance"]+
+                      " Evidence and checks for ONLY these targets: "+", ".join(part),
+                    "priority":parent["priority"],"kind":parent["kind"],
+                    "resource_class":spec["profile"],"targets":part})
+            result=_split_children(db,pid,parent,children,"TIMEOUT: "+diagnostic)
+            result["adaptive"]=adaptive
+            db.commit()
+            return result
+        elif len(spec["targets"])==0:
+            state="SPLIT_REQUIRED"
+        else:
+            state="BLOCKED"
+        db.execute(
+            "UPDATE auto_tasks SET status=?,owner=NULL,owner_session=NULL,"
+            "lease_token=NULL,lease_until=NULL,review_note=?,updated_at=? WHERE id=?",
+            (state,"Timeout; narrow scope: "+diagnostic,core.now(),parent["id"]))
+        event(db,pid,key,"TASK_TIMEOUT",{"next":state,"diagnostic":diagnostic})
+        db.commit()
+        return {"task_key":key,"status":state,"decision":
+                "DECOMPOSE" if state=="SPLIT_REQUIRED" else "BLOCKED",
+                "adaptive":adaptive,
+                "instruction":"Agent must supply independently scoped children; "
+                              "do NOT increase timeout or repeat full Ghidra import."}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def split_task(db,pid,key,actor,token,children,rationale):
+    """After timeout with no atomic targets, the Agent supplies evidence scopes."""
+    rationale=txt(rationale,"rationale",3000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        parent=_task(db,pid,key)
+        _holder(parent,actor,token,"SPLITTING")
+        result=_split_children(db,pid,parent,children,rationale)
+        db.commit()
+        return result
+    except Exception:
+        db.rollback()
+        raise
+
+
+def resource_status(db,pid):
+    migrate(db)
+    project(db,pid)
+    status=scheduler.policy_status(db,pid)
+    return {**status,
+            "ready_tasks":sum(r["status"] in {"PENDING","REWORK"} for r in tasks(db,pid)),
+            "resource_mode":"advisory_reservation_no_os_enforcement"}
+
+
+def resource_config(db,pid,max_concurrency):
+    """Agent may tighten parallelism; never exceed physical CPU or four."""
+    if type(max_concurrency) is not int:
+        raise ValueError("max_concurrency must be integer")
+    h=scheduler.read_host()
+    if not 1<=max_concurrency<=min(scheduler.MAX_WORKERS,h.cpus):
+        raise ValueError("max_concurrency exceeds host or safety limit")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        project(db,pid)
+        policy=scheduler.ensure_policy(db,pid,h)
+        new=min(policy["concurrency"],max_concurrency)
+        db.execute(
+            "UPDATE auto_scheduler_policy SET max_concurrency=?,concurrency=?,"
+            "updated_at=? WHERE project_id=?",
+            (max_concurrency,new,core.now(),pid))
+        event(db,pid,None,"RESOURCE_CONFIGURED",
+              {"max_concurrency":max_concurrency})
+        db.commit()
+        return resource_status(db,pid)
+    except Exception:
+        db.rollback()
+        raise

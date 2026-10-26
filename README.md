@@ -1,6 +1,6 @@
 # RE Dragon — Autonomous Agent-Driven Reverse Engineering
 
-v0.5 implements a goal-level controller for Codex and Antigravity. The user provides ONE objective; the active AI Agent plans, executes, reviews and re-plans through MCP without requesting a new P-stage prompt each time.
+v0.6 adds adaptive CPU/RAM and single-heavy-Ghidra task scheduling to the v0.5 goal-level controller for Codex and Antigravity. The user provides ONE objective; the active AI Agent plans, executes, reviews and re-plans through MCP without requesting a new P-stage prompt each time.
 
 ## Start in the Agent chat
 
@@ -17,6 +17,18 @@ test whether a real reviewer spots a bug, rejects it, allows repair, and
 unlocks a dependent task without extra human prompts. Harness event traces
 can be evaluated with harness_pilot_evaluate, but actual Antigravity
 subagent execution must be verified in /agents.
+
+## v0.6 adaptive task admission and decomposition
+
+The orchestrator (not the user) decides what to execute next:
+resource_class estimates per task; at most one GHIDRA_HEAVY task globally;
+CPU/memory admission; bounded project worker concurrency; dynamic concurrency
+after review/timeout; bounded automatic target-list bisection when Ghidra
+times out; and independently reviewed child tasks before final synthesis.
+
+See [v0.6 scheduler and its limits](docs/V06_SCHEDULER.md).
+There is still no always-on LLM and no OS-level enforcement outside
+cooperating Harness sessions.
 
 ## v0.5 new features
 

@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation, autonomy, pilot
+from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler
 
 
 def schema(properties=None, required=None):
@@ -30,7 +30,9 @@ AUTO_WORK = {"type":"array","minItems":1,"maxItems":50,"items":{
   "properties":{
     "key": STRING,"title":STRING,"acceptance":STRING,
     "kind":{"type":"string","enum":sorted(autonomy.WORK)},
-    "priority":INTEGER,"depends_on":STRINGS
+    "priority":INTEGER,"depends_on":STRINGS,
+    "resource_class":{"type":"string","enum":sorted(scheduler.PROFILES)},
+    "targets":STRINGS
   },
   "required":["key","title","acceptance"],
   "additionalProperties":False
@@ -39,7 +41,33 @@ PLAN_STEPS = {"type": "array", "minItems": 1, "maxItems": 20, "items": {
     "type": "object", "required": ["title", "acceptance"],
     "properties": {"title": STRING, "acceptance": STRING},
     "additionalProperties": False}}
+SPLIT_CHILDREN = {"type":"array","minItems":2,"maxItems":8,"items":{
+  "type":"object",
+  "properties":{"key":STRING,"title":STRING,"acceptance":STRING,
+                "kind":{"type":"string","enum":sorted(autonomy.WORK)},
+                "priority":INTEGER,"targets":STRINGS,
+                "resource_class":{"type":"string","enum":sorted(scheduler.PROFILES)}},
+  "required":["key","title","acceptance","targets"],
+  "additionalProperties":False
+}}
 TOOLS = [
+  {"name":"harness_auto_resources",
+   "description":"Observe v0.6 global resource reservations, host CPU/RAM, heavy Ghidra slot and adaptive per-project concurrency without running processes.",
+   "inputSchema":schema({"project_id":STRING},["project_id"])},
+  {"name":"harness_auto_resource_config",
+   "description":"Set bounded maximum per-project concurrent tasks; never override single heavy Ghidra reservation.",
+   "inputSchema":schema({"project_id":STRING,"max_concurrency":INTEGER},
+                        ["project_id","max_concurrency"])},
+  {"name":"harness_auto_timeout",
+   "description":"Report a real tool timeout. Autosplit an annotated target list into smaller tasks or request DECOMPOSE when target scopes were unknown. Never increase Ghidra timeout.",
+   "inputSchema":schema({"project_id":STRING,"task_key":STRING,"agent_id":STRING,
+                         "claim_token":STRING,"diagnostic":STRING},
+                        ["project_id","task_key","agent_id","claim_token","diagnostic"])},
+  {"name":"harness_auto_split",
+   "description":"Complete DECOMPOSE by adding 2..8 evidence-grounded child tasks that cover the parent scope. Parent waits for their independent reviews before synthesis.",
+   "inputSchema":schema({"project_id":STRING,"task_key":STRING,"agent_id":STRING,
+                         "claim_token":STRING,"children":SPLIT_CHILDREN,"rationale":STRING},
+                        ["project_id","task_key","agent_id","claim_token","children","rationale"])},
     {
         "name":"harness_pilot_evaluate",
         "description":"Evaluate a bounded PILOT goal using persisted controller events. Fail closed on real subagent identity: even controller PASS remains PENDING_HOST_VERIFICATION until Antigravity /agents transcript is inspected.",
@@ -319,6 +347,16 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_auto_resources":
+            return autonomy.resource_status(db,args["project_id"])
+        if name == "harness_auto_resource_config":
+            return autonomy.resource_config(db,args["project_id"],args["max_concurrency"])
+        if name == "harness_auto_timeout":
+            return autonomy.report_timeout(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["diagnostic"])
+        if name == "harness_auto_split":
+            return autonomy.split_task(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["children"],args["rationale"])
         if name == "harness_pilot_evaluate":
             return pilot.evaluate(db,args["project_id"])
         if name == "harness_auto_projects":
@@ -462,7 +500,7 @@ def process(req, state):
         return {"jsonrpc": "2.0", "id": rid, "result": {
             "protocolVersion": client_version,
             "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": {"name": "re-dragon-harness", "version": "0.5.0"},
+            "serverInfo": {"name": "re-dragon-harness", "version": "0.6.0"},
         }}
     if method == "ping":
         return {"jsonrpc": "2.0", "id": rid, "result": {}}

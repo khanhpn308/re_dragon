@@ -17,6 +17,28 @@ Run harness_pilot_evaluate and inspect /agents transcript. SQLite PASS alone
 must NEVER be presented as proof of an independent reviewer or permission
 for mass execution.
 
+## v0.6 adaptive resource scheduling — mandatory
+
+Before first heavy analysis call, use harness_auto_resources to inspect
+available host reservations. In harness_auto_plan, give each task a
+resource_class (GHIDRA_HEAVY/CPU/LIGHT) and concrete atomic targets.
+Do NOT run Ghidra or heavy native REA outside a GHIDRA_HEAVY reserved task.
+Only one Ghidra-heavy reservation is allowed across all projects using this
+shared SQLite state. Work scopes must be appropriately small; reserve only the
+task assigned by harness_auto_tick.
+
+On a tool timeout, call harness_auto_timeout (not a longer same-scope retry).
+When it returns DECOMPOSE, automatically construct 2..8 smaller,
+nonoverlapping source-grounded child tasks via harness_auto_split, then keep
+ticking. Never ask the user to select the next batch. Parents wait for all
+children to pass separate review before a lightweight integration review.
+When resource pressure prevents a task, tick considers other ready work; on
+WAIT do not busy-loop or oversubscribe Ghidra. See docs/V06_SCHEDULER.md.
+
+Resource limits are advisory shared-Harness reservations and are not OS
+process controls. Confirm previous REA/Ghidra process stopped after timeout.
+Host activity outside the single shared state DB cannot be tracked.
+
 ## The continuous controller loop
 
 1. Call harness_auto_projects first to reuse an existing project; otherwise call harness_auto_start once with goal, explicit acceptance and local target if available.
