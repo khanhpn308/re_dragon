@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api
+from . import core, stable, agent_api, investigation
 
 
 def schema(properties=None, required=None):
@@ -24,7 +24,73 @@ def schema(properties=None, required=None):
 
 STRING = {"type": "string"}
 INTEGER = {"type": "integer"}
+STRINGS = {"type": "array", "items": STRING, "maxItems": 100}
+PLAN_STEPS = {"type": "array", "minItems": 1, "maxItems": 20, "items": {
+    "type": "object", "required": ["title", "acceptance"],
+    "properties": {"title": STRING, "acceptance": STRING},
+    "additionalProperties": False}}
 TOOLS = [
+    {
+        "name": "harness_begin_investigation",
+        "description": "Start an agent-owned natural-language research goal. Agent calls REA MCP directly; Python only checkpoints state.",
+        "inputSchema": schema({"goal": STRING, "agent": STRING, "binary_path": STRING},
+                              ["goal"]),
+    },
+    {
+        "name": "harness_set_investigation_plan",
+        "description": "Persist a goal-specific ordered plan authored by the AI Agent, not a Python workflow.",
+        "inputSchema": schema({"investigation_id": STRING, "steps": PLAN_STEPS},
+                              ["investigation_id", "steps"]),
+    },
+    {
+        "name": "harness_record_rea_observation",
+        "description": "Record an Agent-reported result of a direct REA MCP tool call with its Evidence ID and caveats. Agent-provided receipt is not cryptographically authenticated.",
+        "inputSchema": schema({
+            "investigation_id": STRING, "tool": STRING, "summary": STRING,
+            "evidence_id": STRING, "step": INTEGER,
+            "limitations": STRINGS, "target_sha256": STRING,
+        }, ["investigation_id", "tool", "summary"]),
+    },
+    {
+        "name": "harness_update_milestone",
+        "description": "Record progress; marking done requires a REA observation linked to this milestone.",
+        "inputSchema": schema({
+            "investigation_id": STRING, "step": INTEGER,
+            "status": {"type": "string", "enum": sorted(investigation.MILESTONES)},
+            "note": STRING,
+        }, ["investigation_id", "step", "status"]),
+    },
+    {
+        "name": "harness_record_finding",
+        "description": "Store the Agent's evidence-linked finding and its VERIFIED/INFERRED/UNKNOWN assessment; semantic review remains required.",
+        "inputSchema": schema({
+            "investigation_id": STRING, "statement": STRING,
+            "assessment": {"type": "string", "enum": sorted(investigation.ASSESSMENTS)},
+            "rationale": STRING, "observation_ids": STRINGS,
+            "symbol": STRING, "address": STRING,
+        }, ["investigation_id", "statement", "assessment", "rationale"]),
+    },
+    {
+        "name": "harness_investigation_status",
+        "description": "List open investigations or retrieve evidence, findings and milestones of one investigation.",
+        "inputSchema": schema({"investigation_id": STRING}),
+    },
+    {
+        "name": "harness_investigation_review",
+        "description": "Evaluate mechanical provenance gates separately from unverified external Evidence and semantic review.",
+        "inputSchema": schema({"investigation_id": STRING}, ["investigation_id"]),
+    },
+    {
+        "name": "harness_investigation_report",
+        "description": "Write an evidence-linked investigation report to the local state directory.",
+        "inputSchema": schema({"investigation_id": STRING}, ["investigation_id"]),
+    },
+    {
+        "name": "harness_close_investigation",
+        "description": "Close investigation with explicit limitations or reasons; never assert automatic protocol verification.",
+        "inputSchema": schema({"investigation_id": STRING, "note": STRING},
+                              ["investigation_id", "note"]),
+    },
     {
         "name": "harness_context",
         "description": "Discover local .so targets, existing run IDs and the agent-first capability boundary. Read-only; do this first.",
@@ -130,6 +196,33 @@ def call_tool(name, args, state):
         raise ValueError("Tool arguments must be a JSON object")
     with core.database(state) as db:
         stable.migrate(db)
+        investigation.migrate(db)
+        if name == "harness_begin_investigation":
+            return investigation.begin(db, args["goal"], args.get("agent", "codex-or-antigravity"),
+                                       args.get("binary_path"))
+        if name == "harness_set_investigation_plan":
+            return investigation.set_plan(db, args["investigation_id"], args["steps"])
+        if name == "harness_record_rea_observation":
+            return investigation.record_rea(
+                db, args["investigation_id"], args["tool"], args["summary"],
+                args.get("evidence_id"), args.get("step"), args.get("limitations"),
+                args.get("target_sha256"))
+        if name == "harness_update_milestone":
+            return investigation.set_step(db, args["investigation_id"], args["step"],
+                                          args["status"], args.get("note"))
+        if name == "harness_record_finding":
+            return investigation.record_finding(
+                db, args["investigation_id"], args["statement"], args["assessment"],
+                args["rationale"], args.get("observation_ids"),
+                args.get("symbol"), args.get("address"))
+        if name == "harness_investigation_status":
+            return investigation.status(db, args.get("investigation_id"))
+        if name == "harness_investigation_review":
+            return investigation.review(db, args["investigation_id"])
+        if name == "harness_investigation_report":
+            return investigation.report(db, state, args["investigation_id"])
+        if name == "harness_close_investigation":
+            return investigation.close(db, args["investigation_id"], args["note"])
         if name == "harness_context":
             return agent_api.context(db, state)
         if name == "harness_read_evidence":
@@ -201,7 +294,7 @@ def process(req, state):
         return {"jsonrpc": "2.0", "id": rid, "result": {
             "protocolVersion": client_version,
             "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": {"name": "re-dragon-harness", "version": "0.3.1"},
+            "serverInfo": {"name": "re-dragon-harness", "version": "0.4.0"},
         }}
     if method == "ping":
         return {"jsonrpc": "2.0", "id": rid, "result": {}}

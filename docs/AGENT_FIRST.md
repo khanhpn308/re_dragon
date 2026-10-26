@@ -1,39 +1,43 @@
-# Agent-first operation — RE Dragon
+# Agent-first RE Dragon — v0.4 playbook
 
-## Intended interface
+The **Codex/Antigravity Agent**, not the RE Dragon Python package, performs
+investigative reasoning and calls REA MCP tools.
 
-**User -> Codex / Antigravity -> Harness MCP + REA MCP -> Ghidra/JADX.**
+## User request example
 
-The user simply says:
+> Examine ReturnSaiyan ARM64 network initialization from socket receive through
+> decryption and protocol dispatcher. Decide a bounded plan, call REA MCP and
+> trace code. Attach Evidence IDs and address/function identity to each claim.
+> Stop if the provider cannot establish a fact, and report the gap as UNKNOWN.
+> Keep state so the next Agent session can continue.
 
-> Analyze the ReturnSaiyan native TCP handshake. Locate the first server bytes,
-> key initialization, frame decoding and opcode dispatch; cite precise
-> symbol/address evidence and mark VERIFIED, INFERRED and UNKNOWN.
+## What the Agent does
 
-The Agent investigates, calls tools and reports back. The user should not have
-to run a Python command or supply a run ID. Python executes behind MCP.
+1. Discover: harness_context, harness_investigation_status.
+2. Create goal: harness_begin_investigation with selected local ELF.
+3. Author milestones with acceptance criteria: harness_set_investigation_plan.
+4. Select and call REA MCP tools from its own connected MCP catalog. For example,
+   open_binary → search_procedures → analyze_function → inspect_analysis_view,
+   but use the **actual advertised input schema** from the active REA version.
+5. Record truthful REA receipts via harness_record_rea_observation with the
+   real Evidence ID and caveats. If no Evidence ID was returned, omit it.
+6. Mark milestones done only when linked observations exist; leave blocked
+   analysis steps visible.
+7. Record VERIFIED/INFERRED/UNKNOWN findings with explicit observation links.
+8. Review mechanical gates and write an Agent report. The Agent explains
+   limitations, unavailable facets and the next scientific question.
+9. Optionally close. If the session ends, query investigation_status in the
+   next session and continue from remaining milestones.
 
-## Agent orchestration
+REA MCP owns the native analysis session. Harness MCP owns the durable
+research ledger. The two servers are separate; there is no in-process REA
+client nor bridge that runs another decompiler.
 
-| Stage | Agent tools |
-|---|---|
-| Context and available binaries | harness_context, harness_list_runs |
-| Task plan | harness_create_plan |
-| Bounded work | harness_worker |
-| Review evidence | harness_evidence_index, harness_read_evidence, REA MCP |
-| Follow native call paths | harness_queue_function, harness_graph_start, REA MCP |
-| Record reasoning | harness_add_claim |
-| Verify source integrity and report | harness_validate, harness_render_report |
+## One-time MCP setup
 
-harness_next_actions offers candidate next operations but never makes technical
-decisions for the Agent. Source output should be treated as untrusted data.
+Connect both REA and the RE Dragon harness server to each Agent.
 
-## Initial configuration (one-time administrator setup)
-
-Connect *both* MCP servers to the Agent. RE Dragon Harness MCP is launched via
-the Python module internally by the MCP host. The user does not run it each day.
-
-Example Codex config.toml entry for a WSL2-hosted Codex:
+For Codex running in WSL2, merge this TOML entry into Codex configuration:
 
 ~~~toml
 [mcp_servers.re_dragon_harness]
@@ -43,8 +47,8 @@ startup_timeout_sec = 30
 tool_timeout_sec = 1800
 ~~~
 
-Example Antigravity MCP entry for Windows. Merge it with existing mcpServers;
-substitute the real distro and repo paths:
+For Antigravity on Windows, merge this JSON entry into its MCP configuration,
+keeping other servers intact and using the correct distro and checkout path:
 
 ~~~json
 {
@@ -58,26 +62,24 @@ substitute the real distro and repo paths:
 }
 ~~~
 
-The independent REA MCP registration stays enabled. Restart the host after
-MCP setup. Long Ghidra operations may exceed host tool-call timeouts; the
-Agent can use its terminal tool as an internal fallback without burdening the
-user with step-by-step commands.
+The host starts the service automatically. These are **one-time setup snippets**,
+not commands to run with every investigation. REA's own connection is configured
+independently via its official setup.
 
-## New discovery and evidence tools
+## Two sessions, one workflow
 
-- harness_context: bounded scan of .so targets in workspace root, native/ and
-  binaries/ plus existing run state. Does not execute binaries.
-- harness_read_evidence: bounded offset/limit reader for saved local REA JSON.
-  Checks SHA-256 and tags source content as untrusted.
-- harness_next_actions: run status and suggested MCP calls. The AI still plans.
+Session A: create plan, trace login/handshake functions via REA MCP, store
+receipts and conclusions. Session B: read investigation_status, inspect
+original REA data or reconfirm any stale Evidence IDs before carrying on.
+SQLite checkpoints persist, but **REA retained session Evidence IDs may not
+survive reconnecting the REA server**. Store an exported evidence bundle if
+long-term verification is needed; exported bundle provenance must be verified
+separately.
 
-## Limitations
+## Reliability and ethical boundary
 
-Work runs during the active Agent session. SQLite checkpoints persist after it
-ends; they do not turn the Agent into an always-on background service.
-Two Agents can share state but not internal reasoning or Ghidra sessions.
-REA CLI remains the subprocess backend of the existing worker, while direct
-long-lived REA MCP session integration is future work. Semantic G4 cannot be
-automatically approved from tool exit codes.
-
-**CLI entrypoints are retained only for developer diagnostics or fallback.**
+The investigation is not an always-on background Agent. RE Dragon cannot
+continue reasoning after the host AI Agent stops. The verification ledger has
+two explicit non-PASS gates: A5 external receipt authenticity UNVERIFIED and
+A6 semantics REVIEW_REQUIRED. Ghidra pseudocode remains a static approximation,
+not direct proof of protocol interoperability or game-server state.
