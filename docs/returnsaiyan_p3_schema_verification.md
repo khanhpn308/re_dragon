@@ -39,42 +39,42 @@ Tất cả 27 giá trị opcode truyền vào thanh ghi `w1` đều là các s�
 
 ## 3. Bảng Ánh xạ Toàn diện: Opcode $\rightarrow$ Handler $\rightarrow$ Payload Schema $\rightarrow$ Bằng chứng
 
-Toàn bộ 27 opcodes đã được trích xuất địa chỉ thực thi, vtable tương ứng trong `.data.rel.ro`, và chuỗi các lệnh gọi phương thức đọc dữ liệu tuần tự của `LeitorPacote`:
+Toàn bộ 27 opcodes đã được đối chiếu trực tiếp qua vtable Itanium ABI (`.data.rel.ro`), trích xuất địa chỉ thực thi lambda thực tế, kích thước hàm và chuỗi lệnh gọi `LeitorPacote` trong phạm vi ranh giới hàm AArch64:
 
-| Opcode | Tên Delegate / Lambda | Địa chỉ Thực thi | Địa chỉ Vtable | Chuỗi Giải mã Tuần tự (`LeitorPacote`) | Phân loại |
-| :---: | :--- | :---: | :---: | :--- | :---: |
-| `0x00` ( 0) | `$_5` | `0x007f06c8` | `0x014f0e60` | `str -> str -> u8 -> i32 -> str -> str` | `VERIFIED` |
-| `0x01` ( 1) | `$_6` | `0x007f0a0c` | `0x014f0ee0` | `str -> u8 -> i32 -> str -> str -> i16 -> u8[3] -> str -> u8[2] -> i32 -> str -> i16 -> str` | `VERIFIED` |
-| `0x04` ( 4) | `$_7` | `0x007f4ba4` | `0x014f0f60` | `str -> str -> str -> u8` | `VERIFIED` |
-| `0x05` ( 5) | `$_8` | `0x007f4de4` | `0x014f0fe0` | `str -> u8 -> str` | `VERIFIED` |
-| `0x07` ( 7) | `$_9` | `0x007f5060` | `0x014f1060` | `u8 -> str` | `VERIFIED` |
-| `0x08` ( 8) | `$_10` | `0x007f5604` | `0x014f10e0` | `str -> u8 -> str -> i32 -> i64` | `VERIFIED` |
-| `0x0A` (10) | `$_11` | `0x007f5690` | `0x014f1160` | `str -> u8 -> str -> i32 -> i64 -> i32[6]` | `VERIFIED` |
-| `0x10` (16) | `$_13` | `0x007f5a8c` | `0x014f1260` | `i32 -> i64 -> i32[6] -> u8[2] -> i32 -> u8 -> str -> i32[2] -> u8 -> i32 -> u8 -> i32[8] -> u8 -> str -> i32[2]` | `VERIFIED` |
-| `0x12` (18) | `$_12` | `0x007f57b0` | `0x014f11e0` | `u8 -> str -> i32 -> i64 -> i32[6] -> u8[2] -> i32 -> u8 -> str` | `VERIFIED` |
-| `0x20` (32) | `$_14` | `0x007f7078` | `0x014f12e0` | `i16 -> i64 -> i32 -> i16 -> i16 -> i32 -> i64` | `VERIFIED` |
-| `0x21` (33) | `$_15` | `0x007f7b9c` | `0x014f1360` | `str -> i32 -> u8 -> i32 -> u8[3] -> i32 -> u8[2] -> i32 -> u8[2] -> i64 -> i32 -> i16 -> u8 -> i32 -> u8 -> i32 -> i64 -> i32 -> i16[2] -> u8 -> i32 -> str -> u8` | `VERIFIED` |
-| `0x25` (37) | `$_16` | `0x007f7f00` | `0x014f13f0` | `i64 -> i32 -> i16 -> i16 -> u8 -> i32 -> str -> u8 -> str -> u8[2] -> i16[2] -> binario` | `VERIFIED` |
-| `0x26` (38) | `$_17` | `0x007f8058` | `0x014f1460` | `str -> u8 -> str -> u8 -> u8 -> i16 -> i16 -> binario` | `VERIFIED` |
-| `0x27` (39) | `$_18` | `0x007f85c8` | `0x014f14e0` | `i32` | `VERIFIED` |
-| `0x28` (40) | `$_19` | `0x007f94c4` | `0x014f1560` | `i32` | `VERIFIED` |
-| `0x29` (41) | `CChatManager::receberChatUpdate` | `0x0075eca4` | `0x014efa88` | `i64 -> str -> u8 -> str -> str -> u8 -> str -> str` | `VERIFIED` |
-| `0x2A` (42) | `$_20` | `0x007f9bfc` | `0x014f15e0` | `u8 -> i32[4] -> u8 -> i32 -> str -> u8[2] -> i32 -> u8 -> i32[7]` | `VERIFIED` |
-| `0x2B` (43) | `$_21` | `0x007fecb0` | `0x014f16e0` | `u8 -> u8 -> i32 -> i32 -> i16 -> i32 -> u8 -> i16 -> str -> i32` | `VERIFIED` |
-| `0x2C` (44) | `$_28` | `0x00803690` | `0x014f1a60` | `u8[2] -> str -> u8[2] -> str -> u8[2] -> str -> u8 -> i16 -> u8 -> i32[4] -> u8 -> str -> u8 -> i32 -> i64 -> u8` | `VERIFIED` |
-| `0x2D` (45) | `$_22` | `0x007ff730` | `0x014f1760` | *(Ủy thác gián tiếp qua con trỏ sự kiện nội bộ)* | `INFERRED` |
-| `0x2E` (46) | `$_23` | `0x00800818` | `0x014f17e0` | `u8 -> u8` | `VERIFIED` |
-| `0x2F` (47) | `$_29` | `0x008037f4` | `0x014f1ae0` | `u8[2] -> str -> u8[2] -> str -> u8[2] -> str -> u8 -> i16 -> u8 -> i32[4] -> u8 -> str -> u8 -> i32 -> i64 -> u8[2]` | `VERIFIED` |
-| `0x30` (48) | `$_24` | `0x00800be4` | `0x014f1860` | `u8[5] -> i32 -> u8 -> i32[4] -> u8[3] -> i32 -> u8 -> i32[2]` | `VERIFIED` |
-| `0x31` (49) | `$_30` | `0x00806288` | `0x014f1b60` | *(Ủy thác gián tiếp qua con trỏ sự kiện nội bộ)* | `INFERRED` |
-| `0x32` (50) | `$_25` | `0x008014e8` | `0x014f18e0` | `u8 -> str` | `VERIFIED` |
-| `0x33` (51) | `$_26` | `0x00801b60` | `0x014f1960` | `u8[2] -> i32 -> u8[4] -> i32` | `VERIFIED` |
-| `0x43` (67) | `$_27` | `0x00801ff0` | `0x014f19e0` | `i64 -> u8 -> i16 -> i32[2] -> str -> i64 -> i16` | `VERIFIED` |
+| Opcode | Tên Delegate / Lambda | Địa chỉ Thực thi | Địa chỉ Vtable | Chuỗi Giải mã (`LeitorPacote`) | Cấu trúc | Phân loại |
+| :---: | :--- | :---: | :---: | :--- | :---: | :---: |
+| `0x00` ( 0) | `$_5` | `0x007f06c8` | `0x014f0e60` | `str` | STATIC | `VERIFIED` |
+| `0x01` ( 1) | `$_6` | `0x007f0a0c` | `0x014f0ee0` | `str -> u8` *(Header; theo sau là mảng nhân vật biến thiên)* | DYNAMIC | `PARTIAL` |
+| `0x04` ( 4) | `$_7` | `0x007f4ba4` | `0x014f0f60` | `str -> str` | STATIC | `VERIFIED` |
+| `0x05` ( 5) | `$_8` | `0x007f4de4` | `0x014f0fe0` | `str` | STATIC | `VERIFIED` |
+| `0x07` ( 7) | `$_9` | `0x007f5060` | `0x014f1060` | `u8 -> str` | STATIC | `VERIFIED` |
+| `0x08` ( 8) | `$_10` | `0x007f5604` | `0x014f10e0` | `u8` *(Tail-call `b LeitorPacote::u8`)* | STATIC | `VERIFIED` |
+| `0x0A` (10) | `$_11` | `0x007f5690` | `0x014f1160` | `str` | STATIC | `VERIFIED` |
+| `0x10` (16) | `$_13` | `0x007f5a8c` | `0x014f1260` | `i32 -> i64 -> i32[6] -> u8[2] -> i32 -> u8 -> str` *(Header; 62 calls buff rẽ nhánh)* | DYNAMIC | `PARTIAL` |
+| `0x12` (18) | `$_12` | `0x007f57b0` | `0x014f11e0` | `u8 -> str` | STATIC | `VERIFIED` |
+| `0x20` (32) | `$_14` | `0x007f7078` | `0x014f12e0` | `i16 -> i64 -> i32 -> i16 -> i16 -> i32 -> i64` | DYNAMIC | `PARTIAL` |
+| `0x21` (33) | `$_15` | `0x007f7b9c` | `0x014f1360` | `str -> i32 -> u8 -> i32 -> u8[3] -> i32 -> u8` *(Header; vòng lặp battle entities)* | DYNAMIC | `PARTIAL` |
+| `0x25` (37) | `$_16` | `0x007f7f00` | `0x014f13e0` | `i64 -> i32 -> i16 -> i16 -> u8 -> i32` | STATIC | `VERIFIED` |
+| `0x26` (38) | `$_17` | `0x007f8058` | `0x014f1460` | `str -> u8 -> str -> u8` | STATIC | `VERIFIED` |
+| `0x27` (39) | `$_18` | `0x007f85c8` | `0x014f14e0` | `i32` | STATIC | `VERIFIED` |
+| `0x28` (40) | `$_19` | `0x007f94c4` | `0x014f1560` | `i32` | STATIC | `VERIFIED` |
+| `0x29` (41) | `chat_$_1` (`CChatManager::receberChatUpdate`) | `0x0075eca4` | `0x014efa88` | `i64 -> str -> u8 -> str -> str -> u8 -> str -> str` | STATIC | `VERIFIED` |
+| `0x2A` (42) | `$_20` | `0x007f9c2c` | `0x014f15e0` | `u8 -> i32[3]` *(Header; vòng lặp inventory slots)* | DYNAMIC | `PARTIAL` |
+| `0x2B` (43) | `$_21` | `0x007fd6fc` | `0x014f16d0` | `str -> u8[2] -> i32[2]` *(Header; tiến trình nhiệm vụ)* | DYNAMIC | `PARTIAL` |
+| `0x2C` (44) | `$_28` | `0x0080203c` | `0x014f1a50` | `i64 -> u8 -> i16 -> i32[2] -> str -> i64 -> i16` | STATIC | `VERIFIED` |
+| `0x2D` (45) | `$_22` | `0x007fed18` | `0x014f1750` | `u8[2] -> i32[2] -> i16` *(Header; thông báo sự kiện)* | DYNAMIC | `PARTIAL` |
+| `0x2E` (46) | `$_23` | `0x007ffc28` | `0x014f17d0` | `u8 -> str[5]` | STATIC | `VERIFIED` |
+| `0x2F` (47) | `$_29` | `0x00803800` | `0x014f1ad0` | `u8[2] -> str` *(Header; vòng lặp mail & attachments)* | DYNAMIC | `PARTIAL` |
+| `0x30` (48) | `$_24` | `0x00800864` | `0x014f1850` | `u8 -> u8` | STATIC | `VERIFIED` |
+| `0x31` (49) | `$_30` | `0x00806184` | `0x014f1b50` | `i32 -> str` | STATIC | `VERIFIED` |
+| `0x32` (50) | `$_25` | `0x00800f04` | `0x014f18d0` | `u8[5] -> i32 -> u8` *(Header; thuộc tính popup)* | DYNAMIC | `PARTIAL` |
+| `0x33` (51) | `$_26` | `0x00801828` | `0x014f1950` | `u8 -> str` | STATIC | `VERIFIED` |
+| `0x43` (67) | `$_27` | `0x00801bac` | `0x014f19d0` | `u8[2] -> i32 -> u8[4] -> i32` | STATIC | `VERIFIED` |
 
-> [!NOTE]
-> - Trình tự trường (`LeitorPacote`) và binding là **`VERIFIED`** do trích xuất trực tiếp từ mã máy AArch64.
-> - Hai opcode `0x2D` và `0x31` không gọi `LeitorPacote` trực tiếp trong handler mà gọi phương thức ủy quyền gián tiếp qua `this+...`, do đó được phân loại là **`INFERRED`**.
-> - Tên gọi nghiệp vụ (Role Login, Stats Sync, Chat Update, Ping, Pong...) là **`INFERRED`** dựa trên ngữ nghĩa chuỗi log và cấu trúc dữ liệu.
+> [!IMPORTANT]
+> **Giải thích nguyên nhân sai khác ban đầu (Audited Discrepancy Reconciliation):**
+> 1. Trong báo cáo P3 trước đó, một số handler có kích thước nhỏ (ví dụ `$_5` 704b, `$_7` 472b, `$_10` 8b, `$_11` 156b, `$_12` 600b, `$_24` 868b) bị phân tích tràn sang thân hàm kế tiếp do cửa sổ disassembly cố định. Việc đọc chính xác ranh giới hàm ELF (`.symtab`) và vtable Itanium ABI (`vtable + 0x40`) đã xác lập chính xác 100% các lệnh gọi thuộc về từng handler.
+> 2. Phân biệt tường minh giữa **`STATIC`** (chuỗi giải mã tuyến tính, hoàn tất và bất biến) và **`DYNAMIC`** (chuỗi header xác thực được, theo sau bởi các vòng lặp đếm số phần tử hoặc các khối rẽ nhánh điều kiện). Việc không ép cấu trúc động thành mảng tuyến tính giúp codec xử lý an toàn và không bị exception khi gặp payload thực tế.
 
 ---
 
@@ -128,7 +128,7 @@ Running P3 Comprehensive Verification Suite
 [P3 TEST 7] TCP Burst Coalescing (10 back-to-back packets in single read)...
   -> PASS: 10 coalesced packets cleanly separated and dispatched in single read.
 ======================================================================
-ALL P3 TESTS PASSED: 100% Robustness & Compatibility Verified!
+ALL P3 TESTS PASSED: Protocol Robustness & Streaming Integrity Verified!
 ======================================================================
 ```
 

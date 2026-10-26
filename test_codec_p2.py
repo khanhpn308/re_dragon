@@ -194,31 +194,30 @@ def test_tcp_concatenation_coalescing():
 
 def test_opcode_registry_schemas():
     print("[TEST 6] Testing Recovered Opcode Registry Schemas...")
-    # Test Opcode 0x00 (Notice): ["str", "str"]
-    body00 = bytearray()
     def pack_str(s):
         enc = s.encode('utf-8')
         return struct.pack(">H", len(enc)) + enc
-    body00.extend(pack_str("ERR_SERVER_MAINTENANCE"))
+
+    # Test Opcode 0x00 (Notice): ["str"] (reconciled with AArch64 $_5)
+    body00 = bytearray()
     body00.extend(pack_str("Server is currently undergoing scheduled maintenance."))
     parsed00 = OpcodeRegistry.parse_payload(0x00, bytes(body00))
     assert parsed00["parsed"] is True
-    assert parsed00["fields"][0] == "ERR_SERVER_MAINTENANCE"
-    assert "maintenance" in parsed00["fields"][1]
+    assert "maintenance" in parsed00["fields"][0]
+    assert parsed00["status"] == "VERIFIED"
 
-    # Test Opcode 0x2E (Action Status ACK): ["u8", "u8"]
-    body2E = bytes([0x01, 0x00])
-    parsed2E = OpcodeRegistry.parse_payload(0x2E, body2E)
-    assert parsed2E["parsed"] is True
-    assert parsed2E["fields"] == [1, 0]
+    # Test Opcode 0x07 (System Prompt): ["u8", "str"]
+    body07 = bytearray([0x01])
+    body07.extend(pack_str("Connection established successfully."))
+    parsed07 = OpcodeRegistry.parse_payload(0x07, bytes(body07))
+    assert parsed07["parsed"] is True
+    assert parsed07["fields"] == [1, "Connection established successfully."]
 
-    # Test Opcode 0x32 (Toast Notification): ["u8", "str"]
-    body32 = bytearray([0x03])
-    body32.extend(pack_str("You received 100 Dragon Gems!"))
-    parsed32 = OpcodeRegistry.parse_payload(0x32, bytes(body32))
-    assert parsed32["parsed"] is True
-    assert parsed32["fields"][0] == 3
-    assert parsed32["fields"][1] == "You received 100 Dragon Gems!"
+    # Test Opcode 0x30 (Party Team Update): ["u8", "u8"] (reconciled with AArch64 $_24)
+    body30 = bytes([0x04, 0x01])
+    parsed30 = OpcodeRegistry.parse_payload(0x30, body30)
+    assert parsed30["parsed"] is True
+    assert parsed30["fields"] == [4, 1]
 
     print("  -> PASS: Opcode schemas verified against deserializer signatures.")
 
@@ -234,5 +233,5 @@ if __name__ == "__main__":
     test_tcp_concatenation_coalescing()
     test_opcode_registry_schemas()
     print("=" * 70)
-    print("ALL TESTS PASSED: 100% Protocol Compatibility Verified Offline!")
+    print("ALL TESTS PASSED: Protocol Compatibility Model Verified Offline.")
     print("=" * 70)

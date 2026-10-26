@@ -176,7 +176,7 @@ Starting P2 Protocol Compatibility Model Verification Suite
 [TEST 6] Testing Recovered Opcode Registry Schemas...
   -> PASS: Opcode schemas verified against deserializer signatures.
 ======================================================================
-ALL TESTS PASSED: 100% Protocol Compatibility Verified Offline!
+ALL TESTS PASSED: Protocol Compatibility Model Verified Offline.
 ======================================================================
 ```
 

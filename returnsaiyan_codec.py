@@ -9,7 +9,7 @@ import struct
 from typing import List, Tuple, Optional, Dict, Any, Callable
 
 # ==============================================================================
-# 1. Cryptographic Core (ARM64 Verified)
+# 1. Cryptographic Core (ARM64 Machine-Code Verified)
 # ==============================================================================
 
 class CryptoCore:
@@ -378,53 +378,308 @@ class StreamDecoder:
 
 
 # ==============================================================================
-# 5. Opcode Registry & Schema Parsers
+# 5. Opcode Registry & Schema Parsers (Reconciled with AArch64 Machine Code)
 # ==============================================================================
 
 class OpcodeRegistry:
     """
-    Recovered Opcode Dispatch Table from CProtocolManager::registrarTratadores (0x007ede44).
-    Maps all 27 registered opcodes to human-readable names and schemas.
+    Recovered and Reconciled Opcode Dispatch Table from libaos_jogo.so.
+    Registrations:
+      - 26 opcodes in CProtocolManager::registrarTratadores (0x007ede44)
+      - 1 opcode in aos::registrarChat (0x0075eed4)
+    Distinguishes:
+      - STATIC (VERIFIED): Deterministic unconditional field sequence.
+      - DYNAMIC (PARTIAL): Verified header fields, followed by count-controlled loops
+                           or branch-dependent payload attributes.
     """
 
     OPCODES: Dict[int, Dict[str, Any]] = {
-        0x00: {"name": "MSG_BOX_NOTICE", "lambda": "$_5", "schema": ["str", "str"]},
-        0x01: {"name": "ROLE_LOGIN_RESPONSE", "lambda": "$_6", "schema": ["str", "u8", "i32", "str", "str", "i16", "u8", "u8", "u8", "str", "u8", "u8", "i32", "str", "i16"]},
-        0x04: {"name": "ACCOUNT_INFO", "lambda": "$_7", "schema": ["str", "str", "str"]},
-        0x05: {"name": "SERVER_REDIRECT", "lambda": "$_8", "schema": ["str", "u8", "str"]},
-        0x07: {"name": "SYSTEM_PROMPT", "lambda": "$_9", "schema": ["u8", "str"]},
-        0x08: {"name": "CHANGE_PSW_RESULT", "lambda": "$_10", "schema": ["str", "u8", "str"]},
-        0x0A: {"name": "REG_ACCOUNT_RESULT", "lambda": "$_11", "schema": ["str", "u8", "str"]},
-        0x10: {"name": "PLAYER_STATS_SYNC", "lambda": "$_13", "schema": ["i32", "i64", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "u8", "i32", "u8", "str", "i32", "i32", "u8", "i32", "u8", "i32", "i32", "i32", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "str", "i32"]},
-        0x12: {"name": "ENTITY_SPAWN_POSITION", "lambda": "$_12", "schema": ["u8", "str", "i32", "i64", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "u8"]},
-        0x20: {"name": "ENTITY_MOVE_SYNC", "lambda": "$_14", "schema": ["i16", "i64", "i32", "i16", "i16", "i32", "i64"]},
-        0x21: {"name": "BATTLE_STATE_UPDATE", "lambda": "$_15", "schema": ["str", "i32", "u8", "i32", "u8", "u8", "u8", "i32", "u8", "u8", "i32", "u8", "u8", "i64", "i32", "i16", "u8", "i32", "u8", "i32", "i64", "i32", "i16", "i16", "u8", "i32"]},
-        0x25: {"name": "SKILL_CAST_EVENT", "lambda": "$_16", "schema": ["i64", "i32", "i16", "i16", "u8", "i32", "str", "u8", "str", "u8"]},
-        0x26: {"name": "RESOURCE_BINARY_TRANSFER", "lambda": "$_17", "schema": ["str", "u8", "str", "u8", "u8", "i16", "i16", "binario"]},
-        0x27: {"name": "HEARTBEAT_PING", "lambda": "$_18", "schema": ["i32"]},
-        0x28: {"name": "HEARTBEAT_PONG", "lambda": "$_19", "schema": ["i32"]},
-        0x29: {"name": "CHAT_MESSAGE_UPDATE", "lambda": "CChatManager::receberChatUpdate", "schema": ["i64", "str", "u8", "str", "str", "u8", "str", "str"]},
-        0x2A: {"name": "INVENTORY_ITEM_UPDATE", "lambda": "$_20", "schema": ["u8", "i32", "i32", "i32", "i32", "u8", "i32", "str", "u8", "u8", "i32", "u8", "i32", "i32"]},
-        0x2B: {"name": "QUEST_PROGRESS_UPDATE", "lambda": "$_21", "schema": ["u8", "u8", "i32", "i32", "i16", "i32", "u8", "i16", "str", "i32"]},
-        0x2C: {"name": "GUILD_MEMBER_INFO", "lambda": "$_28", "schema": ["u8", "u8", "str", "u8", "u8", "str", "u8", "u8", "str", "u8", "i16", "u8", "i32", "i32", "i32", "i32"]},
-        0x2D: {"name": "DELEGATE_SPECIAL_ACTION", "lambda": "$_22", "schema": []},
-        0x2E: {"name": "ACTION_STATUS_ACK", "lambda": "$_23", "schema": ["u8", "u8"]},
-        0x2F: {"name": "MAIL_ITEM_ATTACHMENT", "lambda": "$_29", "schema": ["u8", "u8", "str", "u8", "u8", "str", "u8", "u8", "str", "u8", "i16", "u8", "i32", "i32", "i32", "i32", "u8", "str", "u8", "i32", "i64", "u8"]},
-        0x30: {"name": "PARTY_TEAM_UPDATE", "lambda": "$_24", "schema": ["u8", "u8", "u8", "u8", "u8", "i32", "u8", "i32", "i32", "i32"]},
-        0x31: {"name": "DELEGATE_SPECIAL_SUB_ACTION", "lambda": "$_30", "schema": []},
-        0x32: {"name": "TOAST_NOTIFICATION", "lambda": "$_25", "schema": ["u8", "str"]},
-        0x33: {"name": "FRIEND_STATUS_UPDATE", "lambda": "$_26", "schema": ["u8", "u8", "i32", "u8", "u8", "u8", "u8", "i32"]},
-        0x43: {"name": "MARKET_AUCTION_ORDER", "lambda": "$_27", "schema": ["i64", "u8", "i16", "i32", "i32", "str", "i64", "i16"]},
+        0x00: {
+            "name": "MSG_BOX_NOTICE",
+            "lambda": "$_5",
+            "handler_addr": 0x007f06c8,
+            "vtable_addr": 0x014f0e60,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["str"],
+            "description": "Server announcement notice dialog",
+        },
+        0x01: {
+            "name": "ROLE_LOGIN_RESPONSE",
+            "lambda": "$_6",
+            "handler_addr": 0x007f0a0c,
+            "vtable_addr": 0x014f0ee0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["str", "u8"],
+            "description": "Login message & role list (header + character array loop)",
+        },
+        0x04: {
+            "name": "ACCOUNT_INFO",
+            "lambda": "$_7",
+            "handler_addr": 0x007f4ba4,
+            "vtable_addr": 0x014f0f60,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["str", "str"],
+            "description": "Account token & credential validation",
+        },
+        0x05: {
+            "name": "SERVER_REDIRECT",
+            "lambda": "$_8",
+            "handler_addr": 0x007f4de4,
+            "vtable_addr": 0x014f0fe0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["str"],
+            "description": "Server redirection host string",
+        },
+        0x07: {
+            "name": "SYSTEM_PROMPT",
+            "lambda": "$_9",
+            "handler_addr": 0x007f5060,
+            "vtable_addr": 0x014f1060,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "str"],
+            "description": "System popup prompt with prompt type code",
+        },
+        0x08: {
+            "name": "CHANGE_PSW_RESULT",
+            "lambda": "$_10",
+            "handler_addr": 0x007f5604,
+            "vtable_addr": 0x014f10e0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8"],
+            "description": "Change password response status code (tail-call LeitorPacote::u8)",
+        },
+        0x0A: {
+            "name": "REG_ACCOUNT_RESULT",
+            "lambda": "$_11",
+            "handler_addr": 0x007f5690,
+            "vtable_addr": 0x014f1160,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["str"],
+            "description": "Account registration response message",
+        },
+        0x10: {
+            "name": "PLAYER_STATS_SYNC",
+            "lambda": "$_13",
+            "handler_addr": 0x007f5a8c,
+            "vtable_addr": 0x014f1260,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["i32", "i64", "i32", "i32", "i32", "i32", "i32", "i32", "u8", "u8", "i32", "u8", "str"],
+            "description": "Player base attributes followed by conditional buff branches (62 calls)",
+        },
+        0x12: {
+            "name": "ENTITY_SPAWN_POSITION",
+            "lambda": "$_12",
+            "handler_addr": 0x007f57b0,
+            "vtable_addr": 0x014f11e0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "str"],
+            "description": "Entity map zone spawn coordinates",
+        },
+        0x20: {
+            "name": "ENTITY_MOVE_SYNC",
+            "lambda": "$_14",
+            "handler_addr": 0x007f7078,
+            "vtable_addr": 0x014f12e0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["i16", "i64", "i32", "i16", "i16", "i32", "i64"],
+            "description": "Entity movement synchronization trajectory",
+        },
+        0x21: {
+            "name": "BATTLE_STATE_UPDATE",
+            "lambda": "$_15",
+            "handler_addr": 0x007f7b9c,
+            "vtable_addr": 0x014f1360,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["str", "i32", "u8", "i32", "u8", "u8", "u8", "i32", "u8"],
+            "description": "Battle environment header with entity & effect loops (20 calls)",
+        },
+        0x25: {
+            "name": "SKILL_CAST_EVENT",
+            "lambda": "$_16",
+            "handler_addr": 0x007f7f00,
+            "vtable_addr": 0x014f13e0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i64", "i32", "i16", "i16", "u8", "i32"],
+            "description": "Skill invocation event (caster, skill, coords, level, timestamp)",
+        },
+        0x26: {
+            "name": "RESOURCE_TRANSFER",
+            "lambda": "$_17",
+            "handler_addr": 0x007f8058,
+            "vtable_addr": 0x014f1460,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["str", "u8", "str", "u8"],
+            "description": "Resource asset manifest metadata",
+        },
+        0x27: {
+            "name": "HEARTBEAT_PING",
+            "lambda": "$_18",
+            "handler_addr": 0x007f85c8,
+            "vtable_addr": 0x014f14e0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i32"],
+            "description": "Heartbeat Ping (timestamp)",
+        },
+        0x28: {
+            "name": "HEARTBEAT_PONG",
+            "lambda": "$_19",
+            "handler_addr": 0x007f94c4,
+            "vtable_addr": 0x014f1560,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i32"],
+            "description": "Heartbeat Pong (timestamp echo)",
+        },
+        0x29: {
+            "name": "CHAT_MESSAGE_UPDATE",
+            "lambda": "chat_$_1",
+            "handler_addr": 0x0075eca4,
+            "vtable_addr": 0x014efa88,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i64", "str", "u8", "str", "str", "u8", "str", "str"],
+            "description": "Chat message update from CChatManager::receberChatUpdate",
+        },
+        0x2A: {
+            "name": "INVENTORY_ITEM_UPDATE",
+            "lambda": "$_20",
+            "handler_addr": 0x007f9c2c,
+            "vtable_addr": 0x014f15e0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["u8", "i32", "i32", "i32"],
+            "description": "Inventory container header with slot item array (41 calls)",
+        },
+        0x2B: {
+            "name": "QUEST_PROGRESS_UPDATE",
+            "lambda": "$_21",
+            "handler_addr": 0x007fd6fc,
+            "vtable_addr": 0x014f16d0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["str", "u8", "u8", "i32", "i32"],
+            "description": "Quest progress tracking with objective lists (13 calls)",
+        },
+        0x2C: {
+            "name": "GUILD_MEMBER_INFO",
+            "lambda": "$_28",
+            "handler_addr": 0x0080203c,
+            "vtable_addr": 0x014f1a50,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i64", "u8", "i16", "i32", "i32", "str", "i64", "i16"],
+            "description": "Guild member information record",
+        },
+        0x2D: {
+            "name": "SPECIAL_ACTION_NOTIFY",
+            "lambda": "$_22",
+            "handler_addr": 0x007fed18,
+            "vtable_addr": 0x014f1750,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["u8", "u8", "i32", "i32", "i16"],
+            "description": "Special action / event dispatch notification (10 calls)",
+        },
+        0x2E: {
+            "name": "ACTION_STATUS_CONFIRM",
+            "lambda": "$_23",
+            "handler_addr": 0x007ffc28,
+            "vtable_addr": 0x014f17d0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "str", "str", "str", "str", "str"],
+            "description": "Action status code with 5 string parameters",
+        },
+        0x2F: {
+            "name": "MAIL_ATTACHMENT_UPDATE",
+            "lambda": "$_29",
+            "handler_addr": 0x00803800,
+            "vtable_addr": 0x014f1ad0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["u8", "u8", "str"],
+            "description": "Mailbox header with dynamic mail items loop (41 calls)",
+        },
+        0x30: {
+            "name": "PARTY_TEAM_UPDATE",
+            "lambda": "$_24",
+            "handler_addr": 0x00800864,
+            "vtable_addr": 0x014f1850,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "u8"],
+            "description": "Party member count and team state",
+        },
+        0x31: {
+            "name": "SUB_ACTION_STATUS",
+            "lambda": "$_30",
+            "handler_addr": 0x00806184,
+            "vtable_addr": 0x014f1b50,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["i32", "str"],
+            "description": "Sub-action error code and diagnostic string",
+        },
+        0x32: {
+            "name": "TOAST_NOTIFICATION",
+            "lambda": "$_25",
+            "handler_addr": 0x00800f04,
+            "vtable_addr": 0x014f18d0,
+            "structure_type": "DYNAMIC",
+            "status": "PARTIAL",
+            "schema": ["u8", "u8", "u8", "u8", "u8", "i32", "u8"],
+            "description": "Toast notification popup attributes (18 calls)",
+        },
+        0x33: {
+            "name": "FRIEND_STATUS_UPDATE",
+            "lambda": "$_26",
+            "handler_addr": 0x00801828,
+            "vtable_addr": 0x014f1950,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "str"],
+            "description": "Friend online status and nickname",
+        },
+        0x43: {
+            "name": "MARKET_TRADE_ORDER",
+            "lambda": "$_27",
+            "handler_addr": 0x00801bac,
+            "vtable_addr": 0x014f19d0,
+            "structure_type": "STATIC",
+            "status": "VERIFIED",
+            "schema": ["u8", "u8", "i32", "u8", "u8", "u8", "u8", "i32"],
+            "description": "Market auction transaction status",
+        },
     }
 
     @classmethod
     def parse_payload(cls, opcode: int, payload: bytes) -> Dict[str, Any]:
         """
         Parses a decrypted payload using the recovered schema for the given opcode.
+        Robustly handles both STATIC verified schemas and DYNAMIC partial schemas.
         """
         meta = cls.OPCODES.get(opcode)
         if not meta:
-            return {"opcode": opcode, "raw_hex": payload.hex(), "parsed": False}
+            return {
+                "opcode": opcode,
+                "raw_hex": payload.hex(),
+                "parsed": False,
+                "error": f"Opcode 0x{opcode:02X} not registered in protocol dispatch table"
+            }
 
         reader = PacketReader(payload)
         fields = []
@@ -445,18 +700,32 @@ class OpcodeRegistry:
                 elif field_type == "binario":
                     rem = reader.remaining()
                     fields.append(reader.read_binary(rem))
-            return {
+
+            remaining_bytes = reader.remaining()
+            result: Dict[str, Any] = {
                 "opcode": opcode,
                 "name": meta["name"],
                 "lambda": meta["lambda"],
+                "handler_addr": hex(meta["handler_addr"]),
+                "structure_type": meta["structure_type"],
+                "status": meta["status"],
                 "fields": fields,
-                "remaining_bytes": reader.remaining(),
+                "remaining_bytes": remaining_bytes,
                 "parsed": True,
             }
+
+            if meta["structure_type"] == "DYNAMIC" and remaining_bytes > 0:
+                result["raw_variable_payload"] = reader.read_binary(remaining_bytes)
+                result["dynamic_body_length"] = remaining_bytes
+
+            return result
         except Exception as e:
             return {
                 "opcode": opcode,
                 "name": meta["name"],
+                "lambda": meta["lambda"],
+                "structure_type": meta["structure_type"],
+                "status": meta["status"],
                 "error": str(e),
                 "partial_fields": fields,
                 "parsed": False,

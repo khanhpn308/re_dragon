@@ -195,14 +195,14 @@ def test_multi_packet_coalescing_burst():
 
     giant_burst = bytearray()
     for i in range(10):
-        # alternate between Ping (0x27) and Toast (0x32)
+        # alternate between Ping (0x27) and Friend Status (0x33: ["u8", "str"])
         if i % 2 == 0:
             body = bytearray([0x27])
             body.extend(struct.pack(">i", 5000 + i))
         else:
-            body = bytearray([0x32])
+            body = bytearray([0x33])
             body.append(1)
-            msg = f"Toast notification #{i}".encode('utf-8')
+            msg = f"Friend #{i} is online".encode('utf-8')
             body.extend(struct.pack(">H", len(msg)) + msg)
 
         enc_payload = CryptoCore.cifrar_s2c(bytes(body), key)
@@ -220,8 +220,8 @@ def test_multi_packet_coalescing_burst():
             assert op == 0x27
             assert PacketReader(payload).read_i32() == 5000 + i
         else:
-            assert op == 0x32
-            parsed = OpcodeRegistry.parse_payload(0x32, payload)
+            assert op == 0x33
+            parsed = OpcodeRegistry.parse_payload(0x33, payload)
             assert f"#{i}" in parsed["fields"][1]
     print("  -> PASS: 10 coalesced packets cleanly separated and dispatched in single read.")
 
@@ -238,5 +238,5 @@ if __name__ == "__main__":
     test_server_greeting_prefix_invariance()
     test_multi_packet_coalescing_burst()
     print("=" * 70)
-    print("ALL P3 TESTS PASSED: 100% Robustness & Compatibility Verified!")
+    print("ALL P3 TESTS PASSED: Protocol Robustness & Streaming Integrity Verified.")
     print("=" * 70)

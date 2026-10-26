@@ -18,6 +18,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Syntax and bytecode
-        run: python -m compileall -q re_harness tests
+        run: python -m compileall -q re_harness tests returnsaiyan_codec.py test_codec_p2.py test_codec_p3.py test_codec_p3_1.py
       - name: SQLite, recovery, graph and MCP tests
         run: python -m unittest discover -s tests -v
+      - name: Protocol Compatibility & Schema Verification Suites (P2, P3, P3.1)
+        run: |
+          pip install pytest
+          pytest -v test_codec_p2.py test_codec_p3.py test_codec_p3_1.py
