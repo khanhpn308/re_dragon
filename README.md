@@ -8,6 +8,16 @@ v0.5 implements a goal-level controller for Codex and Antigravity. The user prov
 
 Both REA MCP and the RE Dragon Harness MCP must be connected once to the Agent host.
 
+## Pilot gate before bulk execution
+
+The source-controlled smoke protocol is in
+[docs/LIVE_PILOT.md](docs/LIVE_PILOT.md). A deliberately defective local
+fixture and the [re-dragon-reviewer subagent](.agents/agents/re-dragon-reviewer.md)
+test whether a real reviewer spots a bug, rejects it, allows repair, and
+unlocks a dependent task without extra human prompts. Harness event traces
+can be evaluated with harness_pilot_evaluate, but actual Antigravity
+subagent execution must be verified in /agents.
+
 ## v0.5 new features
 
 - Goal decomposition as an Agent-authored dependency graph.

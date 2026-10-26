@@ -47,7 +47,7 @@ class AutonomousHarnessTests(unittest.TestCase):
         autonomy.submit(self.db,pid,task["task_key"],producer,
                         task["claim_token"],"Reviewed assembly and code",
                         ["REA:raw-evidence-1"],["docs/analysis.md"],["test:passed"])
-        review=self.claim(pid,reviewer,"reviewer")
+        review=self.claim(pid,reviewer,"reviewer",session="review-session")
         self.assertEqual(review["decision"],"REVIEW")
         self.assertEqual(review["task_key"],task["task_key"])
         return autonomy.review(self.db,pid,review["task_key"],reviewer,
@@ -79,9 +79,9 @@ class AutonomousHarnessTests(unittest.TestCase):
         t=self.claim(pid)
         autonomy.submit(self.db,pid,t["task_key"],"exec",t["claim_token"],
              "Code inspected",["source:1"],[],["offline pytest passed"])
-        own=self.claim(pid,"exec","reviewer")
+        own=self.claim(pid,"exec","reviewer",session="review-session")
         self.assertNotEqual(own["decision"],"REVIEW")
-        external=self.claim(pid,"review-agent","reviewer")
+        external=self.claim(pid,"review-agent","reviewer",session="review-session")
         self.assertEqual(external["decision"],"REVIEW")
 
     def test_plan_rejects_dependency_cycle(self):
@@ -108,7 +108,7 @@ class AutonomousHarnessTests(unittest.TestCase):
         self.assertEqual(self.claim(pid,"other")["task_key"],"codec")
 
     def finish_review_only(self,pid,key,verdict="APPROVE"):
-        review=self.claim(pid,"review-agent","reviewer")
+        review=self.claim(pid,"review-agent","reviewer",session="review-session")
         self.assertEqual(review["task_key"],key)
         return autonomy.review(self.db,pid,key,"review-agent",
             review["claim_token"],verdict,"Primary source inspected",
@@ -160,7 +160,7 @@ class AutonomousHarnessTests(unittest.TestCase):
         first=self.claim(pid)
         autonomy.submit(self.db,pid,"discovery","exec",first["claim_token"],
                         "Done",["source:one"],[],[])
-        r=self.claim(pid,"review-agent","reviewer")
+        r=self.claim(pid,"review-agent","reviewer",session="review-session")
         with self.assertRaisesRegex(ValueError,"requires inspected"):
             autonomy.review(self.db,pid,"discovery","review-agent",
                             r["claim_token"],"APPROVE","No direct review",[])
@@ -281,6 +281,25 @@ class AutonomousHarnessTests(unittest.TestCase):
         self.assertTrue(report.is_file())
         self.assertIn("Restore offline protocol",report.read_text())
         self.assertIn("not cryptographically authenticated",report.read_text())
+
+    def test_distinct_actor_same_session_is_not_independent_review(self):
+        pid=self.goal()
+        self.seed(pid)
+        x=self.claim(pid,"main-actor",session="same-session")
+        autonomy.submit(self.db,pid,x["task_key"],"main-actor",
+                        x["claim_token"],"Prepared result",["src:foo"],[],[])
+        # Different actor string alone in the same LLM session cannot review.
+        spoof=self.claim(pid,"pretend-reviewer","reviewer",session="same-session")
+        self.assertNotEqual(spoof["decision"],"REVIEW")
+        real=self.claim(pid,"review-agent","reviewer",session="reviewer-session")
+        self.assertEqual(real["decision"],"REVIEW")
+        approved=autonomy.review(self.db,pid,real["task_key"],"review-agent",
+                 real["claim_token"],"APPROVE","Inspected primary test source",
+                 ["src:foo"])
+        self.assertEqual(approved["status"],"VERIFIED")
+        task=autonomy.task_detail(self.db,pid,x["task_key"])["task"]
+        self.assertEqual(task["producer_session"],"same-session")
+        self.assertEqual(task["reviewer_session"],"reviewer-session")
 
 if __name__=="__main__":
     unittest.main()

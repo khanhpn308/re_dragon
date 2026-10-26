@@ -73,6 +73,10 @@ def migrate(db):
         PRIMARY KEY(project_id,session_id)
       );
     """)
+    cols={r["name"] for r in db.execute("PRAGMA table_info(auto_tasks)")}
+    for col in ("owner_session","producer_session","reviewer_session"):
+        if col not in cols:
+            db.execute("ALTER TABLE auto_tasks ADD COLUMN "+col+" TEXT")
     db.commit()
 
 
@@ -267,7 +271,9 @@ def tick(db,pid,agent_id,session_id,role="executor",max_turns=MAX_TURNS):
                     choice=None
                     for row in current:
                         if role=="reviewer":
-                            eligible=row["status"]=="SUBMITTED" and row["producer"]!=actor
+                            eligible=(row["status"]=="SUBMITTED" and row["producer"]!=actor
+                                and row["producer_session"] is not None
+                                and row["producer_session"]!=session)
                         else:
                             eligible=(row["status"] in {"PENDING","REWORK"} and
                                 row["tries"]<MAX_ATTEMPTS and
@@ -279,9 +285,9 @@ def tick(db,pid,agent_id,session_id,role="executor",max_turns=MAX_TURNS):
                         token=ident()
                         state="REVIEWING" if role=="reviewer" else "RUNNING"
                         db.execute(
-                            "UPDATE auto_tasks SET status=?,owner=?,lease_token=?,"
+                            "UPDATE auto_tasks SET status=?,owner=?,owner_session=?,lease_token=?,"
                             "lease_until=?,tries=tries+?,updated_at=? WHERE id=?",
-                            (state,actor,token,time.time()+LEASE_SECONDS,
+                            (state,actor,session,token,time.time()+LEASE_SECONDS,
                              0 if role=="reviewer" else 1,core.now(),choice["id"]))
                         event(db,pid,choice["task_key"],"CLAIMED",
                               {"role":role,"actor":actor})
@@ -360,10 +366,10 @@ def submit(db,pid,key,actor,token,summary,evidence,artifacts,checks):
     try:
         row=_task(db,pid,key)
         _holder(row,actor,token,"RUNNING")
-        db.execute("UPDATE auto_tasks SET status='SUBMITTED',producer=?,result=?,"
+        db.execute("UPDATE auto_tasks SET status='SUBMITTED',producer=?,producer_session=?,result=?,"
                    "evidence_json=?,artifacts_json=?,verification_json=?,"
-                   "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
-                   (actor,summary,json.dumps(sources),json.dumps(files),
+                   "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+                   (actor,row["owner_session"],summary,json.dumps(sources),json.dumps(files),
                     json.dumps(validations),core.now(),row["id"]))
         event(db,pid,key,"SUBMITTED",{"producer":actor,"evidence_count":len(sources),
                                     "artifact_count":len(files)})
@@ -390,9 +396,9 @@ def review(db,pid,key,actor,token,verdict,rationale,evidence_checked):
         updated="VERIFIED" if verdict=="APPROVE" else (
             "BLOCKED" if row["tries"]>=MAX_ATTEMPTS else "REWORK")
         db.execute(
-            "UPDATE auto_tasks SET status=?,reviewer=?,review_note=?,"
-            "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
-            (updated,actor,rationale,core.now(),row["id"]))
+            "UPDATE auto_tasks SET status=?,reviewer=?,reviewer_session=?,review_note=?,"
+            "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+            (updated,actor,row["owner_session"],rationale,core.now(),row["id"]))
         event(db,pid,key,"REVIEW_"+verdict,{"actor":actor,
               "evidence_checked":checked,"state":updated})
         db.commit()
@@ -472,7 +478,9 @@ def snapshot(db,pid):
                   "kind":x["kind"],"status":x["status"],
                   "dependencies":json.loads(x["dependencies"]),
                   "tries":x["tries"],"producer":x["producer"],
-                  "reviewer":x["reviewer"],"review_note":x["review_note"]}
+                  "reviewer":x["reviewer"],"review_note":x["review_note"],
+                  "producer_session":x["producer_session"],
+                  "reviewer_session":x["reviewer_session"]}
                  for x in arr],
         "latest_events":[dict(x) for x in db.execute(
             "SELECT task_key,event,details,timestamp FROM auto_events "
@@ -537,7 +545,7 @@ def resolve_issue(db,pid,source_key,audit_key,note):
             raise ValueError("Original task is not disputed")
         db.execute(
             "UPDATE auto_tasks SET status='REWORK',tries=0,"
-            "owner=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
+            "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
             (core.now(),source["id"]))
         event(db,pid,source_key,"AUDIT_RESOLVED",
               {"audit_task":audit_key,"next":"rerun original","note":note})

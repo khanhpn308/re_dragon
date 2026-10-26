@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation, autonomy
+from . import core, stable, agent_api, investigation, autonomy, pilot
 
 
 def schema(properties=None, required=None):
@@ -40,6 +40,11 @@ PLAN_STEPS = {"type": "array", "minItems": 1, "maxItems": 20, "items": {
     "properties": {"title": STRING, "acceptance": STRING},
     "additionalProperties": False}}
 TOOLS = [
+    {
+        "name":"harness_pilot_evaluate",
+        "description":"Evaluate a bounded PILOT goal using persisted controller events. Fail closed on real subagent identity: even controller PASS remains PENDING_HOST_VERIFICATION until Antigravity /agents transcript is inspected.",
+        "inputSchema":schema({"project_id":STRING},["project_id"]),
+    },
     {
         "name":"harness_auto_projects",
         "description":"DISCOVER/RESUME: list existing goal-level projects; no user-provided project ID needed after Agent restart.",
@@ -314,6 +319,8 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_pilot_evaluate":
+            return pilot.evaluate(db,args["project_id"])
         if name == "harness_auto_projects":
             return autonomy.list_projects(db,args.get("limit",30))
         if name == "harness_auto_task_detail":
