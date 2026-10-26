@@ -7,7 +7,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from re_harness import core, stable, mcp
+from re_harness import core, stable, mcp, agent_api
 
 class StableTests(unittest.TestCase):
     def setUp(self):
@@ -215,6 +215,39 @@ class StableTests(unittest.TestCase):
         replies=[json.loads(line) for line in result.stdout.splitlines()]
         self.assertEqual([item["id"] for item in replies],[1,2,3])
         self.assertFalse(replies[-1]["result"]["isError"])
+
+    def test_agent_discovers_local_target_without_cli_input(self):
+        context=agent_api.context(self.db,self.state,root=self.base)
+        self.assertEqual(context["interface"],"agent-first")
+        self.assertTrue(any(item["name"]=="fixture.so"
+                            for item in context["binary_candidates"]))
+
+    def test_agent_reads_paged_task_evidence(self):
+        run=self.plan()
+        stable.work(self.db,self.state,run,steps=1)
+        first=agent_api.read_evidence(self.db,self.state,run,"inspect",limit=12)
+        self.assertTrue(first["digest_matches_file"])
+        self.assertEqual(first["offset"],0)
+        self.assertEqual(first["bytes_read"],12)
+        self.assertIsNotNone(first["next_offset"])
+        next_page=agent_api.read_evidence(self.db,self.state,run,"inspect",
+                                           offset=first["next_offset"],limit=12)
+        self.assertEqual(next_page["offset"],12)
+
+    def test_agent_next_actions_and_mcp_tools(self):
+        run=self.plan()
+        advice=agent_api.next_actions(self.db,run)
+        self.assertEqual(advice["decision_owner"],
+                         "AI Agent (Codex/Antigravity), not Python")
+        names=[tool["name"] for tool in mcp.TOOLS]
+        self.assertIn("harness_context",names)
+        self.assertIn("harness_read_evidence",names)
+        self.assertIn("harness_next_actions",names)
+        response=mcp.process({
+            "jsonrpc":"2.0","id":4,"method":"tools/call",
+            "params":{"name":"harness_next_actions",
+                      "arguments":{"run_id":run}}},self.state)
+        self.assertFalse(response["result"]["isError"])
 
 if __name__=="__main__":
     unittest.main()

@@ -1,87 +1,50 @@
 # RE Dragon — Reverse Engineering Agent Harness
 
-**Stable-engine source v0.3.0**. Python + SQLite orchestration for static ELF analysis using REA CLI and Ghidra on WSL2. Shared work via Codex and Antigravity. The engine has been authored but has NOT been runtime-tested on your workstation.
+**The product interface is an AI Agent (Codex or Antigravity), not a Python CLI.**
 
-## Included
+The user describes a reverse-engineering objective in natural language. The Agent
+plans, calls MCP tools, reads native evidence, selects additional functions,
+records findings and reports back. Python + SQLite are internal infrastructure.
 
-- Workflow JSON, persistent planning and pinned binary SHA-256.
-- SQLite task leases, global native-engine slots, multi-worker coordination.
-- Heartbeats, native child PID/start-time awareness, guarded stale recovery.
-- Per-attempt stdout/stderr evidence, SHA-256, JSON error validation, bounded retry/backoff.
-- Bounded symbol/address candidate indexing and call-graph expansion.
-- Existing G0–G4 validation gates and claim records; graph edges remain only static candidates.
-- Updated CLI and local MCP server, documentation, old Prototype P0 retained.
+## Example request to an Agent
 
-## Requirements
+> Analyze ReturnSaiyan ARM64 networking from TCP handshake to opcode dispatch.
+> Find exact symbols and addresses, verify key/frame handling from pseudocode,
+> preserve evidence and checkpoint the task. Distinguish VERIFIED, INFERRED
+> and UNKNOWN, and report the remaining gaps.
 
-WSL2/Linux, Python 3.10+, REA CLI with the Ghidra native provider configured. Store the ELF and APK locally; .gitignore excludes them.
+No manual Python commands or run IDs required.
 
-## Installation and workflow
+## System roles
 
-~~~bash
-cd ~/returnsaiyan-re
-git pull --ff-only origin main
-python3 -m re_harness doctor
+- **Codex / Antigravity:** active orchestration and technical reasoning.
+- **REA MCP + Ghidra/JADX:** native and Android decompilation tools.
+- **RE Dragon Harness MCP:** tasks, checkpoints, evidence, leases, retries, gates.
+- **Python + SQLite:** implementation details behind MCP, not an end-user UI.
 
-# Full investigation, default native capacity=1
-python3 -m re_harness run --binary ./libaos_jogo.so --timeout 1800 --retries 2 --capacity 1
+The Agent-facing MCP has been expanded with harness_context,
+harness_read_evidence and harness_next_actions, alongside existing planning,
+worker, graph and validation tools. A persistent REA MCP native-analysis session
+has not yet been integrated into the worker; it invokes REA CLI internally.
 
-# Or plan, obtain RUN_ID, then run limited steps
-python3 -m re_harness plan --binary ./libaos_jogo.so
-python3 -m re_harness worker --run-id RUN_ID --max-steps 1
-python3 -m re_harness status --run-id RUN_ID
-python3 -m re_harness resume --run-id RUN_ID --max-steps 10
-~~~
+## Setup and operating protocol
 
-Two workers may share the same SQLite state directory and coordinate through leases. Keep capacity consistent between workers; capacity=1 is the conservative default for large Ghidra binaries.
+Read [Agent-first setup](docs/AGENT_FIRST.md) and [Agent instructions](AGENTS.md).
+Initial MCP registration happens once. Afterwards work begins through chat.
 
-## Bounded static call graph
+## Capabilities and boundaries
 
-~~~bash
-python3 -m re_harness graph-start --run-id RUN_ID \
-  --root 'EXACT_SYMBOL_OR_ADDRESS' --depth 2 --max-nodes 30
-python3 -m re_harness resume --run-id RUN_ID --max-steps 30
-python3 -m re_harness graph --run-id RUN_ID
-python3 -m re_harness evidence --run-id RUN_ID --limit 100
-~~~
+Durable SQLite checkpoints, native task leasing for multiple Agents, process
+recovery, bounded static graph candidates, evidence digests and claims.
+Generated binary/evidence files stay Git-ignored and local.
 
-The graph only adds nodes from identifiable static call candidates returned in raw REA function dossiers. Absence of indexed edges is UNKNOWN rather than proof of no runtime calls.
+A success code or static call graph cannot prove runtime protocol behavior.
+G0–G3 check artifact/provenance integrity; G4 requires code-level review.
+The current implementation is suitable as an Agent-controlled backend but
+is not an always-on autonomous service.
 
-## Recovery
+For CLI diagnostics (not normal user workflow), see [Stable engine developer
+notes](docs/STABLE.md). CI has validated mocked REA scenarios; real Ghidra
+integration still needs verification in the selected WSL2 environment.
 
-~~~bash
-python3 -m re_harness recover --run-id RUN_ID
-python3 -m re_harness resume --run-id RUN_ID --retries 2
-python3 -m re_harness validate --run-id RUN_ID
-python3 -m re_harness report --run-id RUN_ID
-~~~
-
-Recovery refuses to steal an expired lease if the original native process is still alive. The runner terminates only its own child process group on timeout. Exhausted retries require operator attention.
-
-## MCP
-
-Use the existing local harness MCP server: python3 -m re_harness.mcp. It adds worker, graph, symbol index and recovery tools. It is separate from REA's full MCP server.
-
-For Antigravity on Windows, add this server entry to its existing MCP JSON, adjusting the distro name from wsl -l -v:
-
-~~~json
-{
-  "mcpServers": {
-    "re_dragon_harness": {
-      "command": "wsl.exe",
-      "args": ["-d", "Ubuntu-24.04", "--exec", "bash", "-lc",
-        "cd \"$HOME/returnsaiyan-re\" && exec python3 -m re_harness.mcp"]
-    }
-  }
-}
-~~~
-
-Do not replace your existing MCP entries. Long Ghidra jobs may exceed client MCP timeouts; use terminal CLI if necessary.
-
-## Data / acceptance
-
-Generated runs, reports and Evidence remain in the Git-ignored .re_harness_mvp/ directory. G0–G3 cover integrity and provenance; G4 semantic interpretation always requires review. There is no automatic game login, server probing, binary patching or proof of protocol compatibility.
-
-Architecture and limits: docs/STABLE.md. Agent protocol: AGENTS.md. Previous MVP architecture: docs/MVP.md.
-
-**No automated/runtime tests were executed for this release, as requested.** The code is delivered, but reliability must not be represented as empirically verified.
+Repository: https://github.com/khanhpn308/re_dragon

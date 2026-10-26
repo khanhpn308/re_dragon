@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "re-dragon-harness"
-version = "0.3.0"
-description = "Evidence-first local reverse engineering agent harness"
+version = "0.3.1"
+description = "Agent-first evidence-oriented native reverse engineering harness"
 requires-python = ">=3.10"
 dependencies = []
 

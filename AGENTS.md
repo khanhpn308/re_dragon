@@ -1,33 +1,50 @@
-# AGENTS.md — RE Dragon
+# RE Dragon — Agent-first operating contract
 
-Canonical source repository: https://github.com/khanhpn308/re_dragon
+Canonical repository: https://github.com/khanhpn308/re_dragon
 
-## Mission
+## Product goal (highest priority)
 
-Analyze local ReturnSaiyan Android native binaries with REA and Ghidra. Preserve evidence and avoid unsupported protocol claims.
+The user delegates a research goal to **Codex or Antigravity in natural language**.
+The AI Agent is the planner, investigator, tool caller, reviewer, and reporter.
+Python, SQLite and the harness are invisible implementation details: **never ask
+the user to run Python CLI commands, copy run IDs, operate checkpoints or select
+function names as part of the normal workflow.**
 
-## Execution
+## Agent's normal workflow
 
-- Use WSL2 Ubuntu with local ELF and REA installed.
-- Plan: python3 -m re_harness plan --binary ./libaos_jogo.so
-- Work: python3 -m re_harness worker --run-id ID --max-steps 1 --capacity 1
-- Resume: python3 -m re_harness resume --run-id ID
-- Graph: python3 -m re_harness graph-start --run-id ID --root EXACT_SYMBOL_OR_ADDRESS
-- Candidates: python3 -m re_harness evidence --run-id ID
-- Recover: python3 -m re_harness recover --run-id ID
-- Validate/report: python3 -m re_harness validate --run-id ID and report --run-id ID
-- MCP: python3 -m re_harness.mcp
+1. Call harness_context to discover local binaries and existing runs. Reuse a
+   relevant run when practical and avoid duplicate analysis.
+2. Use harness_create_plan for the chosen binary and investigation workflow.
+3. Call harness_worker or harness_execute_step with bounded steps. Those MCP
+   operations use REA CLI/SQLite internally; they are not user-facing.
+4. Inspect harness_evidence_index and harness_read_evidence, plus the REA MCP
+   function/xref tools when available. Do not trust symbol names as conclusions.
+5. Choose next functions based on actual code; call harness_queue_function or
+   harness_graph_start with exact addresses/symbols.
+6. Store claims using harness_add_claim: VERIFIED, INFERRED, UNKNOWN with
+   symbol/address, task key and rationale.
+7. Use harness_validate and harness_render_report, then give the user a concise
+   technical report with verified evidence, uncertainties and next action.
+8. Use harness_next_actions only as optional workflow hints, not as a substitute
+   for agent planning. Resume interrupted work. Do not steal a live process lease.
 
-## Multi-Agent rules
+## Separation of responsibility
 
-1. Share one SQLite state directory and use identical engine capacity (default 1).
-2. Claim tasks through the harness, not parallel unmanaged REA runs.
-3. Do not reclaim leases from still-running native processes.
-4. Review raw REA Evidence including coverage and limitations before scientific claims.
-5. Static call edges and symbol candidates are hypotheses, not runtime truth.
-6. Mark VERIFIED, INFERRED and UNKNOWN distinctly; G4 requires semantic review.
-7. Do not contact game servers or capture credentials without explicit scope.
-8. Commit code, workflow JSON and safe curated reports only. Never commit APK/SO, secrets, packet captures or raw evidence.
-9. Prioritize delivered code as requested; do not claim unrun tests passed.
+- User: high-level task and final review.
+- Codex/Antigravity: decisions, planning, interpretation and dialogue.
+- Harness MCP: tasks, persistence, evidence navigation, leases and gates.
+- REA MCP/Ghidra/JADX: native inspection.
+- Python/SQLite: internal tool implementation. CLI is fallback/diagnostics.
 
-Reference: docs/STABLE.md.
+## Safety and evidence
+
+Static local analysis first. No server probing, APK patching, interception of
+credentials or external account actions absent authorization. Only safe code,
+schemas and curated findings belong on GitHub. APKs/SOs, packets and raw
+evidence stay local. REA success never proves protocol semantics; G4 remains
+semantic review. Share one state directory; default REA engine capacity is 1.
+Do not claim tests were run unless they were.
+
+**All future project documentation should be Agent-first, not Python-CLI-first.**
+
+See docs/AGENT_FIRST.md and docs/STABLE.md.
