@@ -24,6 +24,11 @@ class MarkerRecoveryTests(unittest.TestCase):
         with core.database(self.dbdir) as db:
             autonomy.migrate(db)
             self.project_id = autonomy.start(db, "A safe test goal", "Review is mandatory")["project_id"]
+            autonomy.plan(db, self.project_id, [{
+                "key": "test-slice", "title": "Long test task",
+                "acceptance": "Persisted evidence is required", "kind": "TEST",
+                "priority": 10, "depends_on": [],
+            }])
         initial = wd.load(self.state)
         initial.update(
             project_id=self.project_id,
