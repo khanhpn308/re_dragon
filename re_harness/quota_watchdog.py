@@ -183,8 +183,9 @@ def evaluate(result, previous, timestamp):
                      last_reason="CLI returned different conversation ID; refusing context switch")
         return state
     # Never trust a reported new session on a failed invocation.
-    if not state.get("conversation_id") and isinstance(cid,str) and re.fullmatch(
-            r"[0-9A-Za-z-]{8,128}",cid):
+    if (not state.get("conversation_id") and result.get("code")==0 and
+            status=="SUCCESS" and isinstance(cid,str) and re.fullmatch(
+            r"[0-9A-Za-z-]{8,128}",cid)):
         state["conversation_id"]=cid
     if auth_error(err):
         state.update(status="NEEDS_USER",next_at=0,
@@ -273,7 +274,9 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                        binary=binary,mode=mode)
     except (OSError,ValueError):
         outcome={"code":127,"data":{},"stderr":"Failed to launch CLI"}
-    updated=evaluate(outcome,current,ts)
+    # Schedule reset/backoff from the completed CLI result, not turn start.
+    finished=time.time() if clock is None else clock
+    updated=evaluate(outcome,current,finished)
     if harness_state_dir is not None and updated["status"] not in {
             "WAIT_QUOTA","ERROR","NEEDS_USER","WAIT_RETRY"}:
         try:
