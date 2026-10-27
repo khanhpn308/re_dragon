@@ -1,3 +1,29 @@
+## v0.6.4 — live status & Telegram ChatOps (optional)
+
+- `./dragon status` now reports AGENT_RUNNING, PID, elapsed seconds
+  and supervisor heartbeat while the tracked CLI process is alive.
+  Heartbeat verifies that the supervisor is alive, **not** that the agent
+  is making progress.
+- Telegram delivery uses the established open-source python-telegram-bot library,
+  long polling, private chat allowlist, and local SQLite queue.
+- One-time setup:
+  ```bash
+  python3 -m venv .venv-telegram
+  .venv-telegram/bin/pip install -e '.[telegram]'
+  ./dragon telegram setup
+  ./dragon telegram start
+  ```
+- On later reboots, `./dragon start` brings up the Telegram bot automatically
+  if the credential file and Python environment exist.
+- Commands in the private DM: `/status`, `/tasks`, `/task <text>`.
+  Sending a task queues it; the next headless turn triages it. Telegram
+  does not run shell commands, grant permissions or bypass quota.
+- Local credentials: `~/.config/re-dragon/telegram.json` (chmod 600).
+  Never commit/send Telegram bot tokens or use a shared group for control.
+- Before pulling this version while a headless turn is active, finish the
+  turn and stop the watchdog, then update/restart to avoid concurrent code versions.
+  A real Telegram delivery/polling test requires an actual bot token and user ID.
+
 ## One-command unattended ReturnSaiyan mode (v0.6.3)
 
 After updating your checkout, use only:

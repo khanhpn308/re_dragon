@@ -1,36 +1,93 @@
 #!/usr/bin/env bash
-# RE Dragon: one-command production start/status/stop.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACTION="${1:-status}"
 SESSION="re-dragon-quota-watchdog"
+BOT_SESSION="re-dragon-telegram"
+BOT_CFG="$HOME/.config/re-dragon/telegram.json"
+BOT_PY="$ROOT/.venv-telegram/bin/python"
 cd "$ROOT"
+
+bot_start() {
+  command -v tmux >/dev/null || { echo "Install tmux first" >&2; return 1; }
+  [[ -f "$BOT_CFG" ]] || { echo "Configure once: ./dragon telegram setup" >&2; return 1; }
+  [[ -x "$BOT_PY" ]] || {
+    echo "Install Telegram library once:" >&2
+    echo "python3 -m venv .venv-telegram && .venv-telegram/bin/pip install -e '.[telegram]'" >&2
+    return 1
+  }
+  if tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
+    echo "Telegram bot already running"
+    return 0
+  fi
+  cmd=("$BOT_PY" -m re_harness.telegram_bridge run --workspace "$ROOT")
+  printf -v quoted '%q ' "${cmd[@]}"
+  tmux new-session -d -s "$BOT_SESSION" -c "$ROOT" "$quoted"
+  echo "Telegram bot started (tmux)."
+}
+bot_stop() {
+  if command -v tmux >/dev/null && tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
+    tmux kill-session -t "$BOT_SESSION"
+  fi
+  echo "Telegram bot stopped."
+}
+bot_status() {
+  if command -v tmux >/dev/null && tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
+    echo "Telegram bot: RUNNING"
+  else
+    echo "Telegram bot: STOPPED"
+  fi
+}
 
 case "$ACTION" in
   start)
-    command -v agy >/dev/null || { echo "Antigravity CLI (agy) not installed/logged in" >&2; exit 1; }
-    command -v tmux >/dev/null || { echo "Install tmux once: sudo apt install tmux" >&2; exit 1; }
-    if tmux has-session -t "$SESSION" 2>/dev/null; then
-      echo "RE Dragon is already running. ./dragon status"
-      exit 0
+    command -v agy >/dev/null || { echo "Missing authenticated agy CLI" >&2; exit 1; }
+    command -v tmux >/dev/null || { echo "Install tmux: sudo apt install tmux" >&2; exit 1; }
+    if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+      args=(--workspace "$ROOT")
+      if [[ -n "${RE_DRAGON_HARNESS_STATE_DIR:-}" ]]; then
+        args+=(--state-dir "$RE_DRAGON_HARNESS_STATE_DIR")
+      fi
+      python3 -m re_harness.easy_start "${args[@]}"
+      bash scripts/quota-watchdog.sh start
+    else
+      echo "Watchdog already running"
     fi
-    args=(--workspace "$ROOT")
-    if [[ -n "${RE_DRAGON_HARNESS_STATE_DIR:-}" ]]; then
-      args+=(--state-dir "$RE_DRAGON_HARNESS_STATE_DIR")
+    if [[ -f "$BOT_CFG" ]]; then
+      bot_start || echo "Telegram not started. Agent Watchdog remains running." >&2
     fi
-    python3 -m re_harness.easy_start "${args[@]}"
-    bash scripts/quota-watchdog.sh start
     ;;
-  status|stop|logs)
-    bash scripts/quota-watchdog.sh "$ACTION"
+  status)
+    bash scripts/quota-watchdog.sh status
+    bot_status
+    ;;
+  stop)
+    bash scripts/quota-watchdog.sh stop
+    bot_stop
+    ;;
+  logs)
+    bash scripts/quota-watchdog.sh logs
+    if tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
+      echo "-- Telegram bot process output --"
+      tmux capture-pane -pt "$BOT_SESSION" -S -12
+    fi
     ;;
   resume)
-    # Explicit operator rearm after investigating a NEEDS_USER/ERROR blocker.
     bash scripts/quota-watchdog.sh reset
     "$0" start
     ;;
+  telegram)
+    CMD="${2:-status}"
+    case "$CMD" in
+      setup) python3 -m re_harness.telegram_bridge setup ;;
+      start) bot_start ;;
+      stop) bot_stop ;;
+      status) bot_status ;;
+      *) echo "Usage: ./dragon telegram {setup|start|stop|status}" >&2; exit 2 ;;
+    esac
+    ;;
   *)
-    echo "Usage: ./dragon {start|status|logs|stop|resume}" >&2
+    echo "Usage: ./dragon {start|status|logs|stop|resume|telegram}" >&2
     exit 2
     ;;
 esac
