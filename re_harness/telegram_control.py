@@ -1,5 +1,6 @@
 """One-time, expiring Telegram confirmations for project lifecycle mutations."""
 from __future__ import annotations
+import contextlib
 import json
 import secrets
 import sqlite3
@@ -26,7 +27,7 @@ def propose(workspace,update_id,owner_id,kind,payload,ttl=600):
     request_id=secrets.token_hex(5)
     nonce=secrets.token_hex(6)
     now=time.time()
-    with telegram_inbox.connection(workspace) as db:
+    with contextlib.closing(telegram_inbox.connection(workspace)) as db, db:
         ensure(db)
         db.execute("BEGIN IMMEDIATE")
         old=db.execute("SELECT * FROM control_requests WHERE update_id=?",
@@ -42,7 +43,7 @@ def propose(workspace,update_id,owner_id,kind,payload,ttl=600):
             "SELECT * FROM control_requests WHERE id=?",(request_id,)).fetchone()),True
 
 def list_pending(workspace,owner_id):
-    with telegram_inbox.connection(workspace) as db:
+    with contextlib.closing(telegram_inbox.connection(workspace)) as db, db:
         ensure(db)
         return [dict(x) for x in db.execute(
           "SELECT * FROM control_requests WHERE owner_id=? AND status='PENDING'"
@@ -52,7 +53,7 @@ def list_pending(workspace,owner_id):
 def claim(workspace,request_id,nonce,owner_id,decision):
     if decision not in DECISIONS:
         raise ValueError("Unknown control decision")
-    with telegram_inbox.connection(workspace) as db:
+    with contextlib.closing(telegram_inbox.connection(workspace)) as db, db:
         ensure(db)
         db.execute("BEGIN IMMEDIATE")
         row=db.execute(
@@ -74,7 +75,7 @@ def claim(workspace,request_id,nonce,owner_id,decision):
 def complete(workspace,request_id,status,result):
     if status not in {"DONE","FAILED","FAILED_START"}:
         raise ValueError("Invalid control result status")
-    with telegram_inbox.connection(workspace) as db:
+    with contextlib.closing(telegram_inbox.connection(workspace)) as db, db:
         ensure(db)
         db.execute("BEGIN IMMEDIATE")
         db.execute("UPDATE control_requests SET status=?,result=? "

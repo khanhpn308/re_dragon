@@ -675,7 +675,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                     await update.message.reply_text("Goal must be 5-500 characters; acceptance <=1000")
                     return
                 kind,payload="NEW_GOAL",{"goal":goal,"acceptance":acceptance}
-                desc=f"New goal: {goal[:250]}\\nAcceptance: {(acceptance or 'Harness-defined')[:200]}"
+                desc=f"New goal: {goal[:250]}\nAcceptance: {(acceptance or 'Harness-defined')[:200]}"
             else:
                 target=body.split()[0]
                 if len(target)>80:
@@ -687,7 +687,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 row,_=telegram_control.propose(
                     root,update.update_id,update.effective_user.id,kind,payload)
                 await update.message.reply_text(
-                    f"Please confirm within 10 minutes:\\n{desc}\\n"
+                    f"Please confirm within 10 minutes:\n{desc}\n"
                     "No project has been created or switched yet.",
                     reply_markup=control_keyboard(row))
             except (ValueError,sqlite3.Error) as exc:
@@ -848,8 +848,8 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 return
             telegram_control.complete(root,req_id,"DONE",result["project_id"])
             await query.edit_message_text(
-                f"Project {result['project_id']} activated.\\n"
-                f"Watchdog launcher: {launch}\\n"
+                f"Project {result['project_id']} activated.\n"
+                f"Watchdog launcher: {launch}\n"
                 "Use /status and /progress to follow execution.")
             return
         if data.startswith("appr:"):

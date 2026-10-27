@@ -5,6 +5,7 @@ In the ambiguous network-failure case, prefer a missed notification over spam.
 Global per-bot storage also prevents duplicate notifications across worktrees.
 """
 from __future__ import annotations
+import contextlib
 import hashlib
 import os
 import sqlite3
@@ -35,7 +36,7 @@ def claim(token, owner, event_key, *, base=None):
     if not isinstance(event_key,str) or not 0<len(event_key)<=240:
         raise ValueError("Invalid notification event key")
     fingerprint=bot_fingerprint(token)
-    with connection(base) as db:
+    with contextlib.closing(connection(base)) as db, db:
         db.execute("BEGIN IMMEDIATE")
         cursor=db.execute(
           "INSERT OR IGNORE INTO delivery(bot,owner,event_key,status,claimed_at) "
@@ -44,14 +45,14 @@ def claim(token, owner, event_key, *, base=None):
         return cursor.rowcount==1
 
 def delivered(token, owner, event_key, *, base=None):
-    with connection(base) as db:
+    with contextlib.closing(connection(base)) as db, db:
         db.execute(
           "UPDATE delivery SET status='SENT', sent_at=? "
           "WHERE bot=? AND owner=? AND event_key=? AND status='CLAIMED'",
           (time.time(),bot_fingerprint(token),int(owner),event_key))
 
 def status(token,owner,event_key,*,base=None):
-    with connection(base) as db:
+    with contextlib.closing(connection(base)) as db, db:
         row=db.execute(
           "SELECT status FROM delivery WHERE bot=? AND owner=? AND event_key=?",
           (bot_fingerprint(token),int(owner),event_key)).fetchone()
