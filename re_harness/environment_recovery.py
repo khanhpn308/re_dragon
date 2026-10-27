@@ -126,14 +126,23 @@ def _database(root, *, read_only):
 
 def _eligibility(db, pid):
     pr = db.execute("SELECT status FROM auto_projects WHERE id=?", (pid,)).fetchone()
-    if pr is None or pr["status"] != "ACTIVE":
-        raise NotReady("Project must be ACTIVE")
+    if pr is None or pr["status"] not in {"ACTIVE", "BLOCKED"}:
+        raise NotReady("Project must be ACTIVE or BLOCKED solely by recoverable S6")
     task = db.execute("SELECT * FROM auto_tasks WHERE project_id=? AND task_key=?",
                       (pid, TARGET)).fetchone()
     if task is None:
         return None
     if task["status"] != "BLOCKED":
         return None
+    # A blocked project is expected after the scheduler discovers that S6
+    # cannot run without an Android test device. Never resurrect projects
+    # that are blocked for unrelated or multiple independent reasons.
+    blocked = db.execute(
+        "SELECT task_key FROM auto_tasks WHERE project_id=? AND status='BLOCKED'",
+        (pid,),
+    ).fetchall()
+    if len(blocked) != 1 or blocked[0]["task_key"] != TARGET:
+        raise NotReady("Cannot requeue S6 while other project tasks are BLOCKED")
     note = str(task["review_note"] or "").lower().strip()
     if not note.startswith(ADB_BLOCKER):
         raise NotReady("S6 blocked for a different reason; do not auto-requeue")
@@ -205,7 +214,20 @@ def recover(root, pid, *, apply=False, automatic=False,
              "Reverify signature, endpoint and V2 compatibility before install. "
              "Original blocker preserved in auto_events.", core.now(),current["id"])
         )
+        prior_project_state = db.execute(
+            "SELECT status FROM auto_projects WHERE id=?", (pid,)
+        ).fetchone()["status"]
+        if prior_project_state == "BLOCKED":
+            changed = db.execute(
+                "UPDATE auto_projects SET status='ACTIVE',updated_at=? "
+                "WHERE id=? AND status='BLOCKED'",
+                (core.now(), pid),
+            ).rowcount
+            if changed != 1:
+                raise NotReady("Concurrent project status modification; rollback")
         autonomy.event(db,pid,TARGET,"ENVIRONMENT_RECOVERED",{
+            "prior_project_status": prior_project_state,
+            "project_status_after": "ACTIVE",
             "original_reason":str(current["review_note"] or "")[:200],
             "device_serial":device["serial"], "device_model":device["model"],
             "candidate_apk":apk["path"], "candidate_sha256":apk["sha256"],
@@ -213,6 +235,7 @@ def recover(root, pid, *, apply=False, automatic=False,
         })
         db.commit()
         return {"result": "REQUEUED", "project_id": pid, "task": TARGET,
+                "project_status": "ACTIVE",
                 "device_model": device["model"], "apk_sha256": apk["sha256"],
                 "apk_validation": apk["note"]}
     except Exception:

@@ -368,6 +368,16 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     if current["status"] in STOP:
         return current
     if harness_state_dir is not None:
+        # Before the terminal-project guard, permit only explicitly verified
+        # Android ADB-environment recovery at the turn boundary. This is a
+        # task requeue, never a task verification or E2E acceptance.
+        try:
+            environment_recovery.recover(
+                workspace, current["project_id"], apply=True, automatic=True
+            )
+        except (environment_recovery.NotReady, OSError, ValueError,
+                sqlite3.Error, subprocess.SubprocessError, KeyError):
+            pass
         try:
             info=quota_guard.inspect(harness_state_dir,current.get("project_id"))
             current["project_id"]=info["project_id"]
@@ -411,17 +421,6 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                 str(exc), severity="CRITICAL"
             )
             return current
-    # Automatic S6 environment recovery only at a bounded, between-turn
-    # checkpoint. If ADB/APK proof is absent, leave BLOCKED untouched and
-    # continue other independent tasks. A failed probe never fails the turn.
-    if harness_state_dir is not None and current.get("project_id"):
-        try:
-            environment_recovery.recover(
-                workspace, current["project_id"], apply=True, automatic=True
-            )
-        except (environment_recovery.NotReady, OSError, ValueError,
-                sqlite3.Error, subprocess.SubprocessError):
-            pass
     progress_before = (durable_progress_cursor(harness_state_dir, current.get("project_id"))
                        if harness_state_dir is not None else None)
     prompt=prompt_path.read_text(encoding="utf8")
