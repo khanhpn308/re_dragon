@@ -296,6 +296,11 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     """One bounded turn. Production passes harness_state_dir for project guard."""
     ts=time.time() if clock is None else clock
     current=load(state_path)
+    if current.get("drain_requested"):
+        current.pop("drain_requested", None)
+        current.update(status="PAUSED", next_at=0, last_reason="Gracefully drained; no new turns will be scheduled")
+        save(state_path, current)
+        return current
     if current["status"] in STOP:
         return current
     if harness_state_dir is not None:
@@ -527,14 +532,55 @@ def exit_code_for_status(status):
     return 1
 
 
+def drain_watchdog(
+    workspace: Union[str, Path],
+    timeout: float = 120.0,
+    poll_interval: float = 2.0,
+) -> Dict[str, Any]:
+    """Gracefully request drain of the running watchdog loop and wait for any in-flight turn to finish."""
+    root = Path(workspace).resolve()
+    state_file = root / ".re_harness" / "quota-watchdog.json"
+    state = load(state_file)
+    state["drain_requested"] = True
+    save(state_file, state)
+
+    start_ts = time.time()
+    runtime_path = root / ".re_harness" / "agent-runtime.json"
+    live = runtime_state.snapshot(runtime_path)
+    if live:
+        while time.time() - start_ts < timeout:
+            time.sleep(poll_interval)
+            live = runtime_state.snapshot(runtime_path)
+            if not live:
+                break
+        if live:
+            return {
+                "drained": False,
+                "error": f"Drain timeout ({timeout}s) exceeded while PID {live['pid']} still active",
+                "status": "TIMEOUT",
+                "in_flight_pid": live["pid"],
+            }
+
+    st = load(state_file)
+    st.pop("drain_requested", None)
+    st.update(status="PAUSED", next_at=0, last_reason="Gracefully drained; no new turns will be scheduled")
+    save(state_file, st)
+    return {
+        "drained": True,
+        "status": "PAUSED",
+        "state": st,
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("run", "once", "status", "reset", "pause", "resume"))
+    parser.add_argument("action", choices=("run", "once", "status", "reset", "pause", "resume", "drain"))
     parser.add_argument("--workspace", default=".")
     parser.add_argument("--conversation", default="")
     parser.add_argument("--project-id", default="")
     parser.add_argument("--harness-state-dir", default="")
     parser.add_argument("--binary", default="agy")
+    parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--mode", default="auto",
                         choices=("auto","accept-edits","plan"))
     args = parser.parse_args(argv)
@@ -560,6 +606,13 @@ def main(argv=None):
         state.update(status="PAUSED", next_at=0, last_reason="Paused by operator")
         save(state_file, state)
         print(json.dumps(state, indent=2, ensure_ascii=False))
+        return 0
+    if args.action == "drain":
+        res = drain_watchdog(root, timeout=args.timeout)
+        if not res.get("drained"):
+            print(f"Warning: {res.get('error')}", file=sys.stderr)
+            return 1
+        print(json.dumps(res.get("state", {}), indent=2, ensure_ascii=False))
         return 0
     if args.action == "run":
         signal.signal(signal.SIGTERM, terminate_group)
@@ -598,6 +651,11 @@ def main(argv=None):
             return exit_code_for_status(state["status"]) if state["status"] in STOP else 0
         while True:
             state=load(state_file)
+            if state.get("drain_requested"):
+                state.pop("drain_requested", None)
+                state.update(status="PAUSED", next_at=0, last_reason="Gracefully drained; loop stopped")
+                save(state_file, state)
+                return EXIT_PAUSED
             if state["status"] in STOP:
                 return exit_code_for_status(state["status"])
             if state.get("next_at",0)>time.time():

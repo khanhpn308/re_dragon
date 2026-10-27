@@ -306,6 +306,157 @@ class SafetyCheckError(Exception):
     """Raised when pre-retry safety invariants are violated."""
 
 
+def detect_task_side_effects(task_row: dict, workspace: Optional[Path] = None) -> list[str]:
+    """Detect whether a task produced partial side effects before its lease expired."""
+    effects = []
+    # 1. Non-empty result
+    res = task_row.get("result")
+    if res and str(res).strip():
+        effects.append("task_result_recorded")
+
+    # 2. Non-empty evidence_json
+    ev_raw = task_row.get("evidence_json")
+    if ev_raw:
+        try:
+            ev = json.loads(ev_raw) if isinstance(ev_raw, str) else ev_raw
+            if ev:
+                effects.append(f"task_evidence_recorded({len(ev) if isinstance(ev, (list, dict)) else 1})")
+        except Exception:
+            effects.append("task_evidence_raw_present")
+
+    # 3. Non-empty artifacts_json
+    art_raw = task_row.get("artifacts_json")
+    if art_raw:
+        try:
+            art = json.loads(art_raw) if isinstance(art_raw, str) else art_raw
+            if art:
+                effects.append(f"task_artifacts_recorded({len(art) if isinstance(art, (list, dict)) else 1})")
+        except Exception:
+            effects.append("task_artifacts_raw_present")
+
+    # 4. Check workspace git status if workspace provided
+    if workspace and Path(workspace).exists():
+        ws = Path(workspace)
+        try:
+            import subprocess
+            proc = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=str(ws),
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if proc.returncode == 0:
+                lines = [l.strip() for l in proc.stdout.splitlines() if l.strip()]
+                # Filter out .re_harness files and caches
+                uncommitted = [l for l in lines if not any(p in l for p in [".re_harness", "__pycache__", ".pytest_cache"])]
+                if uncommitted:
+                    effects.append(f"workspace_uncommitted_changes({len(uncommitted)}_files)")
+        except Exception:
+            pass
+
+    return effects
+
+
+def reconcile_stale_leases_safely(
+    workspace: Union[str, Path],
+    project_id: str,
+    harness_state_dir: Optional[Union[str, Path]] = None,
+) -> Dict[str, Any]:
+    """Reconcile stale task leases with anti-duplicate side effect protection.
+
+    If an expired RUNNING task has produced partial side-effects (git modifications,
+    partial evidence, recorded artifacts), it is NOT blindly reset to PENDING.
+    Instead, it is quarantined to DISPUTED to prevent duplicate non-idempotent
+    re-execution, and an incident is journaled.
+    Tasks without side-effects are safely reset to PENDING (or BLOCKED if max attempts reached).
+    """
+    ws = Path(workspace).resolve()
+    db_dir = Path(harness_state_dir).resolve() if harness_state_dir else ws / ".re_harness"
+    now = time.time()
+    reclaimed = []
+    quarantined = []
+    sub_restored = []
+    split_restored = []
+
+    with core.database(db_dir) as db:
+        rows = db.execute(
+            "SELECT * FROM auto_tasks WHERE project_id=? "
+            "AND status IN ('RUNNING','REVIEWING','SPLITTING') AND lease_until<?",
+            (project_id, now)
+        ).fetchall()
+
+        for row in rows:
+            task_key = row["task_key"]
+            status = row["status"]
+
+            if status == "SPLITTING":
+                db.execute(
+                    "UPDATE auto_tasks SET status='SPLIT_REQUIRED', owner=NULL, lease_token=NULL, "
+                    "lease_until=NULL, updated_at=? WHERE id=?",
+                    (core.now(), row["id"])
+                )
+                split_restored.append(task_key)
+            elif status == "REVIEWING":
+                db.execute(
+                    "UPDATE auto_tasks SET status='SUBMITTED', owner=NULL, lease_token=NULL, "
+                    "lease_until=NULL, updated_at=? WHERE id=?",
+                    (core.now(), row["id"])
+                )
+                sub_restored.append(task_key)
+            elif status == "RUNNING":
+                effects = detect_task_side_effects(dict(row), ws)
+                if effects:
+                    note = (
+                        f"Quarantined to DISPUTED: lease expired after side-effects were detected: {', '.join(effects)}. "
+                        "Requires operator verification before retry to prevent duplicate side-effects."
+                    )
+                    db.execute(
+                        "UPDATE auto_tasks SET status='DISPUTED', owner=NULL, lease_token=NULL, "
+                        "lease_until=NULL, review_note=?, updated_at=? WHERE id=?",
+                        (note, core.now(), row["id"])
+                    )
+                    try:
+                        from . import autonomy
+                        autonomy.event(db, project_id, task_key, "TASK_QUARANTINED_STALE_LEASE", {
+                            "reason": "Expired lease with uncommitted side effects",
+                            "detected_effects": effects,
+                        })
+                    except Exception:
+                        pass
+
+                    with contextlib.suppress(Exception):
+                        incidents.record_incident(
+                            workspace=ws,
+                            category="STALE_LEASE",
+                            summary=f"Task {task_key} quarantined to DISPUTED due to stale lease with side-effects: {', '.join(effects)}",
+                            project_id=project_id,
+                            task_id=task_key,
+                        )
+                    quarantined.append({"task_key": task_key, "effects": effects})
+                else:
+                    tries = row["tries"]
+                    next_status = "BLOCKED" if tries >= 3 else "PENDING"
+                    db.execute(
+                        "UPDATE auto_tasks SET status=?, owner=NULL, lease_token=NULL, "
+                        "lease_until=NULL, updated_at=? WHERE id=?",
+                        (next_status, core.now(), row["id"])
+                    )
+                    try:
+                        from . import autonomy
+                        autonomy.event(db, project_id, task_key, "LEASE_EXPIRED", {"state": next_status})
+                    except Exception:
+                        pass
+                    reclaimed.append({"task_key": task_key, "next_status": next_status})
+
+    return {
+        "reclaimed": reclaimed,
+        "quarantined": quarantined,
+        "review_restored": sub_restored,
+        "split_restored": split_restored,
+    }
+
+
 def verify_pre_retry_safety(
     workspace: Path | str,
     project_id: str,
@@ -354,18 +505,21 @@ def verify_pre_retry_safety(
             "cannot auto-retry a non-active project"
         )
 
-    # 3. Clean up expired task leases to prevent stuck tasks or duplicate side-effects
+    # 3. Clean up expired task leases with anti-duplicate side effect protection
     try:
-        from . import autonomy
-        with core.database(db_dir) as db:
-            autonomy._expire(db, project_id)
+        reconcile_result = reconcile_stale_leases_safely(
+            workspace=root,
+            project_id=project_id,
+            harness_state_dir=db_dir,
+        )
     except Exception as exc:
-        raise SafetyCheckError(f"Failed to reconcile task leases: {exc}") from exc
+        raise SafetyCheckError(f"Failed to reconcile task leases safely: {exc}") from exc
 
     return {
         "project_id": project_id,
         "project_status": info["project_status"],
         "goal": info["goal"],
         "task_counts": info["task_status_counts"],
+        "lease_reconciliation": reconcile_result,
         "safe_to_retry": True,
     }

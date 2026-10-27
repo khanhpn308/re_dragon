@@ -86,8 +86,11 @@ case "$ACTION" in
     bash scripts/quota-watchdog.sh status
     bot_status
     ;;
+  drain)
+    bash scripts/quota-watchdog.sh drain "${2:-120}"
+    ;;
   stop)
-    bash scripts/quota-watchdog.sh stop
+    bash scripts/quota-watchdog.sh stop "${2:-}"
     bot_stop
     ;;
   logs)
@@ -129,7 +132,7 @@ case "$ACTION" in
     esac
     ;;
   *)
-    echo "Usage: ./dragon {start|status|logs|stop|resume|telegram}" >&2
+    echo "Usage: ./dragon {start|status|logs|drain [TIMEOUT]|stop [--force]|pause|resume|supervisor|telegram}" >&2
     exit 2
     ;;
 esac

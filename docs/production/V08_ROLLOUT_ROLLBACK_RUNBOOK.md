@@ -20,7 +20,7 @@
 ## 2. Pre-Rollout Verification Checklist
 
 Before initiating any deployment:
-- [ ] Feature branch `feature/v08-autonomous-reliability-recovery` passes all 206 unit tests:
+- [ ] Feature branch `feature/v08-autonomous-reliability-recovery` passes all 219 unit tests:
   ```bash
   python3 -m unittest discover -s tests -v
   ```
@@ -45,24 +45,36 @@ Confirm:
 - Pinned `project_id` matches the active V1 production charter.
 - Record the current turn count, active task, and conversation ID.
 
-### Step 2: Create Pre-Rollout Snapshot Backup
-Create a timestamped backup directory outside the repository:
+### Step 2: Create Pre-Rollout Snapshot Backup with WAL Checkpoint
+Create a consistent, verified snapshot of the SQLite database and state files using the v0.8 WAL-truncating backup tool:
 ```bash
-BACKUP_DIR="$HOME/backups/re-dragon-pre-v08-$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR="$HOME/backups/re-dragon-v08-rollout-$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
-cp -r /home/khanh/returnsaiyan-re/.re_harness "$BACKUP_DIR/"
-cp -r /home/khanh/returnsaiyan-re/.re_harness_mvp "$BACKUP_DIR/"
-sqlite3 /home/khanh/returnsaiyan-re/.re_harness_mvp/state.sqlite3 ".backup '$BACKUP_DIR/state.sqlite3.bak'"
-echo "Backup preserved at: $BACKUP_DIR"
-```
 
-### Step 3: Graceful Stop of Active Production Session
-Wait until the active turn finishes (do not interrupt an in-flight tool call):
+# Execute atomic SQLite backup with PRAGMA wal_checkpoint(TRUNCATE) and manifest generation
+python3 -m re_harness.backup_util backup \
+  --workspace /home/khanh/returnsaiyan-re \
+  --backup-dir "$BACKUP_DIR" \
+  --label pre_v08_rollout
+
+echo "Atomic backup created and verified in: $BACKUP_DIR"
+```
+Verify the generated `backup-manifest.json` contains:
+- Valid SHA-256 for `state.sqlite3`
+- Current Git commit SHA (`git rev-parse HEAD`)
+- Verified `quota-watchdog.json`
+
+### Step 3: Graceful Drain & Stop of Active Production Session
+Do NOT abruptly kill the in-flight process! First, issue a graceful drain to allow any active agent turn to complete and checkpoint:
 ```bash
 cd /home/khanh/returnsaiyan-re
+./dragon drain 120
+```
+When `drain` reports `"status": "PAUSED"`, stop the tmux processes:
+```bash
 ./dragon stop
 ```
-Verify all processes are stopped:
+Verify all processes are cleanly stopped:
 ```bash
 tmux has-session -t re-dragon-quota-watchdog 2>/dev/null && echo "ERROR: session still active" || echo "Cleanly stopped"
 pgrep -f "re_harness" || echo "Zero background harness processes"
@@ -110,21 +122,26 @@ Open Telegram and issue:
 
 If any anomaly occurs (e.g. repeated crashes, database lock deadlock, unrecognized state):
 
-### Step 1: Immediate Stop
+### Step 1: Immediate Drain & Stop
 ```bash
 cd /home/khanh/returnsaiyan-re
-./dragon stop
+./dragon stop --force
 tmux kill-session -t re-dragon-quota-watchdog 2>/dev/null || true
 ```
 
-### Step 2: Restore Pre-Rollout Code & State
+### Step 2: Restore Pre-Rollout Code & Checkpoints
 ```bash
 cd /home/khanh/returnsaiyan-re
-git checkout <PRE_ROLLOUT_COMMIT_SHA>
 
-# Restore SQLite and Watchdog JSON from backup
-cp "$BACKUP_DIR/.re_harness/quota-watchdog.json" .re_harness/
-cp "$BACKUP_DIR/state.sqlite3.bak" .re_harness_mvp/state.sqlite3
+# Check out the recorded pre-rollout commit SHA from backup-manifest.json
+PRE_SHA=$(jq -r .git_commit_sha "$BACKUP_DIR"/backup_*/backup-manifest.json)
+git checkout "$PRE_SHA"
+
+# Safely restore and verify SQLite database and state files
+SNAPSHOT_DIR=$(ls -d "$BACKUP_DIR"/backup_* | head -n 1)
+python3 -m re_harness.backup_util restore \
+  --backup-snapshot "$SNAPSHOT_DIR" \
+  --workspace /home/khanh/returnsaiyan-re
 ```
 
 ### Step 3: Restart Legacy Watchdog

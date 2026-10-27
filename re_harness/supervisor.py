@@ -31,6 +31,11 @@ INTENTIONAL_EXITS = {EXIT_COMPLETE, EXIT_BLOCKED, EXIT_NEEDS_USER, EXIT_PAUSED}
 MAX_SUPERVISOR_CRASH_RESTARTS = 5
 
 
+def is_watchdog_locked(workspace: Union[str, Path]) -> bool:
+    """Convenience helper to check if watchdog is locked in workspace."""
+    return Supervisor(workspace).is_watchdog_locked()
+
+
 class Supervisor:
     def __init__(self, workspace: Path | str, harness_state_dir: Optional[Path | str] = None, binary: str = "agy"):
         self.workspace = Path(workspace).expanduser().resolve()
@@ -127,6 +132,9 @@ class Supervisor:
         signal.signal(signal.SIGTERM, self._handle_term)
         signal.signal(signal.SIGINT, self._handle_term)
 
+        # Fail closed immediately if workspace binding is invalid or project is not active
+        verify_workspace_binding(self.workspace, harness_state_dir=self.harness_state_dir)
+
         try:
             while not self._stop_requested:
                 # 1. Check if Watchdog is already running in tmux or externally
@@ -216,11 +224,98 @@ class Supervisor:
                 lock_handle.close()
 
 
-def generate_systemd_unit(workspace: Path | str) -> str:
-    ws = Path(workspace).resolve()
-    py = sys.executable
+class WorkspaceBindingError(Exception):
+    """Raised when workspace binding validation fails."""
+
+
+def verify_workspace_binding(
+    workspace: Path | str,
+    expected_project_id: Optional[str] = None,
+    harness_state_dir: Optional[Path | str] = None,
+) -> Dict[str, Any]:
+    """Verify that a workspace is a valid, active RE Dragon workspace.
+
+    Guarantees:
+    - Path exists and is a directory.
+    - .re_harness/quota-watchdog.json exists and is valid.
+    - Pinned project_id exists in SQLite auto_projects and status in ACTIVE.
+    - Expected project_id matches if provided.
+    - Resolves reliable python executable.
+    """
+    ws = Path(workspace).expanduser().resolve()
+    if not ws.is_dir():
+        raise WorkspaceBindingError(f"Workspace directory does not exist: {ws}")
+
+    watch_dir = ws / ".re_harness"
+    state_file = watch_dir / "quota-watchdog.json"
+    if not state_file.is_file():
+        raise WorkspaceBindingError(f"Missing quota-watchdog.json in workspace: {state_file}")
+
+    try:
+        data = json.loads(state_file.read_text(encoding="utf8"))
+    except Exception as exc:
+        raise WorkspaceBindingError(f"Corrupt quota-watchdog.json: {exc}")
+
+    pid = data.get("project_id")
+    if not pid or pid in {"PROJECT_ID", "CONVERSATION_ID"}:
+        raise WorkspaceBindingError(f"Watchdog is not bound to a valid project_id (found: {pid!r})")
+
+    if expected_project_id and pid != expected_project_id:
+        raise WorkspaceBindingError(f"Project ID mismatch: expected {expected_project_id}, found {pid}")
+
+    if harness_state_dir:
+        db_dir = Path(harness_state_dir).expanduser().resolve()
+    elif (ws / ".re_harness_mvp" / "state.sqlite3").is_file():
+        db_dir = ws / ".re_harness_mvp"
+    elif (ws / ".re_harness" / "state.sqlite3").is_file():
+        db_dir = ws / ".re_harness"
+    else:
+        db_dir = ws / ".re_harness_mvp"
+
+    db_file = db_dir / "state.sqlite3"
+    if not db_file.is_file():
+        raise WorkspaceBindingError(f"Harness database state.sqlite3 not found at {db_file}")
+
+    import sqlite3
+    with sqlite3.connect(db_file) as db:
+        db.row_factory = sqlite3.Row
+        proj = db.execute("SELECT id, goal, status FROM auto_projects WHERE id=?", (pid,)).fetchone()
+        if not proj:
+            raise WorkspaceBindingError(f"Pinned project '{pid}' not found in Harness database {db_file}")
+        if proj["status"] not in quota_guard.ACTIVE:
+            raise WorkspaceBindingError(f"Pinned project '{pid}' is '{proj['status']}'; supervisor requires an ACTIVE project")
+
+    # Resolve python executable: check ws/.venv/bin/python, sys.executable, or python3
+    py_candidate = ws / ".venv" / "bin" / "python"
+    if py_candidate.is_file() and os.access(py_candidate, os.X_OK):
+        py_bin = str(py_candidate)
+    elif os.access(sys.executable, os.X_OK):
+        py_bin = sys.executable
+    else:
+        py_bin = "/usr/bin/python3"
+
+    return {
+        "workspace": str(ws),
+        "project_id": pid,
+        "conversation_id": data.get("conversation_id"),
+        "goal": proj["goal"],
+        "project_status": proj["status"],
+        "db_dir": str(db_dir),
+        "python_bin": py_bin,
+    }
+
+
+def generate_systemd_unit(
+    workspace: Path | str,
+    expected_project_id: Optional[str] = None,
+    harness_state_dir: Optional[Path | str] = None,
+) -> str:
+    binding = verify_workspace_binding(workspace, expected_project_id=expected_project_id, harness_state_dir=harness_state_dir)
+    ws = binding["workspace"]
+    py = binding["python_bin"]
+    pid = binding["project_id"]
     return f"""[Unit]
-Description=RE Dragon Autonomous Reliability Supervisor
+Description=RE Dragon Autonomous Reliability Supervisor (Project {pid})
 Documentation=https://github.com/khanhpn308/re_dragon
 After=network.target
 
@@ -239,12 +334,23 @@ WantedBy=default.target
 """
 
 
-def generate_windows_task_xml(workspace: Path | str, distro: str = "Ubuntu", user: str = "khanh") -> str:
-    ws = Path(workspace).resolve()
+def generate_windows_task_xml(
+    workspace: Path | str,
+    distro: str = "Ubuntu",
+    user: Optional[str] = None,
+    expected_project_id: Optional[str] = None,
+    harness_state_dir: Optional[Path | str] = None,
+) -> str:
+    binding = verify_workspace_binding(workspace, expected_project_id=expected_project_id, harness_state_dir=harness_state_dir)
+    ws = binding["workspace"]
+    py = binding["python_bin"]
+    pid = binding["project_id"]
+    user_name = user or os.environ.get("USER", "khanh")
     return f"""<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>RE Dragon v0.8 Autonomous Reliability Supervisor (WSL2)</Description>
+    <Description>RE Dragon Autonomous Reliability Supervisor (Project {pid})</Description>
+    <URI>\\RE Dragon\\ReliabilitySupervisor_{pid}</URI>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>
@@ -273,7 +379,7 @@ def generate_windows_task_xml(workspace: Path | str, distro: str = "Ubuntu", use
   <Actions Context="Author">
     <Exec>
       <Command>wsl.exe</Command>
-      <Arguments>-d {distro} -u {user} -- bash -c "cd {ws} && python3 -m re_harness.supervisor run"</Arguments>
+      <Arguments>-d {distro} -u {user_name} -- bash -c "cd {ws} && {py} -m re_harness.supervisor run --workspace {ws}"</Arguments>
     </Exec>
   </Actions>
 </Task>
@@ -288,6 +394,7 @@ def main(argv=None) -> int:
     parser.add_argument("--binary", default="agy")
     parser.add_argument("--distro", default="Ubuntu")
     parser.add_argument("--user", default="khanh")
+    parser.add_argument("--expected-project-id", default="")
     args = parser.parse_args(argv)
 
     root = Path(args.workspace).expanduser().resolve()
@@ -299,8 +406,12 @@ def main(argv=None) -> int:
         return 0
 
     if args.action == "generate-config":
-        systemd_unit = generate_systemd_unit(root)
-        windows_xml = generate_windows_task_xml(root, distro=args.distro, user=args.user)
+        systemd_unit = generate_systemd_unit(
+            root, expected_project_id=args.expected_project_id or None, harness_state_dir=args.harness_state_dir or None
+        )
+        windows_xml = generate_windows_task_xml(
+            root, distro=args.distro, user=args.user, expected_project_id=args.expected_project_id or None, harness_state_dir=args.harness_state_dir or None
+        )
         print("=== systemd unit (copy to ~/.config/systemd/user/re-dragon.service) ===")
         print(systemd_unit)
         print("\n=== Windows Task Scheduler XML ===")

@@ -176,6 +176,55 @@ def pause_watchdog(workspace):
     return f"⏸️ RE Dragon Watchdog paused (was {prev_status}). In-flight turn will complete; no new turns will launch. Use /resume to resume."
 
 
+def ensure_watchdog_active(workspace):
+    """Ensure that an active supervisor or watchdog process is running for the workspace."""
+    root = Path(workspace).resolve()
+    lock_file = root / ".re_harness" / "quota-watchdog.lock"
+
+    if lock_file.exists():
+        with lock_file.open("a+") as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(handle, fcntl.LOCK_UN)
+                is_running = False
+            except (BlockingIOError, OSError):
+                is_running = True
+    else:
+        is_running = False
+
+    if is_running:
+        return "Watchdog process is active (locked); rearmed turn scheduled."
+
+    try:
+        chk = subprocess.run(
+            ["systemctl", "--user", "is-active", "re-dragon.service"],
+            capture_output=True, text=True, timeout=5
+        )
+        if chk.returncode == 0 and "active" in chk.stdout:
+            return "systemd supervisor is active and will start turn automatically."
+    except Exception:
+        pass
+
+    script = root / "scripts" / "quota-watchdog.sh"
+    if not script.is_file():
+        repo_root = Path(__file__).resolve().parent.parent
+        script = repo_root / "scripts" / "quota-watchdog.sh"
+
+    if not script.is_file():
+        return "Watchdog state rearmed to READY (launcher script not found in environment)."
+
+    try:
+        res = subprocess.run(
+            ["bash", str(script), "start"],
+            cwd=root, capture_output=True, text=True, timeout=20
+        )
+        if res.returncode == 0:
+            return "Watchdog background session launched in tmux."
+        return f"Watchdog state armed to READY (launcher note: {res.stderr.strip() or res.stdout.strip()[:100]})."
+    except Exception as exc:
+        return f"Watchdog state armed to READY (launcher note: {exc})."
+
+
 def resume_watchdog(workspace, db_dir=None):
     root = Path(workspace).resolve()
     state_file = root / ".re_harness" / "quota-watchdog.json"
@@ -200,7 +249,8 @@ def resume_watchdog(workspace, db_dir=None):
         last_reason="Resumed via Telegram by operator",
     )
     quota_watchdog.save(state_file, state)
-    return f"▶️ RE Dragon Watchdog resumed for project {pid}. Status set to READY."
+    proc_status = ensure_watchdog_active(workspace)
+    return f"▶️ RE Dragon Watchdog resumed for project {pid}. {proc_status}"
 
 
 def retry_incident(workspace, incident_id, db_dir=None):
@@ -231,7 +281,8 @@ def retry_incident(workspace, incident_id, db_dir=None):
     )
     quota_watchdog.save(state_file, state)
     incidents.record_recovery_attempt(root, incident_id, success=True, note="Operator requested retry via Telegram")
-    return f"✅ Safe retry confirmed for #{incident_id}. Watchdog state reset to READY."
+    proc_status = ensure_watchdog_active(workspace)
+    return f"✅ Safe retry confirmed for #{incident_id}. {proc_status}"
 
 
 @contextlib.contextmanager
