@@ -47,7 +47,7 @@ On a pinned V2 Game Server task: Read RE Dragon AGENTS.md -> pinned V2 charter -
 | QG | Pin exact Go toolchain, assert gofmt stdout EMPTY, go vet/test/race, record exact commands/revision, never mark NOT_RUN as PASS | CI+logs |
 | AI | Inspect before edit, explicit Issue or Harness AC and allowed paths, smallest executable vertical slice, search before create, no invented APIs, independent reviewer, Draft PR not auto-merge | host+review |
 
-Go 1.27.3 is the proposed exact toolchain (operator go-version.txt); confirm target host go env GOVERSION and actual go.mod first. Source suggests pgx/v5 as a dependency candidate. Do not add an ORM, Redis, microservices, MQTT, external frameworks or new dependency without a justified scoped approval and license/security/version check.
+Go 1.27.3 is the owner-approved target toolchain (operator go-version.txt); confirm target host go env GOVERSION and actual go.mod before claiming any BUILD_PASS. Source suggests pgx/v5 as a dependency candidate. Do not add an ORM, Redis, microservices, MQTT, external frameworks or new dependency without a justified scoped approval and license/security/version check.
 
 ## 2. Owner-approved game-server-specific rules
 

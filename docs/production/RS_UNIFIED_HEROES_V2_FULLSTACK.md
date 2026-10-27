@@ -25,17 +25,17 @@ Authorized local compatibility work only. Do not impersonate the historical serv
 - Reuse previously VERIFIED client findings only after confirming original input SHA-256, unchanged semantics, original producer/reviewer and immutable artifact evidence. Never migrate VERIFIED statuses without rechecking.
 - If V1 G6 is blocked by server-dependent gameplay, V1 must stay BLOCKED/PARTIAL rather than fabricated ACCEPTED. The V2 S6 test may complete the full-stack requirement independently.
 
-## 2. Proposed technology baseline
+## 2. Owner-approved technology baseline (runtime not yet verified)
 
 | Layer | Choice | Decision status |
 |---|---|---|
 | Game client | Existing ReturnSaiyan Android ARM64 build, working-copy asset mapping | Keep V1 charter |
 | Game transport | TCP binary protocol, exact verified client handshake and codec | Client evidence required |
-| Server runtime | Go 1.27.3, single Go module, Modular Monolith | Proposed; check installed toolchain |
+| Server runtime | Go 1.27.3, single Go module, Modular Monolith | Approved target; verify installed toolchain and compatibility |
 | TCP implementation | Go standard net, context, encoding/binary | Prefer standard library |
 | Game domain | Sessions, identities, heroes, world, combat, inventory, progression | Derive from client observations |
 | Persistence | PostgreSQL, explicit SQL and versioned migrations; pgx/v5 candidate | Approve exact dependency version |
-| Logging | Standard log/slog, redaction, correlation IDs | Proposed |
+| Logging | Standard log/slog, redaction, correlation IDs | Approved practice; validate implementation |
 | Testing | Golden protocol vectors; Go unit/fuzz/race; real PostgreSQL; real Android E2E | Independent measured evidence |
 | Deployment | Controlled local Go service and database | Never expose third-party endpoints |
 | Agent process | Existing RE Dragon Harness, one quota supervisor, independent reviewer | No duplicate watchdog |
