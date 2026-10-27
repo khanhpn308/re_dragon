@@ -90,7 +90,7 @@ class OneCommandStartupTests(unittest.TestCase):
         st=wd.load(self.watcher)
         st["project_id"]="real-other-1234"
         wd.save(self.watcher,st)
-        with self.assertRaisesRegex(start.SetupError,"another project"):
+        with self.assertRaisesRegex(start.SetupError,"Pinned watchdog project_id"):
             start.bootstrap(self.root)
 
     def test_accepted_goal_is_not_duplicated_after_completion(self):
