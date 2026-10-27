@@ -8,6 +8,20 @@ The user provides ONE high-level reverse-engineering goal. Codex/Antigravity is 
 
 Never create duplicate goal records on reconnect. Call harness_auto_projects FIRST to rediscover the active project ID, then harness_auto_status and harness_auto_task_detail to resume the outstanding evidence-backed backlog.
 
+## RS-UH-PROD-V1 immutable production charter
+
+For project goals starting RS-UH-PROD-V1, read
+docs/production/RS_UNIFIED_HEROES_V1.md at the exact commit SHA
+pinned in that goal/acceptance (use git show SHA:path).
+Do not use an unpinned newer HEAD to silently revise acceptance.
+Validate the co-located local APK and XAPK and their hashes at G1.
+Never infer hero counts from the request or reuse an ACCEPTED pilot project.
+Preserve all A heroes including the two reported new ones; verify
+the full A/B/U union and actual Android behavior. Server-controlled
+playability cannot be inferred from resources or offline tests alone.
+Observe G1–G8, independent review and NEEDS_USER where approval,
+permissions or access to an Android test device are required.
+
 ## Mandatory pre-production live pilot
 
 Before any bulk ReturnSaiyan tasks, read docs/LIVE_PILOT.md and run the

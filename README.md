@@ -1,3 +1,7 @@
+## RS-UH-PROD-V1 — frozen Unified Heroes charter
+
+See [production requirements](docs/production/RS_UNIFIED_HEROES_V1.md) and [hero manifest template](docs/production/RS_UNIFIED_HEROES_V1_MANIFEST.template.csv). Pin the Git commit SHA in the Telegram production goal. APK/XAPK remain local; G1 must verify both sources and SHA-256 before claiming input readiness.
+
 ## v0.7.2 — Project-scoped Autonomous Planning
 
 The headless Watchdog now injects the exact pinned project's goal and
