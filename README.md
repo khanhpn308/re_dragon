@@ -2,6 +2,24 @@
 
 v0.6 adds adaptive CPU/RAM and single-heavy-Ghidra task scheduling to the v0.5 goal-level controller for Codex and Antigravity. The user provides ONE objective; the active AI Agent plans, executes, reviews and re-plans through MCP without requesting a new P-stage prompt each time.
 
+## Automatic restart after Antigravity five-hour quota refresh
+
+The local WSL2 Quota Watchdog can run the same project across fresh
+headless CLI turns without manual prompts. It respects official quota errors,
+waits for the provider's reset countdown and then resumes the pinned
+conversation plus RE Dragon Harness SQLite checkpoints.
+
+After one-time Antigravity authentication and permissions setup:
+  bash scripts/quota-watchdog.sh start [CONVERSATION_ID]
+
+To inspect or stop:
+  bash scripts/quota-watchdog.sh status
+  bash scripts/quota-watchdog.sh logs
+  bash scripts/quota-watchdog.sh stop
+
+Documentation: [docs/QUOTA_WATCHDOG.md](docs/QUOTA_WATCHDOG.md).
+This does NOT defeat quota limits, bypass approvals or run with Windows asleep.
+
 ## Start in the Agent chat
 
 > Read AGENTS.md. Resume the ReturnSaiyan research. Use harness_auto_projects to find existing goals, then harness_auto_start if needed, write an evidence-based task DAG, and repeatedly use harness_auto_tick until a real blocker, session budget or final review. Use REA MCP and local tools to do the assigned work, harness_auto_submit to checkpoint, and a genuinely distinct reviewer Agent for harness_auto_review. Replan automatically on contradictions and commit safe code to re_dragon. Do not ask me for P5/P6 prompts or to run Python manually.

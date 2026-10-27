@@ -39,6 +39,22 @@ Resource limits are advisory shared-Harness reservations and are not OS
 process controls. Confirm previous REA/Ghidra process stopped after timeout.
 Host activity outside the single shared state DB cannot be tracked.
 
+## Unattended quota refresh — v0.6.1
+
+When launched by docs/QUOTA_WATCHDOG_TURN.md, the independent host
+watchdog runs a bounded official Antigravity CLI headless turn. On provider
+RESOURCE_EXHAUSTED the CLI exits; Python host logic, not the LLM, waits
+for reset. The next headless turn MUST recover the same project via
+harness_auto_projects, inspect checkpoint and continue the task DAG.
+Never create a duplicate project, forge an independent reviewer, switch
+accounts/models to bypass quota or use dangerous permission-skipping.
+If permission, authentication or an unresolved user decision is required,
+end the headless turn with NEEDS_USER or BLOCKED and let the watchdog stop.
+
+Emit the required final RE_DRAGON_RUN_STATE JSON line with CONTINUE,
+YIELD, WAIT, COMPLETE, BLOCKED or NEEDS_USER. No success marker means the
+watchdog stops rather than guessing. See docs/QUOTA_WATCHDOG.md.
+
 ## The continuous controller loop
 
 1. Call harness_auto_projects first to reuse an existing project; otherwise call harness_auto_start once with goal, explicit acceptance and local target if available.
