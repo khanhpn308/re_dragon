@@ -121,6 +121,10 @@ def notification_signature(workspace):
     completed=int(counts.get("VERIFIED",0))
     if status in {"WAIT_QUOTA","NEEDS_USER","ERROR","BLOCKED","COMPLETE"}:
         return f"{pid}:{status}:{completed}",status_text(workspace)
+    if (not live and status=="WAIT" and
+            any(term in str(state.get("last_reason","")).lower()
+                for term in ("memory headroom","resource reservation","insufficient memory"))):
+        return f"{pid}:WAIT_RESOURCE",status_text(workspace)
     if completed>0:
         return f"{pid}:verified:{completed}",(
             f"RE Dragon: {completed} verified tasks\nProject: {pid}\n"

@@ -122,6 +122,15 @@ class TelegramInboxTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"not active"):
             tg.submit_task(self.root,33,123,123,"change acceptance")
 
+    def test_memory_resource_wait_notifies_once_without_spam(self):
+        state=qw.load(self.state)
+        state.update(status="WAIT",last_reason="binary-hero-mapping waiting for "
+                     "sufficient memory headroom (available: 2205 MB)")
+        qw.save(self.state,state)
+        key,message=tg.notification_signature(self.root)
+        self.assertIn("WAIT_RESOURCE",key)
+        self.assertIn("memory headroom",message)
+
     def test_significant_notifications_exclude_raw_user_content(self):
         tg.submit_task(self.root,44,123,123,"secret not for notification")
         s=qw.load(self.state)
