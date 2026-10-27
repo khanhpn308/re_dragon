@@ -68,6 +68,12 @@ Design versioned migrations for approved local accounts, heroes, roster, invento
 
 On an authorized Android device/emulator and privately controlled server, demonstrate connect -> verified handshake -> local login -> hero roster/selection -> world -> representative skill/battle/inventory interaction -> persisted restart/reconnect. Preserve all ReturnSaiyan heroes including the two new ones, display donor hero capability honestly, and run A baseline regression. Evidence requires APK SHA, server SHA, Go version, Android OS/ABI, per-step expected/actual logs and independent reviewer. A simulated client or TCP unit tests alone do NOT PASS S6.
 
+### 5,000 CCU performance and persistence verification (DRAFT)
+
+Performance evidence for S5 and S6 is specified in [RS_GO_SERVER_5000_CCU_TEST_PLAN.md](RS_GO_SERVER_5000_CCU_TEST_PLAN.md), document ID `RS-UH-V2-PERF-5000-TP1`. This is a **planned test contract, NOT an executed benchmark or an approved SLO**. The proposed test profiles T00–T13 cover source-bound TCP binary traffic, 5,000 sustained authenticated game sessions, PostgreSQL read/write correctness, idempotency under concurrency, migration under load, crash/reconnect/recovery and real Android end-to-end validation.
+
+Before any load run, the Orchestrator must have owner-approved staging target, validated protocol/client fixture hashes, representative hardware and approved load limits. No 5k claim is valid if the generator saturates, if offered traffic differs from achieved workload, or if the Android client/gameplay compatibility remains unverified. Candidate latency thresholds must be explicitly approved or revised using baseline evidence before turning them into binding production acceptance rules. Do not run this plan while the V1 project is active.
+
 ## 4. Product-level dependencies and acceptance
 
 High-level dependency mapping:
