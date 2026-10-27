@@ -1,3 +1,19 @@
+## v0.7.2 — Project-scoped Autonomous Planning
+
+The headless Watchdog now injects the exact pinned project's goal and
+acceptance criteria read from Harness SQLite rather than a hardcoded
+ReturnSaiyan title. When the pinned project is PLANNING with no tasks,
+the next Agent turn must call the existing `harness_auto_tick` /
+`harness_auto_plan` pipeline and persist its dependency DAG in SQLite.
+Three successive successful headless turns with no persisted DAG stop at
+NEEDS_USER instead of burning quota in an infinite planning loop.
+The terminal completion guard checks only the pinned project; an older
+ACCEPTED project can never complete a newly activated goal.
+
+Updating while an Agent turn is running does not modify its active prompt.
+Allow the current bounded turn to finish before pulling new code, then
+resume the same pinned project without resetting checkpoints.
+
 ## v0.7.1 — Telegram Production Readiness Hotfix
 
 See [Telegram v0.7.1 operations](docs/V071_TELEGRAM_HOTFIX.md).

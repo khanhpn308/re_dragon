@@ -27,7 +27,7 @@ def inspect(db_dir, project_id=None):
         with sqlite3.connect(uri, uri=True, timeout=5) as db:
             db.row_factory=sqlite3.Row
             rows = db.execute(
-                "SELECT id,goal,status FROM auto_projects ORDER BY updated_at DESC"
+                "SELECT id,goal,acceptance,status FROM auto_projects ORDER BY updated_at DESC"
             ).fetchall()
             if project_id:
                 found = [x for x in rows if x["id"] == project_id]
@@ -53,6 +53,7 @@ def inspect(db_dir, project_id=None):
     if chosen["status"] not in ACTIVE | TERMINAL:
         raise ProjectGateError("Unrecognized Harness project status")
     return {"project_id":chosen["id"],"project_status":chosen["status"],
+            "goal":chosen["goal"],"acceptance":chosen["acceptance"],
             "task_status_counts":summary}
 
 

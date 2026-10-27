@@ -23,14 +23,14 @@ class WatchdogSafetyTests(unittest.TestCase):
         with sqlite3.connect(self.harness/"state.sqlite3") as db:
             db.executescript("""
               CREATE TABLE auto_projects (
-                id TEXT PRIMARY KEY,goal TEXT,status TEXT,updated_at TEXT
+                id TEXT PRIMARY KEY,goal TEXT,acceptance TEXT,status TEXT,updated_at TEXT
               );
               CREATE TABLE auto_tasks (
                 project_id TEXT,task_key TEXT,status TEXT
               );
             """)
-            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?)",
-                       ("return-12345678","ReturnSaiyan Unified Heroes","ACTIVE","2026-10-27"))
+            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?,?)",
+                       ("return-12345678","ReturnSaiyan Unified Heroes","Verified all original and Global heroes","ACTIVE","2026-10-27"))
             db.execute("INSERT INTO auto_tasks VALUES(?,?,?)",
                        ("return-12345678","assets","PENDING"))
         q.save(self.watch_state,{**q.load(self.watch_state),
@@ -97,8 +97,8 @@ class WatchdogSafetyTests(unittest.TestCase):
 
     def test_bad_project_count_aborts_instead_of_guessing(self):
         with sqlite3.connect(self.harness/"state.sqlite3") as db:
-            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?)",
-                       ("other-87654321","Another project","ACTIVE","2026-10-27"))
+            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?,?)",
+                       ("other-87654321","Another project","Check another goal separately","ACTIVE","2026-10-27"))
         res=q.once(self.root,self.watch_state,self.prompt,clock=100,
                    runner=lambda *a,**k:self.fail("ambiguous project"),
                    harness_state_dir=self.harness)
@@ -107,8 +107,8 @@ class WatchdogSafetyTests(unittest.TestCase):
 
     def test_pinned_project_ignores_other_active_projects(self):
         with sqlite3.connect(self.harness/"state.sqlite3") as db:
-            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?)",
-                       ("other-87654321","Another project","ACTIVE","2026-10-27"))
+            db.execute("INSERT INTO auto_projects VALUES(?,?,?,?,?)",
+                       ("other-87654321","Another project","Check another goal separately","ACTIVE","2026-10-27"))
         state=q.load(self.watch_state)
         state["project_id"]="return-12345678"
         q.save(self.watch_state,state)
