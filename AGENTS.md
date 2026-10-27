@@ -107,3 +107,11 @@ goal, then use harness_auto_plan to decompose any accepted request. Do not
 silently change the production goal or execute a message outside review gates.
 The watcher only marks the request FORWARDED after an acknowledged successful
 Agent turn; FORWARDED does not mean VERIFIED.
+
+
+## v0.7.1 Telegram production safety
+The Telegram control bridge is an authenticated request and confirmation
+surface only. Do not bypass Watchdog project lock, acceptance gate, quota,
+real independent review or local user permissions. A Telegram approval
+records only the named action; a generic /propose APPROVE never grants
+unreviewed access or changes evidence status.

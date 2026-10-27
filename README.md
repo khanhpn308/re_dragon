@@ -1,3 +1,12 @@
+## v0.7.1 — Telegram Production Readiness Hotfix
+
+See [Telegram v0.7.1 operations](docs/V071_TELEGRAM_HOTFIX.md).
+Commands `/newgoal` and `/project` now ask for one-time owner confirmation;
+they refuse to switch while the Watchdog process lock is active.
+Telegram notification events are reserved globally before send to prevent
+repeating COMPLETE every polling interval. To silence an incident without
+stopping agents: `./dragon telegram stop`.
+
 ## v0.6.6 — Telegram durable crash logs
 
 The bot is launched via `scripts/telegram-supervised.sh`. Its output is

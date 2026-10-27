@@ -8,6 +8,8 @@ and deduplicated progress telemetry.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import subprocess
 import asyncio
 import fcntl
 import getpass
@@ -27,6 +29,8 @@ from . import (
     quota_watchdog,
     runtime_state,
     telegram_inbox,
+    notification_delivery,
+    telegram_control,
 )
 
 CONFIG = Path.home() / ".config" / "re-dragon" / "telegram.json"
@@ -66,10 +70,10 @@ def allowed(user_id, chat_id, chat_type, owner_id):
             int(chat_id or 0) == int(owner_id))
 
 
-def acquire_worker_lock(workspace):
+def acquire_worker_lock(workspace, bot_fingerprint=None):
     """Ensure exactly one Telegram polling worker runs per workspace."""
     root = Path(workspace).resolve()
-    lock_path = root / ".re_harness" / "telegram.lock"
+    lock_path = (Path.home()/".local"/"state"/"re-dragon"/(f"telegram-worker-{bot_fingerprint}.lock") if bot_fingerprint else root / ".re_harness" / "telegram.lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     handle = lock_path.open("a+")
     try:
@@ -107,8 +111,51 @@ def status_text(workspace):
     return "\n".join(lines)
 
 
+@contextlib.contextmanager
+def exclusive_controller_lock(workspace):
+    """Project mutation is forbidden while Watchdog holds its process lock."""
+    lock = Path(workspace).resolve()/".re_harness"/"quota-watchdog.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with lock.open("a+") as handle:
+        try:
+            fcntl.flock(handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except (BlockingIOError,OSError) as exc:
+            raise ValueError(
+                "Watchdog is active. Wait for the current turn/project to finish "
+                "before changing the pinned project."
+            ) from exc
+        try:
+            if runtime_state.snapshot(Path(workspace)/".re_harness"/"agent-runtime.json"):
+                raise ValueError("Agent CLI still running; project switch refused.")
+            yield
+        finally:
+            fcntl.flock(handle,fcntl.LOCK_UN)
+
+
+def start_watchdog_for_new_goal(workspace):
+    """Launch fixed local supervisor script, never user-supplied commands."""
+    root=Path(workspace).resolve()
+    script=root/"scripts"/"quota-watchdog.sh"
+    if not script.is_file():
+        raise ValueError("Watchdog launcher missing")
+    try:
+        proc=subprocess.run(
+            ["bash",str(script),"start"],cwd=root,
+            capture_output=True,text=True,timeout=20,check=False)
+    except (OSError,subprocess.TimeoutExpired) as exc:
+        raise ValueError("Could not start watchdog: "+type(exc).__name__) from exc
+    if proc.returncode!=0:
+        raise ValueError("Watchdog start failed; use /status or check local logs")
+    return proc.stdout.strip()[:180]
+
+
 def switch_project(workspace, target_pid, db_dir=None):
-    """Safely switch the active project with dedicated conversation sessions."""
+    """Refuse project switching while an Agent/Watchdog process is active."""
+    with exclusive_controller_lock(workspace):
+        return _switch_project_locked(workspace,target_pid,db_dir=db_dir)
+
+
+def _switch_project_locked(workspace,target_pid,db_dir=None):
     root = Path(workspace).resolve()
     db_path = Path(db_dir).resolve() if db_dir else root / ".re_harness_mvp"
     with core.database(db_path) as db:
@@ -169,6 +216,11 @@ def create_goal(workspace, goal_text, acceptance_text=None, db_dir=None):
         raise ValueError("Acceptance criteria must not exceed 1000 characters")
 
     db_path = Path(db_dir).resolve() if db_dir else root / ".re_harness_mvp"
+    with exclusive_controller_lock(root):
+        return _create_goal_locked(root,cleaned_goal,cleaned_acc,db_path)
+
+
+def _create_goal_locked(root,cleaned_goal,cleaned_acc,db_path):
     with core.database(db_path) as db:
         autonomy.migrate(db)
         dup = db.execute(
@@ -180,7 +232,7 @@ def create_goal(workspace, goal_text, acceptance_text=None, db_dir=None):
         created = autonomy.start(db, cleaned_goal, cleaned_acc)
         new_pid = created["project_id"]
 
-    switch_res = switch_project(workspace, new_pid, db_dir=db_path)
+    _switch_project_locked(root, new_pid, db_dir=db_path)
     return {
         "project_id": new_pid,
         "goal": cleaned_goal,
@@ -447,7 +499,9 @@ def notification_signature(workspace):
     blocked = int(counts.get("BLOCKED", 0))
     submitted = int(counts.get("SUBMITTED", 0))
 
-    if status in {"WAIT_QUOTA", "NEEDS_USER", "ERROR", "BLOCKED", "COMPLETE"}:
+    if status == "COMPLETE":
+        return f"{pid}:COMPLETE", status_text(workspace)
+    if status in {"WAIT_QUOTA", "NEEDS_USER", "ERROR", "BLOCKED"}:
         return f"{pid}:{status}:v{completed}:b{blocked}", status_text(workspace)
 
     if (not live and status == "WAIT" and
@@ -549,7 +603,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
     owner = int(creds["user_id"])
     root = Path(workspace).resolve()
 
-    lock_handle = acquire_worker_lock(root)
+    lock_handle = acquire_worker_lock(root, notification_delivery.bot_fingerprint(creds["token"]))
     app = ApplicationBuilder().token(creds["token"]).build()
     holder = {"task": None}
 
@@ -564,6 +618,12 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
             return False
         return True
 
+    def control_keyboard(row):
+        return InlineKeyboardMarkup([[
+            InlineKeyboardButton("Confirm", callback_data=f"ctrl:{row['id']}:{row['nonce']}:APPROVE"),
+            InlineKeyboardButton("Cancel", callback_data=f"ctrl:{row['id']}:{row['nonce']}:REJECT")
+        ]])
+
     async def command(update, context):
         if not await auth(update):
             return
@@ -575,15 +635,15 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 "🐉 RE Dragon v0.7 — Telegram Control Center\n\n"
                 "Project Lifecycle:\n"
                 "  /projects — List all projects and status\n"
-                "  /newgoal <goal> [| <acceptance>] — Start and activate a new project\n"
-                "  /project <id> — Switch active project\n\n"
+                "  /newgoal <goal> [| <acceptance>] — Propose new goal for confirmation\n"
+                "  /project <id> — Request confirmation before switch\n\n"
                 "Task Management:\n"
                 "  /tasks [limit] — List tasks and highlight blockers\n"
                 "  /task <desc> — Queue user task for next agent turn\n"
                 "  /progress — Show progress bar and blocker breakdown\n"
                 "  /taskdetail <key> — Inspect evidence and review notes\n\n"
                 "Human Approval:\n"
-                "  /approvals — List pending approval proposals\n"
+                "  /approvals — List pending human and controller decisions\n"
                 "  /propose <action> <desc> — Submit a proposal\n\n"
                 "Reports & Status:\n"
                 "  /report — Export summary and redacted report\n"
@@ -600,42 +660,38 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
             await update.message.reply_text(projects_text(root)[:3900])
             return
 
-        if name in ("/project", "/activate"):
-            args = context.args or []
-            if not args:
-                await update.message.reply_text("Usage: /project <project_id>")
-                return
-            target_pid = args[0].strip()
-            try:
-                res = switch_project(root, target_pid)
-                sess_info = "Fresh dedicated session" if res["new_session"] else f"Session: {res['conversation_id']}"
-                await update.message.reply_text(
-                    f"✅ Activated project {res['project_id']} ({res['status']})\n"
-                    f"Goal: {res['goal'][:100]}\n"
-                    f"{sess_info}"
-                )
-            except Exception as exc:
-                await update.message.reply_text(f"❌ Switch refused: {str(exc)[:200]}")
-            return
-
-        if name == "/newgoal":
+        if name in ("/project", "/activate", "/newgoal"):
             body = " ".join(context.args or []).strip()
             if not body:
-                await update.message.reply_text("Usage: /newgoal <goal description> [| <acceptance criteria>]")
+                usage=("/newgoal <goal> [| <acceptance>]" if name=="/newgoal"
+                       else "/project <project_id>")
+                await update.message.reply_text("Usage: "+usage)
                 return
-            parts = [p.strip() for p in body.split("|", 1)]
-            goal_desc = parts[0]
-            acc_crit = parts[1] if len(parts) > 1 else None
+            if name=="/newgoal":
+                parts=[p.strip() for p in body.split("|",1)]
+                goal=parts[0]
+                acceptance=parts[1] if len(parts)>1 else None
+                if not 5<=len(goal)<=500 or (acceptance and len(acceptance)>1000):
+                    await update.message.reply_text("Goal must be 5-500 characters; acceptance <=1000")
+                    return
+                kind,payload="NEW_GOAL",{"goal":goal,"acceptance":acceptance}
+                desc=f"New goal: {goal[:250]}\\nAcceptance: {(acceptance or 'Harness-defined')[:200]}"
+            else:
+                target=body.split()[0]
+                if len(target)>80:
+                    await update.message.reply_text("Invalid project ID")
+                    return
+                kind,payload="SWITCH_PROJECT",{"project_id":target}
+                desc=f"Switch active project to {target}"
             try:
-                res = create_goal(root, goal_desc, acc_crit)
+                row,_=telegram_control.propose(
+                    root,update.update_id,update.effective_user.id,kind,payload)
                 await update.message.reply_text(
-                    f"🎉 Project Created & Activated!\n"
-                    f"ID: {res['project_id']}\n"
-                    f"Goal: {res['goal']}\n"
-                    f"Acceptance: {res['acceptance'][:150]}..."
-                )
-            except Exception as exc:
-                await update.message.reply_text(f"❌ Cannot create goal: {str(exc)[:200]}")
+                    f"Please confirm within 10 minutes:\\n{desc}\\n"
+                    "No project has been created or switched yet.",
+                    reply_markup=control_keyboard(row))
+            except (ValueError,sqlite3.Error) as exc:
+                await update.message.reply_text("Cannot prepare confirmation: "+str(exc)[:180])
             return
 
         if name == "/tasks":
@@ -695,9 +751,15 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
             state, _ = watched(root)
             pid = state.get("project_id")
             proposals = telegram_inbox.list_proposals(root, pid, status="PENDING")
-            if not proposals:
-                await update.message.reply_text(f"No pending approval proposals for project {pid or 'all'}.")
+            control_pending=telegram_control.list_pending(root,update.effective_user.id)
+            if not proposals and not control_pending:
+                await update.message.reply_text(f"No pending approvals for project {pid or 'all'}.")
                 return
+            for ctl in control_pending[:5]:
+                desc=json.loads(ctl["payload"])
+                await update.message.reply_text(
+                    f"Pending controller confirmation ({ctl['kind']}):\n{str(desc)[:320]}",
+                    reply_markup=control_keyboard(ctl))
             for prop in proposals[:5]:
                 rem_sec = max(0, int(prop["expires_at"] - time.time()))
                 rem_min = rem_sec // 60
@@ -745,6 +807,51 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
             return
         query = update.callback_query
         data = query.data or ""
+        if data.startswith("ctrl:"):
+            parts=data.split(":")
+            if len(parts)!=4:
+                await query.answer("Malformed confirmation",show_alert=True)
+                return
+            _,req_id,nonce,decision=parts
+            try:
+                ctl=telegram_control.claim(root,req_id,nonce,
+                    update.effective_user.id,decision)
+            except (ValueError,sqlite3.Error) as exc:
+                await query.answer(str(exc)[:150],show_alert=True)
+                return
+            await query.answer("Decision received")
+            if decision=="REJECT":
+                await query.edit_message_text("Control request cancelled; no project changed.")
+                return
+            try:
+                if ctl["kind"]=="NEW_GOAL":
+                    d=ctl["payload"]
+                    result=await asyncio.to_thread(
+                        create_goal,root,d["goal"],d.get("acceptance"))
+                elif ctl["kind"]=="SWITCH_PROJECT":
+                    result=await asyncio.to_thread(
+                        switch_project,root,ctl["payload"]["project_id"])
+                else:
+                    raise ValueError("Unrecognized controller action")
+            except Exception as exc:
+                telegram_control.complete(root,req_id,"FAILED",str(exc))
+                await query.edit_message_text(
+                    "Project change refused; Watchdog not rearmed. "+str(exc)[:220])
+                return
+            try:
+                launch=await asyncio.to_thread(start_watchdog_for_new_goal,root)
+            except Exception as exc:
+                telegram_control.complete(root,req_id,"FAILED_START",str(exc))
+                await query.edit_message_text(
+                    f"Project {result['project_id']} activated, but Watchdog "
+                    f"could not start: {str(exc)[:180]}. Use /status to inspect.")
+                return
+            telegram_control.complete(root,req_id,"DONE",result["project_id"])
+            await query.edit_message_text(
+                f"Project {result['project_id']} activated.\\n"
+                f"Watchdog launcher: {launch}\\n"
+                "Use /status and /progress to follow execution.")
+            return
         if data.startswith("appr:"):
             parts = data.split(":")
             if len(parts) == 4:
@@ -787,21 +894,17 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
             try:
                 sig, msg = notification_signature(root)
                 if sig and sig != last:
-                    with telegram_inbox.connection(root) as db:
-                        rec = db.execute(
-                            "SELECT signature FROM notification_cursor WHERE name='watchdog'"
-                        ).fetchone()
-                        if not rec or rec["signature"] != sig:
+                    if notification_delivery.claim(creds["token"], owner, sig):
+                        try:
                             await app.bot.send_message(chat_id=owner, text=msg[:3900])
-                            db.execute(
-                                "INSERT INTO notification_cursor(name, signature, updated_at) "
-                                "VALUES('watchdog', ?, ?) ON CONFLICT(name) "
-                                "DO UPDATE SET signature=excluded.signature, updated_at=excluded.updated_at",
-                                (sig, time.time())
-                            )
+                        except Exception as exc:
+                            print("Telegram delivery uncertain; not retrying:",
+                                  type(exc).__name__,file=sys.stderr,flush=True)
+                        else:
+                            notification_delivery.delivered(creds["token"],owner,sig)
                     last = sig
             except Exception as exc:
-                print("Telegram monitor:", type(exc).__name__, file=sys.stderr)
+                print("Telegram monitor:",type(exc).__name__,file=sys.stderr,flush=True)
             await asyncio.sleep(15)
 
     async def post_init(application):
