@@ -141,6 +141,20 @@ def _eligibility(db, pid):
         raise NotReady("S6 has an active or disputed ownership lease")
     if task["tries"] >= autonomy.MAX_ATTEMPTS:
         raise NotReady("S6 task attempt budget exhausted")
+    # A BLOCKED task that already recorded artifacts/evidence may have
+    # non-idempotent partial work. It needs manual reconciliation instead of
+    # scheduling another executor blindly.
+    if task["result"] and str(task["result"]).strip():
+        raise NotReady("S6 has prior result/side effects requiring reconciliation")
+    for field in ("evidence_json", "artifacts_json", "verification_json"):
+        raw = task[field]
+        if raw:
+            try:
+                existing = json.loads(raw)
+            except (TypeError, ValueError):
+                raise NotReady("S6 prior evidence is malformed; manual review required")
+            if existing:
+                raise NotReady("S6 has prior artifacts/evidence; manual review required")
     deps = json.loads(task["dependencies"])
     if not isinstance(deps, list):
         raise NotReady("Malformed S6 dependencies")

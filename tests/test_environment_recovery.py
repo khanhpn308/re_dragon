@@ -96,6 +96,17 @@ class AndroidEnvironmentRecoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(env.NotReady,"budget"):
             self.check(apply=True)
 
+    def test_partial_artifacts_require_manual_reconciliation(self):
+        with core.database(self.dbdir) as db:
+            with db:
+                db.execute(
+                    "UPDATE auto_tasks SET artifacts_json=? WHERE project_id=? AND task_key=?",
+                    ('["local-evidence.json"]', self.pid, env.TARGET)
+                )
+        with self.assertRaisesRegex(env.NotReady, "prior artifacts"):
+            self.check(apply=True)
+        self.assertEqual(self.task()[0], "BLOCKED")
+
     def test_no_recovery_on_bad_apk_or_usb(self):
         bad=lambda root: (_ for _ in ()).throw(env.NotReady("APK absent"))
         response=env.recover(self.root,self.pid,apply=True,
