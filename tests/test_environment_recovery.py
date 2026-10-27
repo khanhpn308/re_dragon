@@ -51,6 +51,18 @@ class AndroidEnvironmentRecoveryTests(unittest.TestCase):
         return env.recover(self.root,self.pid,apply=apply,automatic=automatic,
                            adb_probe=self.ready_device,apk_probe=self.ready_apk)
 
+    def project_state(self):
+        with core.database(self.dbdir) as db:
+            return db.execute(
+                "SELECT status FROM auto_projects WHERE id=?", (self.pid,)
+            ).fetchone()[0]
+
+    def make_project_blocked(self):
+        with core.database(self.dbdir) as db:
+            with db:
+                db.execute("UPDATE auto_projects SET status='BLOCKED' WHERE id=?",
+                           (self.pid,))
+
     def task(self):
         db=sqlite3.connect(self.dbdir/"state.sqlite3")
         try:
@@ -72,6 +84,47 @@ class AndroidEnvironmentRecoveryTests(unittest.TestCase):
         self.assertEqual(len(row),1)
         self.assertIn("original_reason",json.loads(row[0]["details"]))
         self.assertEqual(json.loads(self.state.read_text())["status"],"PAUSED")
+
+    def test_blocked_project_recovers_atomically_with_s6(self):
+        self.make_project_blocked()
+        self.assertEqual(self.check()["result"], "READY_TO_REQUEUE")
+        self.assertEqual(self.project_state(), "BLOCKED")
+        self.assertEqual(self.check(apply=True)["result"], "REQUEUED")
+        self.assertEqual(self.task()[0], "PENDING")
+        self.assertEqual(self.project_state(), "ACTIVE")
+        with core.database(self.dbdir) as db:
+            row = db.execute("SELECT details FROM auto_events WHERE project_id=? "
+                             "AND event='ENVIRONMENT_RECOVERED' ORDER BY id DESC LIMIT 1",
+                             (self.pid,)).fetchone()
+        self.assertEqual(json.loads(row[0])["prior_project_status"], "BLOCKED")
+
+    def test_blocked_project_rollback_restores_task_and_project(self):
+        self.make_project_blocked()
+        with patch("re_harness.environment_recovery.autonomy.event",
+                   side_effect=RuntimeError("failed durable audit event")):
+            with self.assertRaisesRegex(RuntimeError, "failed durable audit"):
+                self.check(apply=True)
+        self.assertEqual(self.task()[0], "BLOCKED")
+        self.assertEqual(self.project_state(), "BLOCKED")
+
+    def test_reject_other_project_blockers(self):
+        self.make_project_blocked()
+        with core.database(self.dbdir) as db:
+            with db:
+                db.execute("UPDATE auto_tasks SET status='BLOCKED' "
+                           "WHERE project_id=? AND task_key='s1-tcp-protocol-server'",
+                           (self.pid,))
+        with self.assertRaisesRegex(env.NotReady, "other project tasks"):
+            self.check(apply=True)
+        self.assertEqual(self.project_state(), "BLOCKED")
+
+    def test_reject_terminal_project_state(self):
+        with core.database(self.dbdir) as db:
+            with db:
+                db.execute("UPDATE auto_projects SET status='ACCEPTED' WHERE id=?",
+                           (self.pid,))
+        with self.assertRaisesRegex(env.NotReady, "ACTIVE or BLOCKED"):
+            self.check(apply=True)
 
     def test_auto_only_during_active_watchdog(self):
         with self.assertRaisesRegex(env.NotReady,"stopped"):
