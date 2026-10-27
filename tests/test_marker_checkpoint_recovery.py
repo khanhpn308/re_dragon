@@ -53,11 +53,11 @@ class MarkerRecoveryTests(unittest.TestCase):
     def test_checkpoint_progress_prevents_premature_human_interrupt(self):
         t1 = wd.once(self.root, self.state, self.prompt, clock=1000,
                      runner=self.recorded_progress, harness_state_dir=self.dbdir)
-        self.assertEqual(t1["status"], "WAIT_RETRY")
+        self.assertEqual(t1["status"], "CONTINUE")
         self.assertEqual(t1["missing_marker_progress_turns"], 1)
         self.assertEqual(t1["missing_marker_recoveries"], 0)
-        self.assertIn("durable Harness progress", t1["last_reason"])
-        self.assertEqual(t1["next_at"], 1060)
+        self.assertIn("committed a new", t1["last_reason"])
+        self.assertEqual(t1["next_at"], 1030)
 
         t2 = wd.once(self.root, self.state, self.prompt, clock=1061,
                      runner=lambda *a, **kw: self.output(),
@@ -70,21 +70,48 @@ class MarkerRecoveryTests(unittest.TestCase):
         self.assertEqual(t3["status"], "CONTINUE")
         self.assertEqual(t3["missing_marker_progress_turns"], 0)
 
-    def test_bounded_even_with_fake_repeated_progress(self):
+    def test_many_committed_turns_do_not_exhaust_arbitrary_marker_cap(self):
+        # A long real project may have >6 productive turns while a CLI build
+        # consistently omits its terminal text marker. Do not stop it if
+        # the Harness database keeps advancing.
         at = 1000
-        for n in range(wd.MAX_PROGRESS_BACKED_MARKERLESS_TURNS):
+        for n in range(12):
             out = wd.once(self.root, self.state, self.prompt, clock=at,
                           runner=self.recorded_progress, harness_state_dir=self.dbdir)
+            self.assertEqual(out["status"], "CONTINUE")
+            self.assertEqual(out["missing_marker_progress_turns"], n+1)
+            self.assertEqual(out["missing_marker_recoveries"], 0)
+            at = out["next_at"] + 1
+        self.assertFalse(incidents.list_incidents(
+            self.root, project_id=self.project_id, category="MISSING_MARKER"))
+
+    def test_no_progress_exhausts_bounded_retries(self):
+        at = 1000
+        for n in range(wd.MAX_MISSING_MARKER_RECOVERIES):
+            out = wd.once(self.root, self.state, self.prompt, clock=at,
+                          runner=lambda *a, **kw: self.output(), harness_state_dir=self.dbdir)
             self.assertEqual(out["status"], "WAIT_RETRY")
+            self.assertEqual(out["missing_marker_recoveries"], n+1)
             at = out["next_at"] + 1
         exhausted = wd.once(self.root, self.state, self.prompt, clock=at,
-                            runner=self.recorded_progress, harness_state_dir=self.dbdir)
+                            runner=lambda *a, **kw: self.output(),
+                            harness_state_dir=self.dbdir)
         self.assertEqual(exhausted["status"], "NEEDS_USER")
         self.assertEqual(exhausted["next_at"], 0)
         inc = incidents.list_incidents(self.root, project_id=self.project_id,
                                         category="MISSING_MARKER")
         self.assertEqual(len(inc), 1)
 
+    def test_blocked_task_is_persisted_progress_not_fake_success(self):
+        def recorded_block(*args, **kwargs):
+            with core.database(self.dbdir) as db:
+                autonomy.event(db, self.project_id, "test-slice", "TASK_BLOCKED",
+                               {"reason": "ADB not found"})
+            return self.output()
+        result=wd.once(self.root, self.state, self.prompt, clock=1000,
+                       runner=recorded_block, harness_state_dir=self.dbdir)
+        self.assertEqual(result["status"], "CONTINUE")
+        self.assertEqual(result["missing_marker_recoveries"], 0)
     def test_claimed_controller_decision_are_not_progress(self):
         def no_real_progress(*a, **kw):
             with core.database(self.dbdir) as db:
