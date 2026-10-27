@@ -1,0 +1,27 @@
+name: Watchdog PR regression
+on:
+  pull_request:
+    paths:
+      - 're_harness/**'
+      - 'tests/**'
+      - '.github/workflows/watchdog-pr-checks.yml'
+permissions:
+  contents: read
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Syntax and bytecode
+        run: python -m compileall -q re_harness tests
+      - name: Install test dependencies
+        run: pip install -e '.[telegram]'
+      - name: Full unit regression (offline)
+        run: python -m unittest discover -s tests -v
