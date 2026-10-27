@@ -1,3 +1,25 @@
+# Easy start — no manual IDs (v0.6.3)
+
+From the repository checkout:
+```bash
+git pull --ff-only origin main
+./dragon start
+./dragon status
+```
+
+Only on the very first start, `./dragon` seeds one approved
+ReturnSaiyan — Unified Heroes Edition project and launches a fresh headless
+conversation. It does not reuse already ACCEPTED pilot goals or blindly
+resume the CLI's last unrelated conversation. When the first headless turn
+successfully returns its conversation ID, watchdog persists it. On subsequent
+starts the exact project and conversation are reused automatically.
+
+Use `./dragon logs`, `./dragon stop`. If status is NEEDS_USER because
+your authentication expired or an action needs permission, resolve that
+specific issue, then explicitly `./dragon resume`. Do not use resume to
+skip an actual project blocker or verification gate. For advanced use the
+older `scripts/quota-watchdog.sh` still works.
+
 # RE Dragon — Antigravity Quota Watchdog (WSL2)
 
 ## What it does

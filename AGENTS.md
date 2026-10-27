@@ -39,7 +39,17 @@ Resource limits are advisory shared-Harness reservations and are not OS
 process controls. Confirm previous REA/Ghidra process stopped after timeout.
 Host activity outside the single shared state DB cannot be tracked.
 
-## Unattended quota refresh — v0.6.1
+## Unattended quota refresh — v0.6.3
+
+Operators normally start with `./dragon start`. Easy-start seeds a
+ReturnSaiyan Unified Heroes goal if none exists, then opens a dedicated
+headless CLI conversation and pins both IDs after success. Always resume
+the injected project; never switch to ACCEPTED pilot goals. Do not
+request IDs from the user on every launch. Permission/auth blockers remain
+fail-closed; `./dragon resume` is explicit user authorization to retry
+after a real fix.
+
+
 
 When launched by docs/QUOTA_WATCHDOG_TURN.md, the independent host
 watchdog runs a bounded official Antigravity CLI headless turn. On provider

@@ -1,3 +1,31 @@
+## One-command unattended ReturnSaiyan mode (v0.6.3)
+
+After updating your checkout, use only:
+
+```bash
+./dragon start       # create/reuse Unified Heroes production goal, start tmux + headless agy
+./dragon status      # inspect persisted state
+./dragon logs        # short supervisor status log
+./dragon stop        # preserve progress and stop worker
+./dragon resume      # explicit human rearm ONLY after resolving a blocker
+```
+
+The **first** `./dragon start` safely creates the agreed ReturnSaiyan
+Unified Heroes project if none exists (e.g. when only two ACCEPTED pilot
+projects are present), then starts a **new dedicated Antigravity headless
+conversation**, not the unrelated latest pilot in the CLI cache. The CLI
+conversation ID is saved from its first successful JSON result. Subsequent
+starts reuse both pinned IDs without manual copying. The original APK/SO
+remain untouched; production task planning is delegated to Harness.
+
+Only the exact tutorial placeholders `PROJECT_ID`/`CONVERSATION_ID` are
+cleared automatically. Real auth, permission, ambiguous project or approval
+failures require explicit operator resolution; `./dragon start` will not
+silently change project or resume after such a stop.
+
+Auto-restart still requires Windows/WSL to remain running; test one real CLI
+turn and quota refresh before claiming unattended operation.
+
 # RE Dragon — Autonomous Agent-Driven Reverse Engineering
 
 v0.6 adds adaptive CPU/RAM and single-heavy-Ghidra task scheduling to the v0.5 goal-level controller for Codex and Antigravity. The user provides ONE objective; the active AI Agent plans, executes, reviews and re-plans through MCP without requesting a new P-stage prompt each time.

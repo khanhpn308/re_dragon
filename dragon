@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# RE Dragon: one-command production start/status/stop.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ACTION="${1:-status}"
+SESSION="re-dragon-quota-watchdog"
+cd "$ROOT"
+
+case "$ACTION" in
+  start)
+    command -v agy >/dev/null || { echo "Antigravity CLI (agy) not installed/logged in" >&2; exit 1; }
+    command -v tmux >/dev/null || { echo "Install tmux once: sudo apt install tmux" >&2; exit 1; }
+    if tmux has-session -t "$SESSION" 2>/dev/null; then
+      echo "RE Dragon is already running. ./dragon status"
+      exit 0
+    fi
+    args=(--workspace "$ROOT")
+    if [[ -n "${RE_DRAGON_HARNESS_STATE_DIR:-}" ]]; then
+      args+=(--state-dir "$RE_DRAGON_HARNESS_STATE_DIR")
+    fi
+    python3 -m re_harness.easy_start "${args[@]}"
+    bash scripts/quota-watchdog.sh start
+    ;;
+  status|stop|logs)
+    bash scripts/quota-watchdog.sh "$ACTION"
+    ;;
+  resume)
+    # Explicit operator rearm after investigating a NEEDS_USER/ERROR blocker.
+    bash scripts/quota-watchdog.sh reset
+    "$0" start
+    ;;
+  *)
+    echo "Usage: ./dragon {start|status|logs|stop|resume}" >&2
+    exit 2
+    ;;
+esac
