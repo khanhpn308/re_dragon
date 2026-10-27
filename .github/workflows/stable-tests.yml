@@ -19,6 +19,23 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Syntax and bytecode
         run: python -m compileall -q re_harness tests returnsaiyan_codec.py test_codec_p2.py test_codec_p3.py test_codec_p3_1.py test_codec_p4.py test_codec_p4_1.py
+      - name: Install open-source Telegram adapter
+        run: pip install -e '.[telegram]'
+      - name: Telegram Bot library API smoke (offline)
+        run: |
+          python - <<'PY'
+          from telegram.ext import ApplicationBuilder, CommandHandler
+          app = ApplicationBuilder().token("123456:TEST_TOKEN_FOR_LOCAL_BUILDER").build()
+          async def callback(update, context):
+              return None
+          async def hook(application):
+              return None
+          app.add_handler(CommandHandler("status", callback))
+          app.post_init = hook
+          app.post_stop = hook
+          assert app.post_init is hook and app.post_stop is hook
+          print("Telegram adapter SDK smoke: OK")
+          PY
       - name: SQLite, recovery, graph and MCP tests
         run: python -m unittest discover -s tests -v
       - name: Protocol Compatibility & Schema Verification Suites (P2, P3, P3.1, P4, P4.1)
