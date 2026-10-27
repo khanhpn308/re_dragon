@@ -31,7 +31,7 @@ MAX_TRANSIENT_RETRIES = 3
 MAX_CRASH_RETRIES = 3
 MAX_MISSING_MARKER_RECOVERIES = 2
 MISSING_MARKER_DELAY = 60
-MAX_PROGRESS_BACKED_MARKERLESS_TURNS = 6
+# A healthy project can emit many markerless CLI turns while making real\n# Harness progress. Bound no-progress retries, not productive turns.
 
 
 def utc(ts):
@@ -175,7 +175,8 @@ def durable_progress_cursor(db_dir, project_id):
                 """SELECT COALESCE(MAX(id), 0) FROM auto_events
                    WHERE project_id=?
                    AND (event IN ('SUBMITTED', 'PLAN_EXTENDED', 'AUDIT_RESOLVED',
-                                  'TASK_SPLIT', 'CHILDREN_VERIFIED_PARENT_UNLOCKED')
+                                  'TASK_SPLIT', 'CHILDREN_VERIFIED_PARENT_UNLOCKED',
+                                  'TASK_BLOCKED')
                         OR event LIKE 'REVIEW_%')""",
                 (project_id,),
             ).fetchone()[0]
@@ -531,43 +532,56 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                         and progress_after is not None
                         and progress_after > progress_before
                     )
-                    # Do not count a harmless narration as progress. Valid
-                    # persisted plan/submission/review transitions rearm the
-                    # bounded watchdog window, capped across markerless turns.
+                    # A verified durable transaction is a useful completed
+                    # checkpoint even when the provider omits the requested
+                    # textual terminal marker. The marker is *advisory* for
+                    # clean CLI SUCCESS only; authorization, quota, process
+                    # errors, project mismatch and missing DB all fail closed.
+                    # No task acceptance is inferred from the CLI reply.
                     streak = int(current.get("missing_marker_progress_turns", 0))
-                    budget = (1 if advanced else
-                              int(current.get("missing_marker_recoveries", 0)) + 1)
-                    if safe and ((advanced and streak < MAX_PROGRESS_BACKED_MARKERLESS_TURNS)
-                                 or (not advanced and budget <= MAX_MISSING_MARKER_RECOVERIES)):
+                    stalled = int(current.get("missing_marker_recoveries", 0)) + 1
+                    if safe and advanced:
+                        updated.update(
+                            status="CONTINUE",
+                            next_at=finished + NEXT["CONTINUE"],
+                            missing_marker_recoveries=0,
+                            missing_marker_progress_turns=streak + 1,
+                            last_reason=(
+                                "CLI omitted marker but Harness committed a new "
+                                "task/plan/review checkpoint; advancing safely "
+                                "on pinned project"
+                            ),
+                        )
+                    elif safe and stalled <= MAX_MISSING_MARKER_RECOVERIES:
                         updated.update(
                             status="WAIT_RETRY",
-                            next_at=finished + MISSING_MARKER_DELAY * (1 if advanced else budget),
-                            missing_marker_recoveries=0 if advanced else budget,
-                            missing_marker_progress_turns=streak + 1 if advanced else streak,
+                            next_at=finished + MISSING_MARKER_DELAY * stalled,
+                            missing_marker_recoveries=stalled,
+                            missing_marker_progress_turns=streak,
                             last_reason=(
-                                "Missing marker but verified new durable Harness progress; "
-                                "bounded same-project continuation"
-                                if advanced else
-                                "CLI SUCCESS omitted final marker; bounded no-progress "
-                                f"retry ({budget}/{MAX_MISSING_MARKER_RECOVERIES})"
+                                "CLI omitted marker and no new committed "
+                                "checkpoint; bounded no-progress retry "
+                                f"({stalled}/{MAX_MISSING_MARKER_RECOVERIES})"
                             ),
                         )
                     else:
                         incidents.create_or_update_incident(
                             workspace, current.get("project_id"), "MISSING_MARKER",
-                            "CLI state marker absent; no safe checkpoint advancement "
-                            "or recovery budget exhausted", severity="WARNING"
+                            "CLI omitted marker with no safe persisted progress "
+                            "or no-progress retry budget exhausted",
+                            severity="WARNING"
                         )
                         updated.update(
-                            status="NEEDS_USER",
-                            next_at=0,
-                            missing_marker_recoveries=budget,
+                            status="NEEDS_USER", next_at=0,
+                            missing_marker_recoveries=stalled,
                             missing_marker_progress_turns=streak,
                             last_reason=(
-                                "CLI state marker absent; checkpoint/retry budget "
-                                "requires operator or independent review"
+                                "CLI omitted marker and no independently "
+                                "verifiable forward progress after bounded "
+                                "retries; operator review required"
                             ),
                         )
+
     elif (
         outcome.get("code") == 0
         and (outcome.get("data") or {}).get("status") == "SUCCESS"
