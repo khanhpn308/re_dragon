@@ -20,6 +20,9 @@ class RuntimeStatusTests(unittest.TestCase):
         self.root=Path(temp.name)
         self.state=self.root/".re_harness"/"quota-watchdog.json"
         qw.save(self.state,qw.load(self.state))
+        docs=self.root/"docs"
+        docs.mkdir()
+        (docs/"QUOTA_WATCHDOG_TURN.md").write_text("test prompt",encoding="utf8")
 
     def test_live_pid_and_heartbeat_overlay(self):
         path=self.root/".re_harness"/"agent-runtime.json"
