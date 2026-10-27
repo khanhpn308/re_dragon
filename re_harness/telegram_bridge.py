@@ -171,8 +171,7 @@ def pause_watchdog(workspace):
     if state.get("status") == "PAUSED":
         return "Watchdog is already PAUSED."
     prev_status = state.get("status")
-    state.update(status="PAUSED", next_at=0, last_reason="Paused via Telegram by operator")
-    quota_watchdog.save(state_file, state)
+    quota_watchdog.pause_operator(state_file, "Paused via Telegram by operator")
     return f"⏸️ RE Dragon Watchdog paused (was {prev_status}). In-flight turn will complete; no new turns will launch. Use /resume to resume."
 
 
@@ -271,11 +270,18 @@ def retry_incident(workspace, incident_id, db_dir=None):
 
     state_file = root / ".re_harness" / "quota-watchdog.json"
     state = quota_watchdog.load(state_file)
+    if state.get("status") == "PAUSED":
+        return ("Watchdog is PAUSED by operator. Retry refused without unpausing. "
+                "Inspect the incident and task checkpoint first; use /resume "
+                "only after accepting the recovery decision.")
+    if pid and pid != state.get("project_id"):
+        return "Retry refused: incident project does not match pinned Watchdog project."
     state.update(
         status="READY",
         next_at=0,
         transient_failures=0,
         missing_marker_recoveries=0,
+        missing_marker_progress_turns=0,
         crash_recoveries=0,
         last_reason=f"Recovery retry for #{incident_id} requested via Telegram",
     )

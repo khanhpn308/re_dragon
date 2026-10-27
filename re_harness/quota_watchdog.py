@@ -12,6 +12,7 @@ import fcntl
 import json
 import os
 import re
+import sqlite3
 import signal
 import subprocess
 import sys
@@ -30,6 +31,7 @@ MAX_TRANSIENT_RETRIES = 3
 MAX_CRASH_RETRIES = 3
 MAX_MISSING_MARKER_RECOVERIES = 2
 MISSING_MARKER_DELAY = 60
+MAX_PROGRESS_BACKED_MARKERLESS_TURNS = 6
 
 
 def utc(ts):
@@ -110,8 +112,7 @@ def load(path):
             "next_at": 0, "last_reason": "new project"}
 
 
-def save(path, data):
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+def _write_state_unlocked(path, data):
     temp = path.with_suffix(".tmp")
     with temp.open("w", encoding="utf8") as file:
         json.dump(data, file, indent=2, ensure_ascii=False)
@@ -119,6 +120,68 @@ def save(path, data):
         os.fsync(file.fileno())
     os.chmod(temp, 0o600)
     os.replace(temp, path)
+
+
+def save(path, data, *, respect_pause=False):
+    """Atomic state write serialized with pause commands.
+
+    Only end-of-turn writes use respect_pause: an explicit operator PAUSED
+    intent must win over an older in-flight CLI result. Never erase checkpoint
+    telemetry or produce a fake completed marker.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with path.with_suffix(".write.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        effective = dict(data)
+        if respect_pause and path.exists():
+            disk = load(path)
+            if disk.get("status") == "PAUSED":
+                effective.update(status="PAUSED", next_at=0,
+                                 last_reason=disk.get("last_reason", "Paused by operator"))
+            if disk.get("drain_requested"):
+                effective["drain_requested"] = True
+        _write_state_unlocked(path, effective)
+    return effective
+
+
+def pause_operator(path, reason="Paused by operator"):
+    """Set PAUSED atomically without resetting in-flight task counters."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with path.with_suffix(".write.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        state = load(path)
+        state.update(status="PAUSED", next_at=0, last_reason=reason)
+        _write_state_unlocked(path, state)
+    return state
+
+
+def durable_progress_cursor(db_dir, project_id):
+    """Read-only progress fence; count only meaningful persisted task transitions.
+
+    A CLAIMED or CONTROLLER_DECISION event alone is not task progress.
+    Missing DB/schema returns None, never evidence for automatic continuation.
+    """
+    path = Path(db_dir).resolve() / "state.sqlite3"
+    if not path.is_file() or not project_id:
+        return None
+    try:
+        with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=5) as db:
+            count = db.execute(
+                "SELECT COUNT(*) FROM auto_tasks WHERE project_id=?", (project_id,)
+            ).fetchone()[0]
+            meaningful = db.execute(
+                """SELECT COALESCE(MAX(id), 0) FROM auto_events
+                   WHERE project_id=?
+                   AND (event IN ('SUBMITTED', 'PLAN_EXTENDED', 'AUDIT_RESOLVED',
+                                  'TASK_SPLIT', 'CHILDREN_VERIFIED_PARENT_UNLOCKED')
+                        OR event LIKE 'REVIEW_%')""",
+                (project_id,),
+            ).fetchone()[0]
+            return (int(count), int(meaningful))
+    except (sqlite3.Error, OSError, ValueError):
+        return None
 
 
 def log(path, event, state):
@@ -323,7 +386,9 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                     current["conversation_id"]=cid
                 # bootstrap creates a dedicated conversation on first successful turn.
             # Persist project/session binding before any CLI invocation.
-            save(state_path,current)
+            current = save(state_path, current, respect_pause=True)
+            if current.get("status") == "PAUSED":
+                return current
         except quota_guard.ProjectGateError as exc:
             current.update(status="NEEDS_USER",next_at=0,last_reason=str(exc))
             save(state_path,current)
@@ -345,6 +410,8 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                 str(exc), severity="CRITICAL"
             )
             return current
+    progress_before = (durable_progress_cursor(harness_state_dir, current.get("project_id"))
+                       if harness_state_dir is not None else None)
     prompt=prompt_path.read_text(encoding="utf8")
     if not prompt.strip():
         raise ValueError("Missing watchdog continuation instructions")
@@ -431,43 +498,72 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                     "could not be verified"
                 )
             else:
-                safe = (
-                    fresh["project_id"] == current.get("project_id")
-                    and fresh["project_status"] in quota_guard.ACTIVE
-                    and updated.get("conversation_id")
-                )
-                n = int(current.get("missing_marker_recoveries", 0)) + 1
-                if safe and n <= MAX_MISSING_MARKER_RECOVERIES:
+                # Do not infer provider success from a narrative response. Only
+                # committed Harness acceptance can mark the project COMPLETE.
+                if quota_guard.actual_completion(fresh):
                     updated.update(
-                        status="WAIT_RETRY",
-                        next_at=finished + MISSING_MARKER_DELAY * n,
-                        missing_marker_recoveries=n,
-                        last_reason=(
-                            "CLI SUCCESS omitted final marker; bounded "
-                            "retry with pinned Harness checkpoint "
-                            f"({n}/{MAX_MISSING_MARKER_RECOVERIES})"
-                        ),
+                        status="COMPLETE", next_at=0,
+                        missing_marker_recoveries=0,
+                        last_reason="Harness ACCEPTED with verified tasks; CLI omitted marker",
                     )
                 else:
-                    incidents.create_or_update_incident(
-                        workspace, current.get("project_id"), "MISSING_MARKER",
-                        "CLI state marker absent after bounded retries", severity="WARNING"
+                    safe = (
+                        fresh["project_id"] == current.get("project_id")
+                        and fresh["project_status"] in quota_guard.ACTIVE
+                        and updated.get("conversation_id")
                     )
-                    updated.update(
-                        status="NEEDS_USER",
-                        next_at=0,
-                        missing_marker_recoveries=n,
-                        last_reason=(
-                            "CLI state marker absent after bounded retries "
-                            "or no safe pinned active project/session"
-                        ),
+                    progress_after = durable_progress_cursor(
+                        harness_state_dir, current.get("project_id")
                     )
+                    advanced = (
+                        progress_before is not None
+                        and progress_after is not None
+                        and progress_after > progress_before
+                    )
+                    # Do not count a harmless narration as progress. Valid
+                    # persisted plan/submission/review transitions rearm the
+                    # bounded watchdog window, capped across markerless turns.
+                    streak = int(current.get("missing_marker_progress_turns", 0))
+                    budget = (1 if advanced else
+                              int(current.get("missing_marker_recoveries", 0)) + 1)
+                    if safe and ((advanced and streak < MAX_PROGRESS_BACKED_MARKERLESS_TURNS)
+                                 or (not advanced and budget <= MAX_MISSING_MARKER_RECOVERIES)):
+                        updated.update(
+                            status="WAIT_RETRY",
+                            next_at=finished + MISSING_MARKER_DELAY * (1 if advanced else budget),
+                            missing_marker_recoveries=0 if advanced else budget,
+                            missing_marker_progress_turns=streak + 1 if advanced else streak,
+                            last_reason=(
+                                "Missing marker but verified new durable Harness progress; "
+                                "bounded same-project continuation"
+                                if advanced else
+                                "CLI SUCCESS omitted final marker; bounded no-progress "
+                                f"retry ({budget}/{MAX_MISSING_MARKER_RECOVERIES})"
+                            ),
+                        )
+                    else:
+                        incidents.create_or_update_incident(
+                            workspace, current.get("project_id"), "MISSING_MARKER",
+                            "CLI state marker absent; no safe checkpoint advancement "
+                            "or recovery budget exhausted", severity="WARNING"
+                        )
+                        updated.update(
+                            status="NEEDS_USER",
+                            next_at=0,
+                            missing_marker_recoveries=budget,
+                            missing_marker_progress_turns=streak,
+                            last_reason=(
+                                "CLI state marker absent; checkpoint/retry budget "
+                                "requires operator or independent review"
+                            ),
+                        )
     elif (
         outcome.get("code") == 0
         and (outcome.get("data") or {}).get("status") == "SUCCESS"
         and agent_state(str(response))[0] is not None
     ):
         updated["missing_marker_recoveries"] = 0
+        updated["missing_marker_progress_turns"] = 0
     if (inbound and outcome.get("code")==0 and
             (outcome.get("data") or {}).get("status")=="SUCCESS" and
             agent_state((outcome.get("data") or {}).get("response",""))[0] in NEXT):
@@ -515,7 +611,7 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
         except quota_guard.ProjectGateError:
             updated.update(status="NEEDS_USER",next_at=0,
                            last_reason="Harness project disappeared after headless turn")
-    save(state_path,updated)
+    updated = save(state_path, updated, respect_pause=True)
     log(state_path.parent/"quota-watchdog.log","TURN",updated)
     return updated
 
@@ -602,9 +698,7 @@ def main(argv=None):
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
     if args.action == "pause":
-        state = load(state_file)
-        state.update(status="PAUSED", next_at=0, last_reason="Paused by operator")
-        save(state_file, state)
+        state = pause_operator(state_file)
         print(json.dumps(state, indent=2, ensure_ascii=False))
         return 0
     if args.action == "drain":
