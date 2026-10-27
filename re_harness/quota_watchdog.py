@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import incidents, quota_guard, recovery, runtime_state, telegram_inbox
+from . import environment_recovery, incidents, quota_guard, recovery, runtime_state, telegram_inbox
 
 ACTIVE_CHILD = None
 MARKER = "RE_DRAGON_RUN_STATE "
@@ -411,6 +411,17 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                 str(exc), severity="CRITICAL"
             )
             return current
+    # Automatic S6 environment recovery only at a bounded, between-turn
+    # checkpoint. If ADB/APK proof is absent, leave BLOCKED untouched and
+    # continue other independent tasks. A failed probe never fails the turn.
+    if harness_state_dir is not None and current.get("project_id"):
+        try:
+            environment_recovery.recover(
+                workspace, current["project_id"], apply=True, automatic=True
+            )
+        except (environment_recovery.NotReady, OSError, ValueError,
+                sqlite3.Error, subprocess.SubprocessError):
+            pass
     progress_before = (durable_progress_cursor(harness_state_dir, current.get("project_id"))
                        if harness_state_dir is not None else None)
     prompt=prompt_path.read_text(encoding="utf8")

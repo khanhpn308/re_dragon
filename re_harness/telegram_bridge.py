@@ -25,6 +25,7 @@ from pathlib import Path
 from . import (
     autonomy,
     core,
+    environment_recovery,
     incidents,
     quota_guard,
     quota_watchdog,
@@ -117,6 +118,56 @@ def status_text(workspace):
     except Exception:
         pass
     return "\n".join(lines)
+
+
+def environment_text(workspace, apply=False):
+    root = Path(workspace).resolve()
+    st = quota_watchdog.load(root / ".re_harness" / "quota-watchdog.json")
+    pid = st.get("project_id")
+    if not pid:
+        return "No pinned project."
+    try:
+        result = environment_recovery.recover(root, pid, apply=apply)
+    except (environment_recovery.NotReady, ValueError, OSError,
+            sqlite3.Error) as exc:
+        return "Environment recovery refused: " + str(exc)[:300]
+    line = ("S6 Environment: " + str(result.get("result")) +
+            "\nProject: " + str(pid) +
+            "\nTask: " + str(result.get("task")))
+    if result.get("device_model"):
+        line += "\nDevice: " + result["device_model"]
+    if result.get("reason"):
+        line += "\nReason: " + result["reason"][:200]
+    if result.get("apk_validation"):
+        line += "\nAPK: " + result["apk_validation"][:180]
+    if result.get("result") == "REQUEUED":
+        line += "\nS6 is now PENDING, NOT VERIFIED. /resume only after checking the Watchdog."
+    return line
+
+
+def environment_notification(workspace):
+    """One durable event ID per auto-recovery; independent of normal progress notifications."""
+    root = Path(workspace).resolve()
+    dbfile = root / ".re_harness_mvp" / "state.sqlite3"
+    if not dbfile.is_file():
+        return None, None
+    st = quota_watchdog.load(root / ".re_harness" / "quota-watchdog.json")
+    pid = st.get("project_id")
+    if not pid:
+        return None, None
+    with sqlite3.connect(dbfile.resolve().as_uri() + "?mode=ro",uri=True,timeout=5) as db:
+        row = db.execute(
+            "SELECT id FROM auto_events WHERE project_id=? "
+            "AND event='ENVIRONMENT_RECOVERED' ORDER BY id DESC LIMIT 1",(pid,)
+        ).fetchone()
+    if row is None:
+        return None, None
+    return (
+        f"{pid}:environment-recovered:{row[0]}",
+        f"RE Dragon: Android test environment recovered for {pid}. "
+        "S6 was returned BLOCKED -> PENDING after device/APK candidate preflight. "
+        "This is not Android E2E acceptance; use /tasks or /environment to review."
+    )
 
 
 def incidents_text(workspace, project_id=None):
@@ -824,6 +875,8 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 "  /taskdetail <key> — Inspect evidence and review notes\n\n"
                 "Reliability & Incidents:\n"
                 "  /incidents — List open and recent incidents\n"
+                "  /environment — Check S6 Android device/APK readiness (read-only)\n"
+                "  /recoverenv — Requeue S6 after preflight (requires PAUSED)\n"
                 "  /incident <id> — Inspect root cause and event timeline\n"
                 "  /retry <id> — Request safe retry for an incident\n"
                 "  /pause — Pause autonomous execution gracefully\n"
@@ -904,6 +957,13 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
 
         if name == "/progress":
             await update.message.reply_text(progress_text(root)[:3900])
+            return
+
+        if name in ("/environment", "/recoverenv"):
+            msg = await asyncio.to_thread(
+                environment_text, root, name == "/recoverenv"
+            )
+            await update.message.reply_text(msg[:3900])
             return
 
         if name == "/taskdetail":
@@ -1119,7 +1179,8 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
         "start", "help", "status", "projects", "project", "activate",
         "newgoal", "tasks", "task", "progress", "taskdetail",
         "approvals", "propose", "report",
-        "incidents", "incident", "retry", "pause", "resume"
+        "incidents", "incident", "retry", "pause", "resume",
+        "environment", "recoverenv"
     ]
     for c_name in command_names:
         app.add_handler(CommandHandler(c_name, command))
@@ -1147,6 +1208,19 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                     last = sig
             except Exception as exc:
                 print("Telegram monitor:",type(exc).__name__,file=sys.stderr,flush=True)
+            try:
+                env_sig, env_msg = environment_notification(root)
+                if env_sig and notification_delivery.claim(creds["token"], owner, env_sig):
+                    try:
+                        await app.bot.send_message(chat_id=owner, text=env_msg[:3900])
+                    except Exception as exc:
+                        print("Telegram environment delivery uncertain:",
+                              type(exc).__name__,file=sys.stderr,flush=True)
+                    else:
+                        notification_delivery.delivered(creds["token"],owner,env_sig)
+            except Exception as exc:
+                print("Telegram environment monitor:",
+                      type(exc).__name__,file=sys.stderr,flush=True)
             await asyncio.sleep(15)
 
     async def post_init(application):
