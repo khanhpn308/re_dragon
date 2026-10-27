@@ -6,7 +6,17 @@ SESSION="re-dragon-quota-watchdog"
 BOT_SESSION="re-dragon-telegram"
 BOT_CFG="$HOME/.config/re-dragon/telegram.json"
 BOT_PY="$ROOT/.venv-telegram/bin/python"
+BOT_LOG="$ROOT/.re_harness/telegram.log"
 cd "$ROOT"
+
+bot_logs() {
+  if [[ -f "$BOT_LOG" ]]; then
+    echo "--- Durable Telegram log (redacted): $BOT_LOG ---"
+    tail -n 80 "$BOT_LOG" | sed -E 's/[0-9]{6,}:[A-Za-z0-9_-]{25,}/[REDACTED_BOT_TOKEN]/g'
+  else
+    echo "No Telegram log yet: $BOT_LOG"
+  fi
+}
 
 bot_start() {
   command -v tmux >/dev/null || { echo "Install tmux first" >&2; return 1; }
@@ -20,10 +30,18 @@ bot_start() {
     echo "Telegram bot already running"
     return 0
   fi
-  cmd=("$BOT_PY" -m re_harness.telegram_bridge run --workspace "$ROOT")
+  mkdir -p "$ROOT/.re_harness"
+  chmod 700 "$ROOT/.re_harness"
+  cmd=(bash "$ROOT/scripts/telegram-supervised.sh" "$BOT_LOG" "$BOT_PY"
+       -m re_harness.telegram_bridge run --workspace "$ROOT")
   printf -v quoted '%q ' "${cmd[@]}"
   tmux new-session -d -s "$BOT_SESSION" -c "$ROOT" "$quoted"
-  echo "Telegram bot started (tmux)."
+  echo "Telegram process launched in tmux; API readiness is not yet verified."
+  echo "Persistent diagnostic log: $BOT_LOG"
+  if ! tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
+    echo "Telegram process exited immediately; see ./dragon telegram logs" >&2
+    return 1
+  fi
 }
 bot_stop() {
   if command -v tmux >/dev/null && tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
@@ -36,6 +54,7 @@ bot_status() {
     echo "Telegram bot: RUNNING"
   else
     echo "Telegram bot: STOPPED"
+    if [[ -f "$BOT_LOG" ]]; then echo "See: ./dragon telegram logs"; fi
   fi
 }
 
@@ -67,10 +86,7 @@ case "$ACTION" in
     ;;
   logs)
     bash scripts/quota-watchdog.sh logs
-    if tmux has-session -t "$BOT_SESSION" 2>/dev/null; then
-      echo "-- Telegram bot process output --"
-      tmux capture-pane -pt "$BOT_SESSION" -S -12
-    fi
+    bot_logs
     ;;
   resume)
     bash scripts/quota-watchdog.sh reset
@@ -90,7 +106,8 @@ case "$ACTION" in
       start) bot_start ;;
       stop) bot_stop ;;
       status) bot_status ;;
-      *) echo "Usage: ./dragon telegram {setup|doctor|start|stop|status}" >&2; exit 2 ;;
+      logs) bot_logs ;;
+      *) echo "Usage: ./dragon telegram {setup|doctor|start|stop|status|logs}" >&2; exit 2 ;;
     esac
     ;;
   *)

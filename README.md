@@ -1,3 +1,19 @@
+## v0.6.6 — Telegram durable crash logs
+
+The bot is launched via `scripts/telegram-supervised.sh`. Its output is
+written with file mode 0600 to `.re_harness/telegram.log` so startup
+exceptions remain accessible even after the tmux server disappears.
+Check via `./dragon telegram logs` (token-shaped secrets redacted for
+display), then use `./dragon telegram doctor` for read-only Bot API
+and webhook diagnostics. Running `./dragon telegram start` launches
+only the Telegram bridge; it does **not** start another Agent or
+reset existing Harness checkpoints.
+
+A tmux session being present only establishes that the process has
+not yet exited: Bot API connectivity requires doctor or successful
+Telegram command delivery. If no tmux server is running, do not assume
+that Telegram credentials are invalid: inspect the persistent log.
+
 ## v0.6.5 — Telegram self-diagnostic
 
 If the Telegram tmux session is RUNNING but /start or /status does not reply,
