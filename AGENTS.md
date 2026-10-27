@@ -22,6 +22,26 @@ playability cannot be inferred from resources or offline tests alone.
 Observe G1–G8, independent review and NEEDS_USER where approval,
 permissions or access to an Android test device are required.
 
+## RS-UH-PROD-V2 full-stack charter — approved, pinned per project
+
+For a NEW goal beginning `RS-UH-PROD-V2`, read exactly the pinned historical
+Git commit of `docs/production/RS_UNIFIED_HEROES_V2_FULLSTACK.md`, the same
+commit of `docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1.md`, and
+`docs/production/RS_GO_SERVER_5000_CCU_TEST_PLAN.md`. Do NOT silently use
+later HEAD in place of the pinned production contract. Enforce first H0
+V1-evidence handoff audit, then the actual source-grounded G1–G8 and S1–S6
+plus the 5,000 CCU verification in S5/S6. Harness ACCEPTED on V1 is only
+lifecycle status; it does not prove signed APK/runtime/hero support without
+primary files, Android logs and genuinely independent reviewer evidence.
+Go 1.27.3 and the RE Dragon-scoped Go standard are owner-approved for V2,
+but local toolchain and compatibility must be measured. Numerical latency
+SLOs from the load-test plan remain provisional until representative baseline
+review and owner approval. Keep APK/XAPK/proprietary assets and credentials
+local. Use one Watchdog, bounded Ghidra-heavy resource slot and explicit
+permissions for Android, network, schema migration or load-test execution.
+No unauthorized live third-party server connections and no false GO on
+simulator-only or code-only PASS. Never alter archived V1 acceptance.
+
 ## Mandatory pre-production live pilot
 
 Before any bulk ReturnSaiyan tasks, read docs/LIVE_PILOT.md and run the

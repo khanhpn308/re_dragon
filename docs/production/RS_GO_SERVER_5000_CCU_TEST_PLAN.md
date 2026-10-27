@@ -1,13 +1,13 @@
 # RE Dragon — Go Game Server 5,000 CCU Technical Test Plan
 
 **ID:** RS-UH-V2-PERF-5000-TP1  
-**Status:** DRAFT / NOT EXECUTED  
+**Status:** OWNER_APPROVED_TEST_DESIGN / NOT EXECUTED  
 **Date:** 2026-10-27  
-**Scope:** Proposed V2 Go TCP Server + PostgreSQL + integrated Android client  
-**Protected V1 project:** `20d3b705a4314d80` (do not modify, stop or activate another watchdog)  
-**Project references:** `docs/production/RS_UNIFIED_HEROES_V2_FULLSTACK_DRAFT.md`, `docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1_DRAFT.md` and `docs/returnsaiyan_p2_protocol_model.md` in `khanhpn308/re_dragon`.
+**Scope:** Owner-approved V2 Go TCP Server + PostgreSQL + integrated Android client; numerical SLO candidates remain provisional until hardware-baseline review  
+**Protected V1 project:** `20d3b705a4314d80` (reported COMPLETE in Telegram; preserve its state/artifacts, verify supervisor idle before V2 activation)  
+**Project references:** `docs/production/RS_UNIFIED_HEROES_V2_FULLSTACK.md`, `docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1.md` and `docs/returnsaiyan_p2_protocol_model.md` in `khanhpn308/re_dragon`.
 
-> Planning-only document. No load tests, database queries, packet transmissions, staging deployments or migration operations have been run. A planned threshold is not measured capability. All tests must target an owner-authorized, isolated staging environment, never a third-party live game service.
+> Owner-approved test design; **NO TESTS EXECUTED**. No load tests, database queries, packet transmissions, staging deployments or migration operations have been run. A planned threshold is not measured capability. All tests must target an owner-authorized, isolated staging environment, never a third-party live game service.
 
 ## 1. Purpose, boundaries, definitions
 
@@ -234,8 +234,8 @@ After owner approval, safe V1 checkpoint/handoff and NEW V2 project creation, gi
 
 ## 12. Reference documentation
 
-- Proposed RE Dragon V2 charter: https://github.com/khanhpn308/re_dragon/blob/main/docs/production/RS_UNIFIED_HEROES_V2_FULLSTACK_DRAFT.md
-- Proposed RE Dragon Go standard: https://github.com/khanhpn308/re_dragon/blob/main/docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1_DRAFT.md
+- Proposed RE Dragon V2 charter: https://github.com/khanhpn308/re_dragon/blob/main/docs/production/RS_UNIFIED_HEROES_V2_FULLSTACK.md
+- Proposed RE Dragon Go standard: https://github.com/khanhpn308/re_dragon/blob/main/docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1.md
 - Client-only P2 reverse engineering: https://github.com/khanhpn308/re_dragon/blob/main/docs/returnsaiyan_p2_protocol_model.md
 - PostgreSQL query stats: https://www.postgresql.org/docs/18/pgstatstatements.html
 - PostgreSQL online index: https://www.postgresql.org/docs/current/sql-createindex.html
