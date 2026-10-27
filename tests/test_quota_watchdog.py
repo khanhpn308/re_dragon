@@ -123,6 +123,86 @@ class QuotaWatchdogTests(unittest.TestCase):
                     q.load(self.state),1000)
         self.assertEqual(res["status"],"WAIT_QUOTA")
 
+    def test_missing_marker_can_retry_bounded_with_verified_project_identity(self):
+        from re_harness import autonomy, core
+        directory = self.root / ".re_harness_mvp"
+        with core.database(directory) as db:
+            autonomy.migrate(db)
+            pid = autonomy.start(db, "Pinned production goal", "Verified gates")["project_id"]
+        state = q.load(self.state)
+        state.update(project_id=pid, conversation_id="pinned-session-12345678")
+        q.save(self.state, state)
+        missing = {
+            "code": 0,
+            "data": {"status": "SUCCESS", "conversation_id": "pinned-session-12345678",
+                     "response": "Summary without machine-readable marker"},
+            "stderr": "",
+        }
+        runner = lambda *args, **kwargs: missing
+        first = q.once(
+            self.root, self.state, self.prompt, clock=1000,
+            runner=runner, harness_state_dir=directory
+        )
+        self.assertEqual(first["status"], "WAIT_RETRY")
+        self.assertEqual(first["next_at"], 1060)
+        self.assertEqual(first["project_id"], pid)
+        self.assertEqual(first["missing_marker_recoveries"], 1)
+        second = q.once(
+            self.root, self.state, self.prompt, clock=1061,
+            runner=runner, harness_state_dir=directory
+        )
+        self.assertEqual(second["status"], "WAIT_RETRY")
+        self.assertEqual(second["missing_marker_recoveries"], 2)
+        third = q.once(
+            self.root, self.state, self.prompt, clock=1182,
+            runner=runner, harness_state_dir=directory
+        )
+        self.assertEqual(third["status"], "NEEDS_USER")
+        self.assertEqual(third["next_at"], 0)
+        self.assertEqual(third["project_id"], pid)
+        self.assertEqual(third["attempts"], 3)
+
+    def test_missing_marker_bounded_recovery_resets_after_good_turn(self):
+        from re_harness import autonomy, core
+        directory = self.root / ".re_harness_mvp"
+        with core.database(directory) as db:
+            autonomy.migrate(db)
+            pid = autonomy.start(db, "Pinned production goal", "Verified gates")["project_id"]
+        state = q.load(self.state)
+        state.update(project_id=pid, conversation_id="pinned-session-12345678")
+        q.save(self.state, state)
+        outcomes = [
+            {"code":0,"data":{"status":"SUCCESS",
+                               "conversation_id":"pinned-session-12345678",
+                               "response":"No marker"},"stderr":""},
+            self.output(conv="pinned-session-12345678"),
+        ]
+        runner = lambda *args, **kwargs: outcomes.pop(0)
+        first = q.once(self.root,self.state,self.prompt,clock=1000,
+                       runner=runner,harness_state_dir=directory)
+        self.assertEqual(first["status"], "WAIT_RETRY")
+        second = q.once(self.root,self.state,self.prompt,clock=1060,
+                        runner=runner,harness_state_dir=directory)
+        self.assertEqual(second["status"], "CONTINUE")
+        self.assertEqual(second["missing_marker_recoveries"], 0)
+
+    def test_missing_marker_does_not_retry_permission_failure(self):
+        from re_harness import autonomy, core
+        directory = self.root / ".re_harness_mvp"
+        with core.database(directory) as db:
+            autonomy.migrate(db)
+            pid = autonomy.start(db, "Pinned production goal", "Verified gates")["project_id"]
+        state = q.load(self.state)
+        state.update(project_id=pid, conversation_id="pinned-session-12345678")
+        q.save(self.state, state)
+        out={"code":0,"data":{"status":"SUCCESS",
+              "conversation_id":"pinned-session-12345678",
+              "response":"Tool requires approval"},"stderr":""}
+        result=q.once(self.root,self.state,self.prompt,clock=1000,
+                      runner=lambda *a,**kw:out,harness_state_dir=directory)
+        self.assertEqual(result["status"], "NEEDS_USER")
+        self.assertEqual(result["next_at"], 0)
+
     def test_prompt_malformed_stop(self):
         res=q.evaluate({"code":0,"data":{"status":"SUCCESS",
                     "response":'RE_DRAGON_RUN_STATE {"state":"BOGUS"}'},"stderr":""},

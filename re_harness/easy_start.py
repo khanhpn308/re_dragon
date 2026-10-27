@@ -116,9 +116,23 @@ def bootstrap(workspace, state_dir=None, goal=None, acceptance=None, project_id=
             )
         with core.database(db_dir) as db:
             autonomy.migrate(db)
-            # If user didn't request a specific project or goal, and the watcher is
-            # already bound to an active project in DB, maintain it unless conflicting.
-            selected_pid, created = _select_project(db, goal=goal, project_id=project_id)
+            # A durable project_id binding always takes precedence over legacy
+            # title discovery. This is critical for resuming a V1 project while
+            # an older ReturnSaiyan goal is already ACCEPTED. Do not silently
+            # switch to another project after a failed lookup.
+            pinned = state.get("project_id") if not (goal or project_id) else None
+            if pinned:
+                row = db.execute(
+                    "SELECT id FROM auto_projects WHERE id=?", (pinned,)
+                ).fetchone()
+                if row is None:
+                    raise SetupError(
+                        "Pinned watchdog project_id is absent in Harness SQLite; "
+                        "refusing fallback project discovery"
+                    )
+            selected_pid, created = _select_project(
+                db, goal=goal, project_id=project_id or pinned
+            )
 
         if state.get("project_id") and state["project_id"] != selected_pid and not (project_id or goal):
             raise SetupError("Watchdog pinned to another project; cannot silently switch")

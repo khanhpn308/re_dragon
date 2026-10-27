@@ -27,6 +27,8 @@ NEXT = {"CONTINUE": 30, "YIELD": 60, "WAIT": 180}
 DEFAULT_QUOTA_POLL = 900
 RESET_GRACE = 60
 MAX_TRANSIENT_RETRIES = 3
+MAX_MISSING_MARKER_RECOVERIES = 2
+MISSING_MARKER_DELAY = 60
 
 
 def utc(ts):
@@ -322,6 +324,69 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     # Schedule reset/backoff from the completed CLI result, not turn start.
     finished=time.time() if clock is None else clock
     updated=evaluate(outcome,current,finished)
+    # An explicit permission/quota/error is never retried as a missing marker.
+    # For a CLI-success turn that omitted only the terminal marker, the CLI
+    # process has exited, the pinned project identity is checked anew, and one
+    # bounded continuation is permitted. No task is marked VERIFIED here:
+    # durable Harness state and independent review remain the source of truth.
+    response = (outcome.get("data") or {}).get("response", "")
+    missing_marker = (
+        outcome.get("code") == 0
+        and (outcome.get("data") or {}).get("status") == "SUCCESS"
+        and updated.get("status") == "NEEDS_USER"
+        and updated.get("last_reason") ==
+            "Agent did not emit the required structured watchdog state"
+    )
+    if missing_marker and harness_state_dir is not None:
+        if auth_error(str(response)) or quota_error(str(response)):
+            updated["last_reason"] = (
+                "Successful CLI omitted state but response requires "
+                "authorization/quota investigation"
+            )
+        else:
+            try:
+                fresh = quota_guard.inspect(
+                    harness_state_dir, current.get("project_id")
+                )
+            except quota_guard.ProjectGateError:
+                updated["last_reason"] = (
+                    "CLI omitted state and pinned Harness checkpoint "
+                    "could not be verified"
+                )
+            else:
+                safe = (
+                    fresh["project_id"] == current.get("project_id")
+                    and fresh["project_status"] in quota_guard.ACTIVE
+                    and updated.get("conversation_id")
+                )
+                n = int(current.get("missing_marker_recoveries", 0)) + 1
+                if safe and n <= MAX_MISSING_MARKER_RECOVERIES:
+                    updated.update(
+                        status="WAIT_RETRY",
+                        next_at=finished + MISSING_MARKER_DELAY * n,
+                        missing_marker_recoveries=n,
+                        last_reason=(
+                            "CLI SUCCESS omitted final marker; bounded "
+                            "retry with pinned Harness checkpoint "
+                            f"({n}/{MAX_MISSING_MARKER_RECOVERIES})"
+                        ),
+                    )
+                else:
+                    updated.update(
+                        status="NEEDS_USER",
+                        next_at=0,
+                        missing_marker_recoveries=n,
+                        last_reason=(
+                            "CLI state marker absent after bounded retries "
+                            "or no safe pinned active project/session"
+                        ),
+                    )
+    elif (
+        outcome.get("code") == 0
+        and (outcome.get("data") or {}).get("status") == "SUCCESS"
+        and agent_state(str(response))[0] is not None
+    ):
+        updated["missing_marker_recoveries"] = 0
     if (inbound and outcome.get("code")==0 and
             (outcome.get("data") or {}).get("status")=="SUCCESS" and
             agent_state((outcome.get("data") or {}).get("response",""))[0] in NEXT):
