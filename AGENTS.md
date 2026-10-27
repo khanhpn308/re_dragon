@@ -42,6 +42,25 @@ permissions for Android, network, schema migration or load-test execution.
 No unauthorized live third-party server connections and no false GO on
 simulator-only or code-only PASS. Never alter archived V1 acceptance.
 
+## V2 Go Standard v1.1 — opt-in amendment only
+
+For a NEW, owner-scoped RS-UH-PROD-V2 Go Server task that **explicitly pins**
+`docs/production/GO_GAME_SERVER_AGENT_STANDARD_V1_1.md` at an approved
+addendum commit SHA, consult its `GO_GAME_SERVER_RULE_MATRIX_V1_1.md` and
+`GO_GAME_SERVER_RULE_REGISTRY_V1_1.md` before any Go code/review. Resolve only
+the applicable rule IDs; 36 upstream LoRa/MQTT/RF rules remain EXCLUDED.
+Preserve the existing exact V2 charter SHA in Harness and record a **separate**
+addendum SHA and explicit task/owner approval. Never switch an active task's
+rulebook from its historical pin simply because HEAD changed.
+
+The rulebook's Python policy check is documentation-only. Until a real
+`game-server/go.mod` exists, Go BUILD/UNIT/RACE = NOT_RUN_NO_MODULE; docs CI
+PASS cannot certify game server functionality, PostgreSQL, Android E2E or
+5,000 CCU. Source-verified TCP contracts, allowed paths, host permissions,
+independent review and V1 immutable acceptance remain superior constraints.
+Do not create Go scaffolding, modify V1 checkpoints or restart agents merely
+to activate this amendment. See V1.1 Standard §0 and rollout §6.
+
 ## Mandatory pre-production live pilot
 
 Before any bulk ReturnSaiyan tasks, read docs/LIVE_PILOT.md and run the
