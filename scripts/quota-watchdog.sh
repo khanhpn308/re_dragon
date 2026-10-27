@@ -14,6 +14,8 @@ case "$ACTION" in
     fi
     cmd=(python3 -m re_harness.quota_watchdog run --workspace "$ROOT" --mode "$MODE")
     if [[ -n "${2:-}" ]]; then cmd+=(--conversation "$2"); fi
+    if [[ -n "${3:-${RE_DRAGON_PROJECT_ID:-}}" ]]; then cmd+=(--project-id "${3:-$RE_DRAGON_PROJECT_ID}"); fi
+    if [[ -n "${RE_DRAGON_HARNESS_STATE_DIR:-}" ]]; then cmd+=(--harness-state-dir "$RE_DRAGON_HARNESS_STATE_DIR"); fi
     printf -v quoted '%q ' "${cmd[@]}"
     tmux new-session -d -s "$SESSION" -c "$ROOT" "$quoted"
     echo "Quota Watchdog started in tmux. Use: bash scripts/quota-watchdog.sh status"
@@ -43,6 +45,7 @@ case "$ACTION" in
     fi
     args=(python3 -m re_harness.quota_watchdog reset --workspace "$ROOT")
     if [[ -n "${2:-}" ]]; then args+=(--conversation "$2"); fi
+    if [[ -n "${3:-${RE_DRAGON_PROJECT_ID:-}}" ]]; then args+=(--project-id "${3:-$RE_DRAGON_PROJECT_ID}"); fi
     (cd "$ROOT" && "${args[@]}")
     echo "Rearmed. Start watchdog again after resolving the blocker."
     ;;
@@ -50,7 +53,7 @@ case "$ACTION" in
     (cd "$ROOT" && python3 -m re_harness.quota_watchdog once --workspace "$ROOT" --mode "$MODE")
     ;;
   *)
-    echo "Usage: bash scripts/quota-watchdog.sh {start [CONVERSATION_ID]|status|logs|stop|reset|once}" >&2
+    echo "Usage: bash scripts/quota-watchdog.sh {start [CONVERSATION_ID] [PROJECT_ID]|status|logs|stop|reset [CONVERSATION_ID] [PROJECT_ID]|once}" >&2
     exit 2
     ;;
 esac

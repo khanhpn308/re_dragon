@@ -11,7 +11,7 @@ conversation plus RE Dragon Harness SQLite checkpoints.
 
 After one-time Antigravity authentication and scoped permissions setup
 (default auto sandbox mode; never use --dangerously-skip-permissions):
-  bash scripts/quota-watchdog.sh start [CONVERSATION_ID]
+  bash scripts/quota-watchdog.sh start [CONVERSATION_ID] [PROJECT_ID]
 
 To inspect or stop:
   bash scripts/quota-watchdog.sh status
@@ -20,6 +20,8 @@ To inspect or stop:
 
 Documentation: [docs/QUOTA_WATCHDOG.md](docs/QUOTA_WATCHDOG.md).
 This does NOT defeat quota limits, bypass approvals or run with Windows asleep.
+The watcher pins one project and one conversation, stops on ambiguous projects,
+uses bounded transport retries and checks SQLite before accepting COMPLETE.
 
 ## Start in the Agent chat
 

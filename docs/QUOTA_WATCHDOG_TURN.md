@@ -5,9 +5,9 @@ quota watchdog. This is one bounded turn of the EXISTING project.
 
 1. Read AGENTS.md and docs/V06_SCHEDULER.md. Call harness_auto_projects and
    harness_auto_status to resume the ReturnSaiyan Unified Heroes Edition goal.
-   Never create a duplicate goal. If none exists, create ONE legitimate goal
-   for preserving the playable ReturnSaiyan client and integrating missing
-   Dragon Ball Global hero assets with evidence-based compatibility checks.
+   The supervisor injects a pinned PROJECT ID. Work ONLY on that project;
+   do not create a new goal or switch projects or conversations. If the goal
+   is absent or blocked, emit NEEDS_USER.
 2. Continue autonomous tasks with harness_auto_tick. Respect Ghidra exclusion,
    resource leases, evidence reviews, scope decomposition and task checkpoint
    rules. Complete more than one task only when their acceptance gates permit.

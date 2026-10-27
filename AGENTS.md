@@ -44,8 +44,9 @@ Host activity outside the single shared state DB cannot be tracked.
 When launched by docs/QUOTA_WATCHDOG_TURN.md, the independent host
 watchdog runs a bounded official Antigravity CLI headless turn. On provider
 RESOURCE_EXHAUSTED the CLI exits; Python host logic, not the LLM, waits
-for reset. The next headless turn MUST recover the same project via
-harness_auto_projects, inspect checkpoint and continue the task DAG.
+for reset. The next headless turn MUST recover the pinned project ID injected by the
+watchdog via harness_auto_projects/harness_auto_status, inspect checkpoint
+and continue the task DAG; never switch goal or create another project.
 Never create a duplicate project, forge an independent reviewer, switch
 accounts/models to bypass quota or use dangerous permission-skipping.
 If permission, authentication or an unresolved user decision is required,

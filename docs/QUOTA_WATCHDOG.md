@@ -34,7 +34,7 @@ take longer.
   conversation for the same absolute workspace path.
 
 Start once from the repository:
-  bash scripts/quota-watchdog.sh start CONVERSATION_ID
+  bash scripts/quota-watchdog.sh start CONVERSATION_ID PROJECT_ID
 
 Or without a conversation ID:
   bash scripts/quota-watchdog.sh start
@@ -46,6 +46,23 @@ Observe:
 Stop deliberately:
   bash scripts/quota-watchdog.sh stop
 
+The supervisor uses .re_harness_mvp/state.sqlite3 by default (override
+RE_DRAGON_HARNESS_STATE_DIR). It binds exactly one active project or needs an
+explicit PROJECT_ID. It binds a conversation supplied by the operator or
+from the official Antigravity CLI workspace conversation cache. Unknown or
+ambiguous bindings stop NEEDS_USER; existing progress is never overwritten.
+
+A model COMPLETE marker is NOT sufficient: the watcher verifies actual
+ACCEPTED status and VERIFIED tasks in the local Harness SQLite checkpoint.
+STOPPED, BLOCKED and awaiting-final-review goals stop for user intervention.
+
+Quota waits respect the provider countdown plus 60 seconds; missing
+countdowns mean one permitted recheck per 15 minutes, not an assumed five
+hour reset. Separate transient network retry budget: at most 3 attempts
+with bounded backoff. Permission/authentication and ambiguous tool timeouts
+stop immediately, without switching model/account or skipping approval.
+Only short status metadata is logged.
+
 After resolving a permissions or authentication blocker:
   bash scripts/quota-watchdog.sh reset
   bash scripts/quota-watchdog.sh start
@@ -56,6 +73,7 @@ Use 'once' for a bounded first trial:
 ## State machine and safety
 
 - READY / CONTINUE / YIELD: run another bounded headless turn.
+- WAIT_RETRY: bounded transport retries, not quota retries.
 - WAIT: back off temporarily before retrying.
 - WAIT_QUOTA: no requests until the provider-reported reset countdown or
   a conservative recheck if unknown. The CLI may sometimes cache previous
