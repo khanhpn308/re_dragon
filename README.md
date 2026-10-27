@@ -1,3 +1,17 @@
+## v0.6.5 — Telegram self-diagnostic
+
+If the Telegram tmux session is RUNNING but /start or /status does not reply,
+run `./dragon telegram doctor`. This read-only command checks getMe
+(username and connectivity) and getWebhookInfo (webhook conflict) using the
+Bot Token stored locally, without displaying the token or consuming updates.
+Use `tmux capture-pane -pt re-dragon-telegram -S -80` to inspect hidden
+runtime errors (redact tokens before sharing output). Telegram Desktop
+can use a separate proxy from WSL2; working Desktop messaging does not
+prove WSL2 has HTTPS access to `api.telegram.org`.
+
+The command does not delete webhook state, clear messages, reset auth,
+run a second getUpdates consumer or touch the main Agent checkpoint.
+
 ## v0.6.4 — live status & Telegram ChatOps (optional)
 
 - `./dragon status` now reports AGENT_RUNNING, PID, elapsed seconds

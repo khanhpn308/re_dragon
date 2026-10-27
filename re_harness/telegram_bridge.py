@@ -133,6 +133,57 @@ def notification_signature(workspace):
     return None,None
 
 
+
+async def telegram_probe(bot_factory, token):
+    """Read-only Bot API connectivity and webhook check; redact credentials."""
+    bot=bot_factory(token)
+    async with bot:
+        me=await asyncio.wait_for(bot.get_me(),timeout=20)
+        hook=await asyncio.wait_for(bot.get_webhook_info(),timeout=20)
+    return {
+        "api_reachable": True,
+        "bot_username": getattr(me, "username", None),
+        "webhook_configured": bool(getattr(hook,"url","")),
+        "pending_updates": getattr(hook,"pending_update_count",None),
+    }
+
+
+def doctor():
+    """Safe on an active bot: no getUpdates, no webhook deletion, no token echo."""
+    try:
+        from telegram import Bot
+        from telegram.error import InvalidToken, NetworkError, TimedOut
+        creds=config()
+    except (ImportError,ValueError,OSError) as exc:
+        print("Telegram doctor: local setup unavailable:",type(exc).__name__)
+        return 2
+    print("Telegram doctor: testing getMe/getWebhookInfo via WSL2 (no changes)...",
+          flush=True)
+    try:
+        report=asyncio.run(telegram_probe(Bot,creds["token"]))
+    except InvalidToken:
+        print("ERROR: invalid/revoked Bot Token. Update with ./dragon telegram setup.")
+        return 2
+    except (NetworkError,TimedOut,OSError,asyncio.TimeoutError) as exc:
+        print("ERROR: cannot reach Telegram Bot API from WSL2:",type(exc).__name__)
+        print("Check DNS, network policy, HTTPS access to api.telegram.org, "
+              "or whether Telegram Desktop uses a separate proxy.")
+        return 2
+    except Exception as exc:
+        print("ERROR: Telegram Bot API check failed:",type(exc).__name__)
+        return 2
+    print("Bot API: OK; username: @"+str(report["bot_username"]))
+    print("Telegram polling webhook conflict:",
+          "YES" if report["webhook_configured"] else "NO")
+    print("Pending updates:",report["pending_updates"])
+    if report["webhook_configured"]:
+        print("BLOCKED: webhook is configured; polling needs a cleared webhook.")
+        print("No webhook was changed by this diagnostic.")
+        return 3
+    print("API connectivity OK. If messages still have no replies, inspect the "
+          "tmux bot log for polling/handler errors.")
+    return 0
+
 def serve(workspace):
     try:
         from telegram.ext import ApplicationBuilder,CommandHandler
@@ -177,6 +228,10 @@ def _serve_impl(workspace,ApplicationBuilder,CommandHandler):
         await update.message.reply_text(msg[:3900])
     for name in ("start","help","status","tasks","task"):
         app.add_handler(CommandHandler(name,command))
+    async def bot_error(update,context):
+        print("Telegram handler/polling error:",
+              type(context.error).__name__,file=sys.stderr,flush=True)
+    app.add_error_handler(bot_error)
     async def monitor():
         last=None
         while True:
@@ -198,6 +253,9 @@ def _serve_impl(workspace,ApplicationBuilder,CommandHandler):
                 print("Telegram monitor:",type(exc).__name__,file=sys.stderr)
             await asyncio.sleep(30)
     async def post_init(application):
+        print("Telegram adapter initialized for @"+
+              str(getattr(application.bot,"username","unknown"))+
+              "; polling will start next",flush=True)
         holder["task"]=asyncio.create_task(monitor())
     async def post_stop(application):
         task=holder["task"]
@@ -213,13 +271,15 @@ def _serve_impl(workspace,ApplicationBuilder,CommandHandler):
 
 def main(argv=None):
     p=argparse.ArgumentParser()
-    p.add_argument("action",choices=("setup","run"))
+    p.add_argument("action",choices=("setup","run","doctor"))
     p.add_argument("--workspace",default=".")
     args=p.parse_args(argv)
     if args.action=="setup":
         try: configure()
         except ValueError as e:p.exit(2,str(e)+"\n")
         return 0
+    if args.action=="doctor":
+        return doctor()
     try:return serve(args.workspace)
     except (ValueError,RuntimeError) as e:
         p.exit(2,str(e)+"\n")

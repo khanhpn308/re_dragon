@@ -80,10 +80,17 @@ case "$ACTION" in
     CMD="${2:-status}"
     case "$CMD" in
       setup) python3 -m re_harness.telegram_bridge setup ;;
+      doctor)
+        if [[ ! -x "$BOT_PY" ]]; then
+          echo "Install Telegram dependency first: .venv-telegram/bin/pip install -e '.[telegram]'" >&2
+          exit 2
+        fi
+        "$BOT_PY" -m re_harness.telegram_bridge doctor --workspace "$ROOT"
+        ;;
       start) bot_start ;;
       stop) bot_stop ;;
       status) bot_status ;;
-      *) echo "Usage: ./dragon telegram {setup|start|stop|status}" >&2; exit 2 ;;
+      *) echo "Usage: ./dragon telegram {setup|doctor|start|stop|status}" >&2; exit 2 ;;
     esac
     ;;
   *)
