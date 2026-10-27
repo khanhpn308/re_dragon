@@ -78,6 +78,10 @@ class WatchdogSafetyTests(unittest.TestCase):
         self.assertIn("without verified",r["last_reason"])
 
     def test_project_accepted_is_terminal_without_model_call(self):
+        # A real watcher has already pinned this project before it finishes.
+        pinned=q.load(self.watch_state)
+        pinned["project_id"]="return-12345678"
+        q.save(self.watch_state,pinned)
         self.update_project("ACCEPTED","VERIFIED")
         r=q.once(self.root,self.watch_state,self.prompt,clock=100,
                  runner=lambda *a,**k:self.fail("should not invoke agy"),
