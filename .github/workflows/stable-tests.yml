@@ -24,16 +24,22 @@ jobs:
       - name: Telegram Bot library API smoke (offline)
         run: |
           python - <<'PY'
-          from telegram.ext import ApplicationBuilder, CommandHandler
+          from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+          from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
           app = ApplicationBuilder().token("123456:TEST_TOKEN_FOR_LOCAL_BUILDER").build()
           async def callback(update, context):
               return None
           async def hook(application):
               return None
           app.add_handler(CommandHandler("status", callback))
+          app.add_handler(CommandHandler("projects", callback))
+          app.add_handler(CommandHandler("approvals", callback))
+          app.add_handler(CallbackQueryHandler(callback))
           app.post_init = hook
           app.post_stop = hook
           assert app.post_init is hook and app.post_stop is hook
+          kb = InlineKeyboardMarkup([[InlineKeyboardButton("OK", callback_data="test")]])
+          assert len(kb.inline_keyboard) == 1
           print("Telegram adapter SDK smoke: OK")
           PY
       - name: SQLite, recovery, graph and MCP tests

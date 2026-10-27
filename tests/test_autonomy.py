@@ -7,7 +7,8 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from re_harness import core, autonomy, mcp
+from unittest.mock import patch
+from re_harness import core, autonomy, mcp, scheduler
 
 
 class AutonomousHarnessTests(unittest.TestCase):
@@ -19,6 +20,10 @@ class AutonomousHarnessTests(unittest.TestCase):
         self.binary.write_bytes(b"\x7fELF"+b"\x00"*32)
         self.db=core.database(self.state)
         self.addCleanup(self.db.close)
+        self.host=patch("re_harness.scheduler.read_host",
+                        return_value=scheduler.Host(8,16384,0.0))
+        self.host.start()
+        self.addCleanup(self.host.stop)
         autonomy.migrate(self.db)
 
     def goal(self):

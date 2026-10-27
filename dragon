@@ -67,6 +67,12 @@ case "$ACTION" in
       if [[ -n "${RE_DRAGON_HARNESS_STATE_DIR:-}" ]]; then
         args+=(--state-dir "$RE_DRAGON_HARNESS_STATE_DIR")
       fi
+      if [[ -n "${2:-}" && "$2" != --* ]]; then
+        args+=(--project-id "$2")
+      elif [[ "$#" -gt 1 ]]; then
+        shift
+        args+=("$@")
+      fi
       python3 -m re_harness.easy_start "${args[@]}"
       bash scripts/quota-watchdog.sh start
     else

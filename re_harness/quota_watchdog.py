@@ -194,6 +194,10 @@ def evaluate(result, previous, timestamp):
             status=="SUCCESS" and isinstance(cid,str) and re.fullmatch(
             r"[0-9A-Za-z-]{8,128}",cid)):
         state["conversation_id"]=cid
+        if state.get("project_id"):
+            convs = dict(state.get("project_conversations") or {})
+            convs[state["project_id"]] = cid
+            state["project_conversations"] = convs
     if auth_error(err):
         state.update(status="NEEDS_USER",next_at=0,
                      last_reason="CLI authentication/permissions require user")
@@ -305,6 +309,10 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                                  [x["id"] for x in inbound])
     if updated.get("bootstrap_new_conversation") and updated.get("conversation_id"):
         updated.pop("bootstrap_new_conversation",None)
+        if updated.get("project_id"):
+            convs = dict(updated.get("project_conversations") or {})
+            convs[updated["project_id"]] = updated["conversation_id"]
+            updated["project_conversations"] = convs
     if (current.get("bootstrap_new_conversation") and
             updated["status"] in NEXT and not updated.get("conversation_id")):
         updated.update(status="NEEDS_USER",next_at=0,
