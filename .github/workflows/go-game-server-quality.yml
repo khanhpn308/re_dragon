@@ -1,0 +1,111 @@
+name: Go Game Server — rulebook and quality gates
+
+on:
+  pull_request:
+    paths:
+      - 'docs/production/GO_GAME_SERVER_*'
+      - 'AGENTS.md'
+      - 'scripts/check_go_standard.py'
+      - 'tests/test_go_standard_policy.py'
+      - 'game-server/**'
+      - '.github/workflows/go-game-server-quality.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/production/GO_GAME_SERVER_*'
+      - 'AGENTS.md'
+      - 'scripts/check_go_standard.py'
+      - 'tests/test_go_standard_policy.py'
+      - 'game-server/**'
+      - '.github/workflows/go-game-server-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: V1.1 policy consistency (no game server claim)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate the registry, applicability and exclusions
+        run: |
+          python scripts/check_go_standard.py
+          python -m unittest discover -s tests -p 'test_go_standard_policy.py' -v
+      - name: State honest policy scope
+        run: echo "Docs-only gate cannot demonstrate Go build, PostgreSQL, Android or 5,000 CCU."
+
+  discover:
+    name: Check actual Go module presence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has_go: ${{ steps.module.outputs.has_go }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: module
+        name: Fail on Go sources without a module
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f game-server/go.mod ]]; then
+            echo "has_go=true" >> "$GITHUB_OUTPUT"
+            echo "Go module present: scheduling actual Go quality checks"
+          else
+            echo "has_go=false" >> "$GITHUB_OUTPUT"
+            if [[ -d game-server ]] && find game-server -name '*.go' -type f -print -quit | grep -q .; then
+              echo "::error::Go sources exist under game-server, but game-server/go.mod is missing"
+              exit 1
+            fi
+            echo "::notice::NOT_RUN_NO_MODULE — no Go server yet; GOFMT/BUILD/VET/UNIT/RACE/DB/E2E/5K NOT_RUN"
+          fi
+
+  go:
+    name: Real Go vet/unit/race (only if module exists)
+    needs: [policy, discover]
+    if: needs.discover.outputs.has_go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: game-server
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Verify exact pinned toolchain and module
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.3"
+          grep -Eq '^go 1\.27\.3$' go.mod || { echo "::error::go.mod must pin Go 1.27.3"; exit 1; }
+      - name: gofmt must produce empty output
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad="$(find . -name '*.go' -type f -print0 | xargs -0 -r gofmt -l)"
+          if [[ -n "$bad" ]]; then
+            printf 'Go files requiring gofmt:\n%s\n' "$bad"
+            exit 1
+          fi
+      - name: Verify, vet, unit and race (actual results only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          go mod verify
+          go vet ./...
+          go test ./...
+          CGO_ENABLED=1 go test -race ./...
+      - name: Report limits (not integration evidence)
+        run: |
+          echo "Go format, module verification, vet, unit and race have run."
+          echo "NOT_RUN: PostgreSQL integration, Android E2E, 5,000 CCU, fault/recovery; separate staged evidence required."
