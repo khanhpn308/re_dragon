@@ -1,0 +1,21 @@
+# RE Dragon Supervisor User Systemd Service Template
+# Do not deploy this template directly to ~/.config/systemd/user/.
+# Always generate a verified service unit bound to the specific production workspace:
+#   python3 -m re_harness.supervisor generate-config --workspace /path/to/target > ~/.config/systemd/user/re-dragon.service
+[Unit]
+Description=RE Dragon Autonomous Reliability Supervisor (Template)
+Documentation=https://github.com/khanhpn308/re_dragon
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=@TARGET_WORKSPACE@
+ExecStart=@PYTHON_EXECUTABLE@ -m re_harness.supervisor run --workspace @TARGET_WORKSPACE@
+Restart=on-failure
+RestartPreventExitStatus=0 10 11 12
+RestartSec=30
+KillMode=process
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

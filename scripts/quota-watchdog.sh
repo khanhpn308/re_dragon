@@ -33,11 +33,27 @@ case "$ACTION" in
       tail -n 40 "$ROOT/.re_harness/quota-watchdog.log"
     else echo "No watchdog log"; fi
     ;;
+  drain)
+    (cd "$ROOT" && python3 -m re_harness.quota_watchdog drain --workspace "$ROOT" --timeout "${2:-120}")
+    ;;
   stop)
-    if command -v tmux >/dev/null && tmux has-session -t "$SESSION" 2>/dev/null; then
-      tmux kill-session -t "$SESSION"
+    if [[ "${2:-}" == "--force" ]]; then
+      if command -v tmux >/dev/null && tmux has-session -t "$SESSION" 2>/dev/null; then
+        tmux kill-session -t "$SESSION"
+      fi
+      echo "Force stopped."
+    else
+      echo "Initiating graceful drain (waiting for in-flight turn to checkpoint)..."
+      (cd "$ROOT" && python3 -m re_harness.quota_watchdog drain --workspace "$ROOT" --timeout "${2:-120}") || {
+        echo "Drain timed out or failed. Use 'stop --force' if you must kill immediately." >&2
+        exit 1
+      }
+      sleep 1
+      if command -v tmux >/dev/null && tmux has-session -t "$SESSION" 2>/dev/null; then
+        tmux kill-session -t "$SESSION" 2>/dev/null || true
+      fi
+      echo "Gracefully stopped. State and checkpoints are safely preserved."
     fi
-    echo "Stopped. State and Harness checkpoints are preserved."
     ;;
   reset)
     if command -v tmux >/dev/null && tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -53,7 +69,7 @@ case "$ACTION" in
     (cd "$ROOT" && python3 -m re_harness.quota_watchdog once --workspace "$ROOT" --mode "$MODE")
     ;;
   *)
-    echo "Usage: bash scripts/quota-watchdog.sh {start [CONVERSATION_ID] [PROJECT_ID]|status|logs|stop|reset [CONVERSATION_ID] [PROJECT_ID]|once}" >&2
+    echo "Usage: bash scripts/quota-watchdog.sh {start [CONVERSATION_ID] [PROJECT_ID]|status|logs|drain [TIMEOUT]|stop [--force]|reset [CONVERSATION_ID] [PROJECT_ID]|once}" >&2
     exit 2
     ;;
 esac

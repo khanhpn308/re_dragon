@@ -90,7 +90,7 @@ class OneCommandStartupTests(unittest.TestCase):
         st=wd.load(self.watcher)
         st["project_id"]="real-other-1234"
         wd.save(self.watcher,st)
-        with self.assertRaisesRegex(start.SetupError,"another project"):
+        with self.assertRaisesRegex(start.SetupError,"Pinned watchdog project_id"):
             start.bootstrap(self.root)
 
     def test_accepted_goal_is_not_duplicated_after_completion(self):
@@ -101,6 +101,44 @@ class OneCommandStartupTests(unittest.TestCase):
         with self.assertRaisesRegex(start.SetupError,"ACCEPTED"):
             start.bootstrap(self.root)
         self.assertEqual(len(self.projects()),1)
+
+    def test_resume_prefers_pinned_active_project_over_old_accepted_goal(self):
+        with core.database(self.harness) as db:
+            old = autonomy.start(db, start.GOAL, start.ACCEPTANCE)["project_id"]
+            db.execute("UPDATE auto_projects SET status='ACCEPTED' WHERE id=?", (old,))
+            target = autonomy.start(
+                db, "RS-UH-PROD-V1: Android client charter",
+                "Complete eight verified gates"
+            )["project_id"]
+        state = wd.load(self.watcher)
+        state.update(status="READY", project_id=target,
+                     conversation_id="production-session-123456789")
+        wd.save(self.watcher, state)
+        info = start.bootstrap(self.root)
+        self.assertEqual(info["project_id"], target)
+        self.assertFalse(info["project_created"])
+        self.assertEqual(self.state()["conversation_id"],
+                         "production-session-123456789")
+        self.assertEqual(len(self.projects()), 2)
+
+    def test_pinned_missing_project_does_not_silently_fall_back(self):
+        with core.database(self.harness) as db:
+            autonomy.start(db, start.GOAL, start.ACCEPTANCE)
+        state = wd.load(self.watcher)
+        state["project_id"] = "missing-pinned-project"
+        wd.save(self.watcher, state)
+        with self.assertRaisesRegex(start.SetupError, "Pinned watchdog project_id"):
+            start.bootstrap(self.root)
+
+    def test_unpinned_start_selects_active_project_when_older_accepted_exists(self):
+        with core.database(self.harness) as db:
+            old = autonomy.start(db, start.GOAL, start.ACCEPTANCE)["project_id"]
+            db.execute("UPDATE auto_projects SET status='ACCEPTED' WHERE id=?", (old,))
+            active = autonomy.start(db, start.TITLE + " v1 active", "Verified")["project_id"]
+        # No pinned project in state
+        info = start.bootstrap(self.root)
+        self.assertEqual(info["project_id"], active)
+        self.assertFalse(info["project_created"])
 
     def test_first_headless_turn_pins_cli_returned_session(self):
         setup=start.bootstrap(self.root)

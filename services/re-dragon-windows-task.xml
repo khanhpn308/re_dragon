@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<!--
+  RE Dragon Windows Task Scheduler Template
+  Generate bound configuration using:
+    python3 -m re_harness.supervisor generate-config --workspace /path/to/target > task.xml
+  Then import on Windows:
+    schtasks /create /xml task.xml /tn "\RE Dragon\ReliabilitySupervisor"
+-->
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>RE Dragon v0.8 Autonomous Reliability Supervisor (Template)</Description>
+    <URI>\RE Dragon\ReliabilitySupervisor_Template</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <ExecutionTimeLimit>P3D</ExecutionTimeLimit>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>wsl.exe</Command>
+      <Arguments>-d @DISTRO@ -u @USER@ -- bash -c "cd @TARGET_WORKSPACE@ && @PYTHON_EXECUTABLE@ -m re_harness.supervisor run --workspace @TARGET_WORKSPACE@"</Arguments>
+    </Exec>
+  </Actions>
+</Task>

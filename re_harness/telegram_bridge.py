@@ -25,8 +25,10 @@ from pathlib import Path
 from . import (
     autonomy,
     core,
+    incidents,
     quota_guard,
     quota_watchdog,
+    recovery,
     runtime_state,
     telegram_inbox,
     notification_delivery,
@@ -108,7 +110,179 @@ def status_text(workspace):
         ]
     else:
         lines += ["Reason: " + str(state.get("last_reason", ""))[:220]]
+    try:
+        open_incs = incidents.list_incidents(workspace, status="OPEN", limit=5)
+        if open_incs:
+            lines.append(f"⚠️ Open incidents: {len(open_incs)} (use /incidents to inspect)")
+    except Exception:
+        pass
     return "\n".join(lines)
+
+
+def incidents_text(workspace, project_id=None):
+    root = Path(workspace).resolve()
+    items = incidents.list_incidents(root, project_id=project_id, limit=10)
+    if not items:
+        return "✅ No incidents recorded in journal."
+    lines = ["🚨 RE Dragon Incident Journal:"]
+    for inc in items:
+        status_icon = "🔴" if inc["status"] == "OPEN" else "🟡" if inc["status"] == "INVESTIGATING" else "🟢"
+        lines.append(
+            f"{status_icon} #{inc['id']} [{inc['severity']}] {inc['category']}\n"
+            f"   Status: {inc['status']} | Attempts: {inc['recovery_attempts']}/{inc['max_recovery_attempts']} | Count: {inc['occurrence_count']}\n"
+            f"   Error: {inc['error_message'][:120]}\n"
+            f"   Use /incident {inc['id']} for details"
+        )
+    return "\n".join(lines)
+
+
+def incident_detail_text(workspace, incident_id):
+    root = Path(workspace).resolve()
+    inc = incidents.get_incident(root, incident_id)
+    if not inc:
+        return f"Incident '{incident_id}' not found."
+    lines = [
+        f"🚨 Incident Details: #{inc['id']}",
+        f"Project: {inc.get('project_id') or 'unbound'}",
+        f"Task: {inc.get('task_id') or 'none'}",
+        f"Category: {inc['category']}",
+        f"Severity: {inc['severity']}",
+        f"Status: {inc['status']}",
+        f"Occurrences: {inc['occurrence_count']}",
+        f"Recovery Attempts: {inc['recovery_attempts']}/{inc['max_recovery_attempts']}",
+        f"Error: {inc['error_message']}",
+    ]
+    if inc.get("resolution_notes"):
+        lines.append(f"Resolution Notes: {inc['resolution_notes']}")
+    events = inc.get("events") or []
+    if events:
+        lines.append("\nEvent Timeline:")
+        for ev in events[-5:]:
+            lines.append(f"  • [{ev['event_type']}] {ev['message'][:150]}")
+    if inc["status"] in ("OPEN", "INVESTIGATING", "FAILED_UNRECOVERABLE"):
+        lines.append(f"\nTo retry safely, run: /retry {inc['id']}")
+    return "\n".join(lines)
+
+
+def pause_watchdog(workspace):
+    root = Path(workspace).resolve()
+    state_file = root / ".re_harness" / "quota-watchdog.json"
+    state = quota_watchdog.load(state_file)
+    if state.get("status") == "PAUSED":
+        return "Watchdog is already PAUSED."
+    prev_status = state.get("status")
+    state.update(status="PAUSED", next_at=0, last_reason="Paused via Telegram by operator")
+    quota_watchdog.save(state_file, state)
+    return f"⏸️ RE Dragon Watchdog paused (was {prev_status}). In-flight turn will complete; no new turns will launch. Use /resume to resume."
+
+
+def ensure_watchdog_active(workspace):
+    """Ensure that an active supervisor or watchdog process is running for the workspace."""
+    root = Path(workspace).resolve()
+    lock_file = root / ".re_harness" / "quota-watchdog.lock"
+
+    if lock_file.exists():
+        with lock_file.open("a+") as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(handle, fcntl.LOCK_UN)
+                is_running = False
+            except (BlockingIOError, OSError):
+                is_running = True
+    else:
+        is_running = False
+
+    if is_running:
+        return "Watchdog process is active (locked); rearmed turn scheduled."
+
+    try:
+        chk = subprocess.run(
+            ["systemctl", "--user", "is-active", "re-dragon.service"],
+            capture_output=True, text=True, timeout=5
+        )
+        if chk.returncode == 0 and "active" in chk.stdout:
+            return "systemd supervisor is active and will start turn automatically."
+    except Exception:
+        pass
+
+    script = root / "scripts" / "quota-watchdog.sh"
+    if not script.is_file():
+        repo_root = Path(__file__).resolve().parent.parent
+        script = repo_root / "scripts" / "quota-watchdog.sh"
+
+    if not script.is_file():
+        return "Watchdog state rearmed to READY (launcher script not found in environment)."
+
+    try:
+        res = subprocess.run(
+            ["bash", str(script), "start"],
+            cwd=root, capture_output=True, text=True, timeout=20
+        )
+        if res.returncode == 0:
+            return "Watchdog background session launched in tmux."
+        return f"Watchdog state armed to READY (launcher note: {res.stderr.strip() or res.stdout.strip()[:100]})."
+    except Exception as exc:
+        return f"Watchdog state armed to READY (launcher note: {exc})."
+
+
+def resume_watchdog(workspace, db_dir=None):
+    root = Path(workspace).resolve()
+    state_file = root / ".re_harness" / "quota-watchdog.json"
+    state = quota_watchdog.load(state_file)
+    pid = state.get("project_id")
+    if not pid:
+        return "Cannot resume: No pinned project_id found in state. Use /projects or /project <id>."
+    harness_dir = Path(db_dir).resolve() if db_dir else root / ".re_harness_mvp"
+    try:
+        info = quota_guard.inspect(harness_dir, pid)
+        if info["project_status"] not in quota_guard.ACTIVE:
+            return f"Cannot resume: Project {pid} is in status '{info['project_status']}'."
+    except Exception as exc:
+        return f"Cannot resume: Checkpoint check failed: {exc}"
+
+    state.update(
+        status="READY",
+        next_at=0,
+        transient_failures=0,
+        missing_marker_recoveries=0,
+        crash_recoveries=0,
+        last_reason="Resumed via Telegram by operator",
+    )
+    quota_watchdog.save(state_file, state)
+    proc_status = ensure_watchdog_active(workspace)
+    return f"▶️ RE Dragon Watchdog resumed for project {pid}. {proc_status}"
+
+
+def retry_incident(workspace, incident_id, db_dir=None):
+    root = Path(workspace).resolve()
+    inc = incidents.get_incident(root, incident_id)
+    if not inc:
+        return f"Incident '{incident_id}' not found."
+    if inc["status"] == "RESOLVED":
+        return f"Incident #{incident_id} is already marked RESOLVED."
+
+    pid = inc.get("project_id")
+    harness_dir = Path(db_dir).resolve() if db_dir else root / ".re_harness_mvp"
+    if pid:
+        try:
+            recovery.verify_pre_retry_safety(root, pid, harness_dir, previous_pid=None)
+        except recovery.SafetyCheckError as exc:
+            return f"❌ Pre-retry safety check failed: {exc}\nAction aborted to prevent double execution."
+
+    state_file = root / ".re_harness" / "quota-watchdog.json"
+    state = quota_watchdog.load(state_file)
+    state.update(
+        status="READY",
+        next_at=0,
+        transient_failures=0,
+        missing_marker_recoveries=0,
+        crash_recoveries=0,
+        last_reason=f"Recovery retry for #{incident_id} requested via Telegram",
+    )
+    quota_watchdog.save(state_file, state)
+    incidents.record_recovery_attempt(root, incident_id, success=True, note="Operator requested retry via Telegram")
+    proc_status = ensure_watchdog_active(workspace)
+    return f"✅ Safe retry confirmed for #{incident_id}. {proc_status}"
 
 
 @contextlib.contextmanager
@@ -632,7 +806,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
 
         if name in ("/start", "/help"):
             msg = (
-                "🐉 RE Dragon v0.7 — Telegram Control Center\n\n"
+                "🐉 RE Dragon v0.8 — Telegram Control Center\n\n"
                 "Project Lifecycle:\n"
                 "  /projects — List all projects and status\n"
                 "  /newgoal <goal> [| <acceptance>] — Propose new goal for confirmation\n"
@@ -642,6 +816,12 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 "  /task <desc> — Queue user task for next agent turn\n"
                 "  /progress — Show progress bar and blocker breakdown\n"
                 "  /taskdetail <key> — Inspect evidence and review notes\n\n"
+                "Reliability & Incidents:\n"
+                "  /incidents — List open and recent incidents\n"
+                "  /incident <id> — Inspect root cause and event timeline\n"
+                "  /retry <id> — Request safe retry for an incident\n"
+                "  /pause — Pause autonomous execution gracefully\n"
+                "  /resume — Unpause and resume execution\n\n"
                 "Human Approval:\n"
                 "  /approvals — List pending human and controller decisions\n"
                 "  /propose <action> <desc> — Submit a proposal\n\n"
@@ -800,6 +980,54 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 await update.message.reply_text(f"❌ Report export failed: {str(exc)[:200]}")
             return
 
+        if name == "/incidents":
+            try:
+                state, _ = watched(root)
+                msg = incidents_text(root, state.get("project_id"))
+            except Exception as exc:
+                msg = f"Cannot fetch incidents: {exc}"
+            await update.message.reply_text(msg[:3900])
+            return
+
+        if name == "/incident":
+            args = context.args or []
+            if not args:
+                await update.message.reply_text("Usage: /incident <incident_id>")
+                return
+            inc_id = args[0].strip()
+            msg = incident_detail_text(root, inc_id)
+            await update.message.reply_text(msg[:3900])
+            return
+
+        if name == "/retry":
+            args = context.args or []
+            if not args:
+                await update.message.reply_text("Usage: /retry <incident_id>")
+                return
+            inc_id = args[0].strip()
+            try:
+                res = await asyncio.to_thread(retry_incident, root, inc_id)
+            except Exception as exc:
+                res = f"Cannot process retry: {exc}"
+            await update.message.reply_text(res[:3900])
+            return
+
+        if name == "/pause":
+            try:
+                res = await asyncio.to_thread(pause_watchdog, root)
+            except Exception as exc:
+                res = f"Cannot pause watchdog: {exc}"
+            await update.message.reply_text(res[:3900])
+            return
+
+        if name == "/resume":
+            try:
+                res = await asyncio.to_thread(resume_watchdog, root)
+            except Exception as exc:
+                res = f"Cannot resume watchdog: {exc}"
+            await update.message.reply_text(res[:3900])
+            return
+
         await update.message.reply_text("Unsupported command. Use /help.")
 
     async def callback_query(update, context):
@@ -831,6 +1059,13 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 elif ctl["kind"]=="SWITCH_PROJECT":
                     result=await asyncio.to_thread(
                         switch_project,root,ctl["payload"]["project_id"])
+                elif ctl["kind"]=="RETRY_INCIDENT":
+                    result=await asyncio.to_thread(
+                        retry_incident,root,ctl["payload"]["incident_id"])
+                elif ctl["kind"]=="PAUSE_WATCHDOG":
+                    result=await asyncio.to_thread(pause_watchdog,root)
+                elif ctl["kind"]=="RESUME_WATCHDOG":
+                    result=await asyncio.to_thread(resume_watchdog,root)
                 else:
                     raise ValueError("Unrecognized controller action")
             except Exception as exc:
@@ -877,7 +1112,8 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
     command_names = [
         "start", "help", "status", "projects", "project", "activate",
         "newgoal", "tasks", "task", "progress", "taskdetail",
-        "approvals", "propose", "report"
+        "approvals", "propose", "report",
+        "incidents", "incident", "retry", "pause", "resume"
     ]
     for c_name in command_names:
         app.add_handler(CommandHandler(c_name, command))
