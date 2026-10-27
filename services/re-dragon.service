@@ -1,0 +1,17 @@
+[Unit]
+Description=RE Dragon Autonomous Reliability Supervisor
+Documentation=https://github.com/khanhpn308/re_dragon
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/re-dragon-reliability
+ExecStart=/usr/bin/python3 -m re_harness.supervisor run --workspace %h/re-dragon-reliability
+Restart=on-failure
+RestartPreventExitStatus=0 10 11 12
+RestartSec=30
+KillMode=process
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

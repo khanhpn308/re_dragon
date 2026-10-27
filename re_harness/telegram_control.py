@@ -7,7 +7,7 @@ import sqlite3
 import time
 from . import telegram_inbox
 
-KINDS={"NEW_GOAL","SWITCH_PROJECT"}
+KINDS={"NEW_GOAL","SWITCH_PROJECT","RETRY_INCIDENT","PAUSE_WATCHDOG","RESUME_WATCHDOG"}
 DECISIONS={"APPROVE","REJECT"}
 
 def ensure(db):

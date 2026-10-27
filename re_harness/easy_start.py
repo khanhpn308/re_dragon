@@ -71,17 +71,18 @@ def _select_project(db, goal=None, project_id=None):
         "ORDER BY created_at DESC",
         (TITLE + "%",),
     ).fetchall()
-    if len(matches) > 1:
+    active_matches = [r for r in matches if r["status"] in VALID_STATES]
+    if len(active_matches) == 1:
+        return active_matches[0]["id"], False
+    if len(active_matches) > 1:
         raise SetupError(
-            "Multiple ReturnSaiyan production goals already exist; "
+            "Multiple active ReturnSaiyan production goals already exist; "
             "choose/resolve the correct project before enabling unattended runs"
         )
-    if matches:
+    if matches and not active_matches:
         row = matches[0]
-        if row["status"] not in VALID_STATES:
-            raise SetupError("Production goal is " + row["status"] +
-                             "; will not restart or duplicate a closed project")
-        return row["id"], False
+        raise SetupError("Production goal is " + row["status"] +
+                         "; will not restart or duplicate a closed project")
 
     # Never replace unrelated active or pilot projects; they remain intact.
     created = autonomy.start(db, GOAL, ACCEPTANCE)

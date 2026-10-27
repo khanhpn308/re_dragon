@@ -94,9 +94,21 @@ case "$ACTION" in
     bash scripts/quota-watchdog.sh logs
     bot_logs
     ;;
+  pause)
+    python3 -m re_harness.quota_watchdog pause --workspace "$ROOT"
+    ;;
   resume)
     bash scripts/quota-watchdog.sh reset
     "$0" start
+    ;;
+  supervisor)
+    CMD="${2:-status}"
+    case "$CMD" in
+      status) python3 -m re_harness.supervisor status --workspace "$ROOT" ;;
+      generate) python3 -m re_harness.supervisor generate-config --workspace "$ROOT" ;;
+      run) python3 -m re_harness.supervisor run --workspace "$ROOT" ;;
+      *) echo "Usage: ./dragon supervisor {status|generate|run}" >&2; exit 2 ;;
+    esac
     ;;
   telegram)
     CMD="${2:-status}"

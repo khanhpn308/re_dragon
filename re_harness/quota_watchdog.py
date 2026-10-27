@@ -18,15 +18,16 @@ import sys
 import time
 from pathlib import Path
 
-from . import quota_guard, runtime_state, telegram_inbox
+from . import incidents, quota_guard, recovery, runtime_state, telegram_inbox
 
 ACTIVE_CHILD = None
 MARKER = "RE_DRAGON_RUN_STATE "
-STOP = {"COMPLETE", "BLOCKED", "NEEDS_USER", "ERROR"}
+STOP = {"COMPLETE", "BLOCKED", "NEEDS_USER", "ERROR", "PAUSED"}
 NEXT = {"CONTINUE": 30, "YIELD": 60, "WAIT": 180}
 DEFAULT_QUOTA_POLL = 900
 RESET_GRACE = 60
 MAX_TRANSIENT_RETRIES = 3
+MAX_CRASH_RETRIES = 3
 MAX_MISSING_MARKER_RECOVERIES = 2
 MISSING_MARKER_DELAY = 60
 
@@ -177,7 +178,7 @@ def invoke(workspace, prompt, conversation, binary="agy", mode="auto",
     return {"code": p.returncode, "data": data, "stderr": stderr[-2000:]}
 
 
-def evaluate(result, previous, timestamp):
+def evaluate(result, previous, timestamp, workspace=None):
     """Provider result -> durable state, never treating failed turns as success."""
     state = dict(previous)
     state["attempts"] = int(state.get("attempts",0))+1
@@ -190,6 +191,11 @@ def evaluate(result, previous, timestamp):
             cid != state["conversation_id"]):
         state.update(status="NEEDS_USER",next_at=0,
                      last_reason="CLI returned different conversation ID; refusing context switch")
+        if workspace:
+            incidents.create_or_update_incident(
+                workspace, state.get("project_id"), "CORRUPT_STATE",
+                "CLI returned different conversation ID; refusing context switch", severity="CRITICAL"
+            )
         return state
     # Never trust a reported new session on a failed invocation.
     if (not state.get("conversation_id") and result.get("code")==0 and
@@ -203,6 +209,12 @@ def evaluate(result, previous, timestamp):
     if auth_error(err):
         state.update(status="NEEDS_USER",next_at=0,
                      last_reason="CLI authentication/permissions require user")
+        if workspace:
+            incidents.create_or_update_incident(
+                workspace, state.get("project_id"), "AUTH_OR_PERMISSION",
+                "CLI authentication/permissions require user", severity="CRITICAL",
+                details={"error": err[:400]}
+            )
     elif quota_error(err):
         delay=reset_seconds(err)
         state.update(status="WAIT_QUOTA",
@@ -211,8 +223,16 @@ def evaluate(result, previous, timestamp):
                      quota_hits=int(state.get("quota_hits",0))+1,
                      transient_failures=0,
                      last_reason="Provider quota exhausted; honoring reported refresh")
+        if workspace:
+            incidents.create_or_update_incident(
+                workspace, state.get("project_id"), "QUOTA_EXHAUSTED",
+                "Provider quota exhausted; honoring reported refresh", severity="INFO",
+                details={"delay": delay}
+            )
     elif result.get("code")==0 and status=="SUCCESS":
         state["transient_failures"]=0
+        state["missing_marker_recoveries"]=0
+        state["crash_recoveries"]=0
         tag,note=agent_state(data.get("response",""))
         if tag in NEXT:
             state.update(status=tag,next_at=timestamp+NEXT[tag],
@@ -224,18 +244,50 @@ def evaluate(result, previous, timestamp):
     elif status in ("WAITING","CANCELED","INTERRUPTED") or result.get("code")==124:
         state.update(status="NEEDS_USER",next_at=0,
                      last_reason="Interaction/approval required or process timeout")
+        if workspace and result.get("code")==124:
+            incidents.create_or_update_incident(
+                workspace, state.get("project_id"), "TIMEOUT",
+                "Watchdog process timeout (code 124)", severity="WARNING"
+            )
     elif temporary_error(err):
         n=int(state.get("transient_failures",0))+1
         if n>MAX_TRANSIENT_RETRIES:
             state.update(status="ERROR",next_at=0,transient_failures=n,
                          last_reason="Transient network retry budget exhausted")
+            if workspace:
+                incidents.create_or_update_incident(
+                    workspace, state.get("project_id"), "NETWORK_TRANSIENT",
+                    "Transient network retry budget exhausted", severity="ERROR"
+                )
         else:
             state.update(status="WAIT_RETRY",next_at=timestamp+min(900,60*2**(n-1)),
                          transient_failures=n,
                          last_reason="Transient transport error; bounded backoff")
+    elif result.get("code") is not None and result.get("code") != 0:
+        is_oom = result.get("code") == 137 or bool(recovery.RE_OOM.search(err))
+        category = "RESOURCE_EXHAUSTION" if is_oom else "AGENT_CRASH"
+        n = int(state.get("crash_recoveries", 0)) + 1
+        state["crash_recoveries"] = n
+        if n <= MAX_CRASH_RETRIES:
+            delay = 60.0 if is_oom else min(180, 30 * 2**(n-1))
+            state.update(status="WAIT_RETRY", next_at=timestamp + delay,
+                         last_reason=f"{category} (exit code {result.get('code')}); bounded recovery ({n}/{MAX_CRASH_RETRIES})")
+        else:
+            state.update(status="ERROR", next_at=0,
+                         last_reason=f"{category} retry budget exhausted; operator inspection required")
+            if workspace:
+                incidents.create_or_update_incident(
+                    workspace, state.get("project_id"), category,
+                    f"{category} retry budget exhausted (exit code {result.get('code')})", severity="ERROR"
+                )
     else:
         state.update(status="ERROR",next_at=0,
                      last_reason="Unexpected CLI error; operator inspection required")
+        if workspace:
+            incidents.create_or_update_incident(
+                workspace, state.get("project_id"), "UNEXPECTED_ERROR",
+                "Unexpected CLI error; operator inspection required", severity="ERROR"
+            )
     return state
 
 
@@ -274,6 +326,20 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
             return current
     if float(current.get("next_at") or 0)>ts:
         return current
+    if current.get("status") == "WAIT_RETRY" and harness_state_dir is not None and current.get("project_id"):
+        try:
+            recovery.verify_pre_retry_safety(
+                workspace, current["project_id"], harness_state_dir, previous_pid=None
+            )
+        except recovery.SafetyCheckError as exc:
+            current.update(status="NEEDS_USER", next_at=0,
+                           last_reason=f"Pre-retry safety violation: {exc}")
+            save(state_path, current)
+            incidents.create_or_update_incident(
+                workspace, current["project_id"], "CORRUPT_STATE",
+                str(exc), severity="CRITICAL"
+            )
+            return current
     prompt=prompt_path.read_text(encoding="utf8")
     if not prompt.strip():
         raise ValueError("Missing watchdog continuation instructions")
@@ -323,7 +389,7 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
         outcome={"code":127,"data":{},"stderr":"Failed to launch CLI"}
     # Schedule reset/backoff from the completed CLI result, not turn start.
     finished=time.time() if clock is None else clock
-    updated=evaluate(outcome,current,finished)
+    updated=evaluate(outcome,current,finished,workspace=workspace)
     # An explicit permission/quota/error is never retried as a missing marker.
     # For a CLI-success turn that omitted only the terminal marker, the CLI
     # process has exited, the pinned project identity is checked anew, and one
@@ -339,10 +405,16 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     )
     if missing_marker and harness_state_dir is not None:
         if auth_error(str(response)) or quota_error(str(response)):
+            cat = "AUTH_OR_PERMISSION" if auth_error(str(response)) else "QUOTA_EXHAUSTED"
             updated["last_reason"] = (
                 "Successful CLI omitted state but response requires "
                 "authorization/quota investigation"
             )
+            if workspace:
+                incidents.create_or_update_incident(
+                    workspace, current.get("project_id"), cat,
+                    updated["last_reason"], severity="CRITICAL" if cat == "AUTH_OR_PERMISSION" else "INFO"
+                )
         else:
             try:
                 fresh = quota_guard.inspect(
@@ -372,6 +444,10 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                         ),
                     )
                 else:
+                    incidents.create_or_update_incident(
+                        workspace, current.get("project_id"), "MISSING_MARKER",
+                        "CLI state marker absent after bounded retries", severity="WARNING"
+                    )
                     updated.update(
                         status="NEEDS_USER",
                         next_at=0,
@@ -439,9 +515,21 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     return updated
 
 
+def exit_code_for_status(status):
+    if status == "COMPLETE":
+        return 0
+    if status == "BLOCKED":
+        return 10
+    if status == "NEEDS_USER":
+        return 11
+    if status == "PAUSED":
+        return 12
+    return 1
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("run", "once", "status", "reset"))
+    parser.add_argument("action", choices=("run", "once", "status", "reset", "pause", "resume"))
     parser.add_argument("--workspace", default=".")
     parser.add_argument("--conversation", default="")
     parser.add_argument("--project-id", default="")
@@ -467,6 +555,12 @@ def main(argv=None):
             result["agent"]=live
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
+    if args.action == "pause":
+        state = load(state_file)
+        state.update(status="PAUSED", next_at=0, last_reason="Paused by operator")
+        save(state_file, state)
+        print(json.dumps(state, indent=2, ensure_ascii=False))
+        return 0
     if args.action == "run":
         signal.signal(signal.SIGTERM, terminate_group)
         signal.signal(signal.SIGINT, terminate_group)
@@ -477,14 +571,16 @@ def main(argv=None):
             print("Quota watchdog is already active", file=sys.stderr)
             return 2
         state = load(state_file)
-        if args.action=="reset":
+        if args.action in ("reset", "resume"):
             state.update(status="READY",next_at=0,transient_failures=0,
+                         missing_marker_recoveries=0,crash_recoveries=0,
                          last_reason="User resumed after intervention")
             if args.project_id:
                 state["project_id"]=args.project_id
             if args.conversation:
                 state["conversation_id"]=args.conversation
             save(state_file,state)
+            print(json.dumps(state, indent=2, ensure_ascii=False))
             return 0
         if args.project_id:
             if state.get("project_id") and state["project_id"]!=args.project_id:
@@ -499,11 +595,11 @@ def main(argv=None):
             state=once(root,state_file,prompt_file,args.binary,args.mode,
                        harness_state_dir=db_dir)
             print(json.dumps(state, indent=2, ensure_ascii=False))
-            return 0 if state["status"] not in {"ERROR","NEEDS_USER"} else 1
+            return exit_code_for_status(state["status"]) if state["status"] in STOP else 0
         while True:
             state=load(state_file)
             if state["status"] in STOP:
-                return 0 if state["status"]=="COMPLETE" else 1
+                return exit_code_for_status(state["status"])
             if state.get("next_at",0)>time.time():
                 time.sleep(min(60,max(1,state["next_at"]-time.time())))
                 continue

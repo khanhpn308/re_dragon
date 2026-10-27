@@ -130,6 +130,16 @@ class OneCommandStartupTests(unittest.TestCase):
         with self.assertRaisesRegex(start.SetupError, "Pinned watchdog project_id"):
             start.bootstrap(self.root)
 
+    def test_unpinned_start_selects_active_project_when_older_accepted_exists(self):
+        with core.database(self.harness) as db:
+            old = autonomy.start(db, start.GOAL, start.ACCEPTANCE)["project_id"]
+            db.execute("UPDATE auto_projects SET status='ACCEPTED' WHERE id=?", (old,))
+            active = autonomy.start(db, start.TITLE + " v1 active", "Verified")["project_id"]
+        # No pinned project in state
+        info = start.bootstrap(self.root)
+        self.assertEqual(info["project_id"], active)
+        self.assertFalse(info["project_created"])
+
     def test_first_headless_turn_pins_cli_returned_session(self):
         setup=start.bootstrap(self.root)
         seen=[]
