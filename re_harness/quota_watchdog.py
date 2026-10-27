@@ -49,7 +49,9 @@ def quota_error(text):
 
 def auth_error(text):
     s = (text or "").lower()
-    return any(k in s for k in ("authentication required", "not authenticated",
+    return any(k in s for k in ("soft-denied", "tool denied", "action denied",
+                                "tool permission", "needs approval", "not allowed",
+                                "authentication required", "not authenticated",
                                 "sign in", "login required", "permission denied",
                                 "requires approval", "waiting for approval"))
 
@@ -106,7 +108,7 @@ def terminate_group(signum, frame):
     raise SystemExit(128 + signum)
 
 
-def invoke(workspace, prompt, conversation, binary="agy", mode="accept-edits",
+def invoke(workspace, prompt, conversation, binary="agy", mode="auto",
            timeout=1900):
     if mode not in ("auto", "accept-edits", "plan"):
         raise ValueError("Invalid mode")
@@ -148,7 +150,12 @@ def evaluate(result, previous, timestamp):
         state["conversation_id"] = cid
     err = str(data.get("error") or "")+"\n"+str(result.get("stderr") or "")
     status = str(data.get("status") or "").upper()
-    if result.get("code")==0 and status=="SUCCESS":
+    # Headless may soft-deny a tool and still exit successfully.
+    # Never count such a turn as progress, even with a valid final marker.
+    if auth_error(err):
+        state.update(status="NEEDS_USER", next_at=0,
+                     last_reason="CLI authentication/permissions require user")
+    elif result.get("code")==0 and status=="SUCCESS":
         tag, note = agent_state(data.get("response", ""))
         if tag in NEXT:
             state.update(status=tag, next_at=timestamp+NEXT[tag],
@@ -158,9 +165,6 @@ def evaluate(result, previous, timestamp):
                          last_reason=note or "Goal gate reached")
         else:
             state.update(status="NEEDS_USER", next_at=0, last_reason=note)
-    elif auth_error(err):
-        state.update(status="NEEDS_USER", next_at=0,
-                     last_reason="CLI authentication/permissions require user")
     elif quota_error(err):
         delay = reset_seconds(err)
         state.update(status="WAIT_QUOTA",
@@ -177,7 +181,7 @@ def evaluate(result, previous, timestamp):
     return state
 
 
-def once(workspace, state_path, prompt_path, binary="agy", mode="accept-edits",
+def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
          clock=None, runner=invoke):
     ts = time.time() if clock is None else clock
     current = load(state_path)
@@ -203,7 +207,7 @@ def main(argv=None):
     parser.add_argument("--workspace", default=".")
     parser.add_argument("--conversation", default="")
     parser.add_argument("--binary", default="agy")
-    parser.add_argument("--mode", default="accept-edits",
+    parser.add_argument("--mode", default="auto",
                         choices=("auto","accept-edits","plan"))
     args = parser.parse_args(argv)
     root = Path(args.workspace).expanduser().resolve()

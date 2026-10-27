@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SESSION="re-dragon-quota-watchdog"
 ACTION="${1:-status}"
-MODE="${RE_DRAGON_AGENT_MODE:-accept-edits}"
+MODE="${RE_DRAGON_AGENT_MODE:-auto}"
 
 case "$ACTION" in
   start)

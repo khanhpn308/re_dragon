@@ -97,6 +97,19 @@ class QuotaWatchdogTests(unittest.TestCase):
            "stderr":"authentication required"},q.load(self.state),1000)
         self.assertEqual(res["status"],"NEEDS_USER")
 
+    def test_soft_denied_tool_is_not_progress_even_when_cli_exits_zero(self):
+        outcome={"code":0,
+                 "data":{"status":"SUCCESS","response":
+                      'RE_DRAGON_RUN_STATE {"state":"CONTINUE"}'},
+                 "stderr":"Tool command(git) was soft-denied: requires approval"}
+        result=q.evaluate(outcome,q.load(self.state),1000)
+        self.assertEqual(result["status"],"NEEDS_USER")
+        self.assertEqual(result["next_at"],0)
+
+    def test_auto_mode_is_default_when_no_operator_flag(self):
+        import inspect
+        self.assertEqual(inspect.signature(q.invoke).parameters["mode"].default, "auto")
+
     def test_unknown_success_fails_closed(self):
         res=q.evaluate({"code":0,"data":{"status":"SUCCESS",
                     "response":"Everything looks fine"},"stderr":""},

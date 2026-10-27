@@ -19,6 +19,11 @@ take longer.
 - Authenticate once interactively with agy. Configure permissions only for
   intended project tools and allowed local workspace files. DO NOT use
   dangerously-skip-permissions for unattended jobs.
+- Watchdog defaults to CLI auto mode, which uses the official terminal sandbox
+  and evaluates safe commands on supported hosts. Unsupported environments
+  fall back to default permissions; denied tools must stop the watcher.
+- A headless tool permission can be soft-denied while CLI exit code is zero.
+  The watchdog treats such stderr diagnostics as NEEDS_USER, not SUCCESS.
 - Install tmux in Ubuntu WSL2 if absent: sudo apt install tmux.
 - Ensure python3, tmux, agy and both MCP servers are working.
 - Pull the repository updates into the same WSL2 workspace.

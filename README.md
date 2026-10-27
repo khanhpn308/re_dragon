@@ -9,7 +9,8 @@ headless CLI turns without manual prompts. It respects official quota errors,
 waits for the provider's reset countdown and then resumes the pinned
 conversation plus RE Dragon Harness SQLite checkpoints.
 
-After one-time Antigravity authentication and permissions setup:
+After one-time Antigravity authentication and scoped permissions setup
+(default auto sandbox mode; never use --dangerously-skip-permissions):
   bash scripts/quota-watchdog.sh start [CONVERSATION_ID]
 
 To inspect or stop:
