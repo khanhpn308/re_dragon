@@ -142,7 +142,10 @@ def invoke(workspace, prompt, conversation, binary="agy", mode="auto",
         raise ValueError("Invalid mode")
     argv = [binary, "-p", prompt, "--output-format", "json",
             "--print-timeout", "30m", "--mode", mode]
-    argv += ["--conversation", conversation] if conversation else ["--continue"]
+    if conversation:
+        argv += ["--conversation", conversation]
+    # No conversation: first dedicated headless project session; never use
+    # --continue because that could resume an unrelated pilot session.
     global ACTIVE_CHILD
     p = subprocess.Popen(argv, cwd=workspace, text=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, start_new_session=True)
@@ -245,11 +248,13 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
             if info["project_status"] in quota_guard.TERMINAL:
                 raise quota_guard.ProjectGateError("Harness project needs user/review intervention")
             if not current.get("conversation_id"):
-                cid=cached_conversation(workspace)
-                if not cid:
-                    raise quota_guard.ProjectGateError(
-                        "No pinned Antigravity conversation found; supply --conversation")
-                current["conversation_id"]=cid
+                if not current.get("bootstrap_new_conversation"):
+                    cid=cached_conversation(workspace)
+                    if not cid:
+                        raise quota_guard.ProjectGateError(
+                            "No pinned conversation found; use ./dragon start for bootstrap")
+                    current["conversation_id"]=cid
+                # bootstrap creates a dedicated conversation on first successful turn.
             # Persist project/session binding before any CLI invocation.
             save(state_path,current)
         except quota_guard.ProjectGateError as exc:
@@ -277,6 +282,12 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
     # Schedule reset/backoff from the completed CLI result, not turn start.
     finished=time.time() if clock is None else clock
     updated=evaluate(outcome,current,finished)
+    if updated.get("bootstrap_new_conversation") and updated.get("conversation_id"):
+        updated.pop("bootstrap_new_conversation",None)
+    if (current.get("bootstrap_new_conversation") and
+            updated["status"] in NEXT and not updated.get("conversation_id")):
+        updated.update(status="NEEDS_USER",next_at=0,
+                       last_reason="Headless run did not return a conversation ID")
     if harness_state_dir is not None and updated["status"] not in {
             "WAIT_QUOTA","ERROR","NEEDS_USER","WAIT_RETRY"}:
         try:
