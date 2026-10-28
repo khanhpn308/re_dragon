@@ -41,7 +41,7 @@ jobs:
       - name: Print formatted Go source for review
         working-directory: game-server
         run: |
-          for f in internal/domain/hero/instance.go internal/domain/hero/instance_test.go internal/repository/postgres/hero_onboarding_repo.go; do
+          for f in internal/domain/hero/instance.go internal/domain/hero/instance_test.go internal/repository/postgres/hero_onboarding_repo.go internal/session/handler.go internal/protocol/framing_test.go; do
             echo "FMT_BEGIN:$f"
             gofmt < "$f" | base64 -w0
             echo
