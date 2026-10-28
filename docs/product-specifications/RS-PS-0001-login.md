@@ -1,41 +1,60 @@
 # RS-PS-0001 — Đăng nhập
 
-**Trạng thái phê duyệt:** `USER_APPROVED` (đã được người dùng chốt ngày 2026-10-28)  
-**Sự hiện diện trong ứng dụng:** `USER_CONFIRMED`  
-**Mức xác minh bằng APK/REA MCP:** `NOT_YET_VERIFIED`  
-**Phiên bản đặc tả:** `1.0`  
-**Loại tài liệu:** Product Specification (đặc tả sản phẩm); **không phải Work Package triển khai**.
+| Index | Thuộc tính | Giá trị |
+|---|---|---|
+| `RS-PS-0001` | Chức năng | đăng nhập |
+| `META-01` | Trạng thái phê duyệt | `USER_APPROVED` — người dùng chốt ngày 2026-10-28 |
+| `META-02` | Xác nhận có trong ứng dụng | `USER_CONFIRMED` |
+| `META-03` | Kiểm chứng kỹ thuật APK/REA MCP | `NOT_YET_VERIFIED` |
+| `META-04` | Phiên bản tài liệu | `1.1` — chỉ đổi cấu trúc trình bày, không sửa yêu cầu phiên 1.0 |
+| `META-05` | Loại tài liệu | Product Specification — không phải Work Package triển khai |
 
-## A. Nội dung được người dùng phê duyệt — nguyên văn
+## A. Ma trận yêu cầu đã phê duyệt
 
-1. CHỨC NĂNG: đăng nhập
+**Nguồn:** Nội dung người dùng đã chốt, giữ nguyên từng giá trị; không diễn giải lại.
 
-2. ĐẦU VÀO: tài khoản, mật khẩu, người dùng ấn đăng nhập
+| Index | Trường | Nội dung người dùng phê duyệt (nguyên văn) | Trạng thái |
+|---|---|---|---|
+| `RS-PS-0001-F01` | Chức năng | đăng nhập | `USER_APPROVED` |
+| `RS-PS-0001-F02` | Đầu vào | tài khoản, mật khẩu, người dùng ấn đăng nhập | `USER_APPROVED` |
+| `RS-PS-0001-F03` | Hành động | tùy vào trạng thái server: hoạt động tốt, bảo trì | `USER_APPROVED` |
+| `RS-PS-0001-F04` | Đầu ra | hoạt động tốt - đưa vào màn hình đăng nhập, hiện danh sách server, tên nhân vật, level, vip, server | `USER_APPROVED` |
+| `RS-PS-0001-F05` | Trạng thái lỗi | không có kết nối mạng, thông tin tài khoản mật khẩu không chính xác | `USER_APPROVED` |
+| `RS-PS-0001-F06` | Dữ liệu lưu trữ | thông tin người dùng ( tài khoản, mật khẩu, vip, server) | `USER_APPROVED` |
 
-3. HÀNH ĐỘNG: tùy vào trạng thái server: hoạt động tốt, bảo trì
+## B. Ma trận khoảng trống thông tin
 
-4. ĐẦU RA: hoạt động tốt - đưa vào màn hình đăng nhập, hiện danh sách server, tên nhân vật, level, vip, server
+Các dòng này **không phải quy tắc được người dùng phê duyệt**. Chúng chỉ ghi rõ điều chưa đủ dữ kiện, không tự tạo hành vi mới.
 
-5. TRẠNG THÁI LỖI: không có kết nối mạng, thông tin tài khoản mật khẩu không chính xác
+| Index | Liên kết yêu cầu | Thông tin cần làm rõ/xác minh | Trạng thái |
+|---|---|---|---|
+| `RS-PS-0001-U01` | `RS-PS-0001-F03` | Hành vi, giao diện và thông báo cụ thể khi server đang **bảo trì** | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U02` | `RS-PS-0001-F04` | Cách chuyển màn hình khi đăng nhập thành công và quan hệ giữa "màn hình đăng nhập" với danh sách server/nhân vật | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U03` | `RS-PS-0001-F05` | Nội dung thông báo UI trong hai trường hợp lỗi đã nêu | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U04` | `RS-PS-0001-F06` | Cấu trúc dữ liệu, nơi lưu và vòng đời lưu trữ (client/server) cho tài khoản, mật khẩu, VIP và server | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U05` | `RS-PS-0001-F06` | Cơ chế bảo vệ mật khẩu, lưu phiên/xác thực và yêu cầu bảo mật dữ liệu | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U06` | `RS-PS-0001-F01–F06` | Phép thử nghiệm thu chi tiết | **CHƯA XÁC ĐỊNH** |
+| `RS-PS-0001-U07` | `RS-PS-0001-F01–F06` | C2S/S2C opcode, payload, callback Lua/native, quy tắc truy cập và sơ đồ database | **CHƯA XÁC ĐỊNH** |
 
-6. DỮ LIỆU LƯU TRỮ: thông tin người dùng ( tài khoản, mật khẩu, vip, server)
+**Chú thích cho `RS-PS-0001-U02`:** Giữ nguyên câu đầu ra đã phê duyệt; không tự quyết định trình tự màn hình.
 
-## B. Chi tiết CHƯA XÁC ĐỊNH (không tự điền và không tính là quy tắc đã chốt)
+**Chú thích bảo mật cho `RS-PS-0001-U05`:** Cụm từ “mật khẩu” trong yêu cầu không phải sự phê duyệt lưu mật khẩu thô; mọi triển khai phải bảo vệ bí mật xác thực. Chưa chốt vị trí hoặc cơ chế lưu trữ.
 
-- Hành vi, giao diện và thông báo cụ thể khi server đang **bảo trì**: **CHƯA XÁC ĐỊNH**.
-- Cách chuyển màn hình khi đăng nhập thành công và quan hệ giữa "màn hình đăng nhập" với danh sách server/nhân vật: **CHƯA XÁC ĐỊNH**. Giữ nguyên câu đầu ra của người dùng, không diễn giải lại.
-- Nội dung thông báo UI trong hai trường hợp lỗi đã nêu: **CHƯA XÁC ĐỊNH**.
-- Cấu trúc dữ liệu, nơi lưu và vòng đời lưu trữ (client/server) cho tài khoản, mật khẩu, VIP và server: **CHƯA XÁC ĐỊNH**.
-- Cơ chế bảo vệ mật khẩu, lưu phiên/xác thực và yêu cầu bảo mật dữ liệu: **CHƯA XÁC ĐỊNH**. Việc liệt kê "mật khẩu" không phải là yêu cầu hoặc sự phê duyệt lưu **mật khẩu thô**; quá trình triển khai cần bảo vệ bí mật đăng nhập.
-- Phép thử nghiệm thu chi tiết: **CHƯA XÁC ĐỊNH**.
-- C2S/S2C opcode, payload, callback Lua/native, quy tắc truy cập và sơ đồ database: **CHƯA XÁC ĐỊNH**; Agent phải xác minh kỹ thuật từ APK/REA, không được giả định.
+**Chú thích kỹ thuật cho `RS-PS-0001-U07`:** Agent phải xác minh opcode, payload, Lua/native callback và schema database từ APK/REA; không được điền bằng suy đoán.
 
-## C. Quy tắc sử dụng đặc tả
+## C. Quy tắc định danh và truy vết
 
-1. Người dùng xác nhận chức năng tồn tại trong app; đây là bằng chứng **yêu cầu sản phẩm**, không tự động là bằng chứng hàm/opcode từ mã máy.
-2. Bảo toàn nguyên văn mục A. Không thay đổi quy tắc đã chốt, không tự thêm tính năng hay trường hợp sử dụng.
-3. `CHƯA XÁC ĐỊNH` trong mục B chỉ có thể đóng bằng sự chốt bổ sung của người dùng hoặc bằng chứng kỹ thuật **nếu đó là thông tin triển khai thực tế**; không lẫn lộn hành vi APK với ý định thiết kế.
-4. Tài liệu này là nguồn đầu vào được phê duyệt cho reverse engineering và lập Work Package **sau giai đoạn khảo sát/phân rã**; không là lệnh triển khai tự động. Registry 68 Work Package trước đó **NOT_APPROVED — DO NOT EXECUTE**.
-5. Không lưu hoặc commit thông tin tài khoản/mật khẩu thật, token hoặc dữ liệu cá nhân thực tế vào repository.
+| Dạng index | Ý nghĩa |
+|---|---|
+| `RS-PS-NNNN` | Đặc tả của một chức năng, định danh bất biến |
+| `RS-PS-NNNN-F01..F06` | Sáu trường nội dung đã được người dùng chốt |
+| `RS-PS-NNNN-U01..` | Các điểm chưa xác định, gắn với trường tương ứng |
+| `META-XX` | Metadata tài liệu, không phải luật gameplay |
 
-**Nguồn phê duyệt:** người dùng gửi biểu mẫu hoàn chỉnh kèm tuyên bố "Tôi CHỐT và phê duyệt đặc tả chức năng ReturnSaiyan" trong cuộc hội thoại, ngày 2026-10-28.
+1. Người dùng xác nhận chức năng có trong app; đó là **xác nhận yêu cầu sản phẩm**, chưa tự động là bằng chứng hàm/opcode từ mã máy.
+2. Không sửa giá trị `F01–F06` khi chỉ chuẩn hóa hình thức; các thay đổi sản phẩm sau này cần người dùng phê duyệt phiên bản mới và lưu lịch sử.
+3. Các mục `Uxx` chỉ được giải quyết bằng phê duyệt bổ sung cho hành vi sản phẩm, hoặc bằng bằng chứng kỹ thuật khi đó là chi tiết triển khai thực tế. Không đánh đồng hai nguồn.
+4. Tài liệu là nguồn đầu vào cho reverse engineering và phân rã Work Package **sau khi có đủ cơ sở và được phê duyệt**. Registry 68 WP trước đó **NOT_APPROVED — DO NOT EXECUTE**.
+5. Không lưu hoặc commit tài khoản, mật khẩu thật, token hoặc dữ liệu cá nhân của người chơi vào repository.
+
+**Nguồn phê duyệt:** Người dùng gửi biểu mẫu hoàn chỉnh kèm lời xác nhận “Tôi CHỐT và phê duyệt đặc tả chức năng ReturnSaiyan” ngày 2026-10-28.
