@@ -1,0 +1,26 @@
+{
+  "project_id": "fb6880376c06404f",
+  "task_key": "g8-unified-hero-evidence-audit-report",
+  "timestamp": "2026-10-27T14:10:30+07:00",
+  "acceptance_matrix": {
+    "G1_source_baseline": "VERIFIED (ReturnSaiyan-arm64.apk & libaos_jogo.so SHA256 hashes verified and untouched)",
+    "G2_roster_inventory": "VERIFIED (128 RS heroes + 131 DBG heroes inventoried, 10 candidates selected, schema divergence identified)",
+    "G3_mapping_and_assets": "VERIFIED (Collisions remapped to safe IDs 10081-10084, 160 Spine files staged, dual-placement parity validated)",
+    "G4_preservation_guarantee": "VERIFIED (100% field-by-field match for all 128 RS heroes, Ultra Ego Vegeta, Vegito Blue, Broly, Black Frieza intact)",
+    "G5_apk_packaging": "VERIFIED (dist/ReturnSaiyan-UnifiedHeroes-signed.apk built, 4-byte zipalign, apksigner v1/v2/v3 verified, rollback documented)",
+    "G6_environment_evaluation": "VERIFIED (Honest ADB absence reported; client resident assets verified; live server strictly isolated)",
+    "G7_regression_testing": "VERIFIED (9 dedicated integrity & packaging tests passed; 174 full regression tests passed, 0 failures)",
+    "G8_independent_review": "VERIFIED (All tasks reviewed by independent Antigravity subagent with primary evidence inspection)"
+  },
+  "deliverables": [
+    "dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+    "staging/assets/data/dataBin/hero.xc",
+    "staging/assets/data/GameData/spine/actor/",
+    "release_manifest.json",
+    "docs/PACKAGING_AND_ROLLBACK.md",
+    "docs/RUNTIME_ENVIRONMENT_EVALUATION.md",
+    "docs/HERO_METADATA_MAPPING_REPORT.md",
+    "docs/UNIFIED_HERO_DELTA_MATRIX.md",
+    "docs/STAGING_ASSET_REPORT.md"
+  ]
+}

@@ -1,0 +1,1108 @@
+{
+  "metadata": {
+    "task_key": "stage-unified-heroes-tree",
+    "staging_root": "staging/assets",
+    "original_rs_heroes": 128,
+    "integrated_new_heroes": 10,
+    "total_unified_heroes": 138,
+    "unified_hero_xc_bytes": 55084,
+    "unified_hero_xc_sha256": "13e73693c3d0a8d15c69008435811c9d2e7b38c1c70ff5e0f6eb0bc8a16a0bec"
+  },
+  "staged_spine_assets": {
+    "total_files": 160,
+    "total_bytes": 25593369,
+    "actors_covered": [
+      1062,
+      1065,
+      1066,
+      1067,
+      1068,
+      1069,
+      1070,
+      1071,
+      1072,
+      1073,
+      1074,
+      1075,
+      1076,
+      1077,
+      1078,
+      1118,
+      1125,
+      1153,
+      2043,
+      2046,
+      3033
+    ],
+    "files": [
+      {
+        "filename": "1062.atlas",
+        "size": 3370,
+        "sha256": "57187234c219b3824a2a329d79f7c17c8d44dd47b7b3cda33dabd5d60092d0e7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062.atlas"
+      },
+      {
+        "filename": "1062.json",
+        "size": 235199,
+        "sha256": "55d39dd027276361ea07541a8653f3b8e7ff3e7fad72fa852e2f0951c85a2d25",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062.json"
+      },
+      {
+        "filename": "1062.pkm",
+        "size": 65600,
+        "sha256": "538392511d8a8e83d310944ee1d123e678c8dfedf5e3524f8de34104853ac27d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062.pkm"
+      },
+      {
+        "filename": "1062.xc",
+        "size": 153563,
+        "sha256": "05068778f32a7384eb85c3edaac080ed22a46ec8131c01bbc1e43ed646000344",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062.xc"
+      },
+      {
+        "filename": "1062c.atlas",
+        "size": 1750,
+        "sha256": "376bec1c26a0ba51b87f1b0e8a2f84de8466c480b23b3dd40249151f92d04d4e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062c.atlas"
+      },
+      {
+        "filename": "1062c.json",
+        "size": 23532,
+        "sha256": "e11156a863869dde93eae3b0709259ced032dcc78d2186e92ddd392c0b597d8c",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062c.json"
+      },
+      {
+        "filename": "1062c.pkm",
+        "size": 1048640,
+        "sha256": "5eeadae27bda4b08f06bf68699d4ab507ac9eba87bc4f09fe2d27447147a3d2a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062c.pkm"
+      },
+      {
+        "filename": "1062c.xc",
+        "size": 15923,
+        "sha256": "a434a478957eea01694d543c7f244ddd394a2a4a123bcc6b1a1dd2827e79008a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1062c.xc"
+      },
+      {
+        "filename": "1065.atlas",
+        "size": 2739,
+        "sha256": "df4fa5feb33b553ea390fc1c416dc05fbd2e4dc19f323a505e1f43cd70fe7e79",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065.atlas"
+      },
+      {
+        "filename": "1065.json",
+        "size": 279935,
+        "sha256": "1630a7382680610980ac7971b683203cd0a05e340164b07a58f80f53508c5b39",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065.json"
+      },
+      {
+        "filename": "1065.pkm",
+        "size": 65600,
+        "sha256": "7e7c863d8cf6123bf05aec74834098bb985502d1754426156d235e98524e595d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065.pkm"
+      },
+      {
+        "filename": "1065.xc",
+        "size": 200628,
+        "sha256": "4a6381f5fdaf1a3cb1109431871da7aca7a58810961f2096bac778c85ca5c3b8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065.xc"
+      },
+      {
+        "filename": "1065c.atlas",
+        "size": 1844,
+        "sha256": "38f6f17de8925b32343955f4c681bc7f78e40d5088ee41a6a399282b4fbe121f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065c.atlas"
+      },
+      {
+        "filename": "1065c.json",
+        "size": 24150,
+        "sha256": "3dfb281368dbe6428b4b77403687331a3acd10a737ffd4b04816f7bbaeeec9e5",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065c.json"
+      },
+      {
+        "filename": "1065c.pkm",
+        "size": 1048640,
+        "sha256": "b20f923c0a741a53dcd23ab09b6d159f12bb36d2148973e4ed708e0e9bc2f573",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065c.pkm"
+      },
+      {
+        "filename": "1065c.xc",
+        "size": 15564,
+        "sha256": "33bd244a73ecd0d9b4833639cf305e1f813561cf69beac2db57d70c2ab1e168a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1065c.xc"
+      },
+      {
+        "filename": "1066.atlas",
+        "size": 3070,
+        "sha256": "953f2ad11b42d28ab536e61afa1bb66860735833e07caee2a0785099eb16eb33",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066.atlas"
+      },
+      {
+        "filename": "1066.json",
+        "size": 226450,
+        "sha256": "5ad45ea2b0f7518ded27ce55a21396d69a3008c7416df7965ce4666b87e6d45f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066.json"
+      },
+      {
+        "filename": "1066.pkm",
+        "size": 65600,
+        "sha256": "3ad551286bff3eeff42c5dab85ad6410e7aa1318a9799670b2994da5e0d4549e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066.pkm"
+      },
+      {
+        "filename": "1066.xc",
+        "size": 151094,
+        "sha256": "1e01ad89b536f183da3f51e3532a8449b172e87acec637a5d73a7c76aed0502d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066.xc"
+      },
+      {
+        "filename": "1066c.atlas",
+        "size": 1852,
+        "sha256": "0c5408a4a0f8708b71db15809b06e8f6b27f7adc54258d07af7c15c5317dd249",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066c.atlas"
+      },
+      {
+        "filename": "1066c.json",
+        "size": 24531,
+        "sha256": "138d73b94a9fe437f43008257b00085192a37ec93d05238f0eea7cc43bdd922b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066c.json"
+      },
+      {
+        "filename": "1066c.pkm",
+        "size": 1048640,
+        "sha256": "22e07dbefea634a830eeda05789f6daf6b44f5ddc0e4471c2b274c96f7653cdd",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066c.pkm"
+      },
+      {
+        "filename": "1066c.xc",
+        "size": 17310,
+        "sha256": "9d98d5bb3ca69f8ce9b07481409987e2093e33311f195a006a23d1397614bce1",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1066c.xc"
+      },
+      {
+        "filename": "1067.atlas",
+        "size": 2391,
+        "sha256": "8438af05fd881017198f4ef2f2e19c1928e5e44269be436ca36c6a0c084e971f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067.atlas"
+      },
+      {
+        "filename": "1067.json",
+        "size": 217007,
+        "sha256": "f0e9dcdb14ffb5d793cac7d4efd1ea3b6bf06b46b5b6b6c4e220a84d12c76be9",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067.json"
+      },
+      {
+        "filename": "1067.pkm",
+        "size": 65600,
+        "sha256": "7896c6115f6835fcad71a54d3ccc496721162477dbdd8035feb11e6b6f8f7259",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067.pkm"
+      },
+      {
+        "filename": "1067.xc",
+        "size": 145848,
+        "sha256": "fc748c1fba91acbef1996ad1a721a94a25f19cafdc1ce58442c1fa2f42c29e37",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067.xc"
+      },
+      {
+        "filename": "1067c.atlas",
+        "size": 1075,
+        "sha256": "25a775ed3184afbbe60c5a9e8eb53c314d20b707d009edc3030c09d36cd483e3",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067c.atlas"
+      },
+      {
+        "filename": "1067c.json",
+        "size": 10043,
+        "sha256": "80acb6cccee5bd759e8614afd3b2ceeb8c571988327d9bbb300e00aa40dc9d7b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067c.json"
+      },
+      {
+        "filename": "1067c.pkm",
+        "size": 1048640,
+        "sha256": "7a6acba6d4bc29065b287a66ebc38691e1eaaa2681f41129b875c66b54f6eddb",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067c.pkm"
+      },
+      {
+        "filename": "1067c.xc",
+        "size": 5759,
+        "sha256": "d98afd15b1c88ab226476762adc7cc978a25ac507d57a1989783bb6beeac5d02",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1067c.xc"
+      },
+      {
+        "filename": "1068.atlas",
+        "size": 2392,
+        "sha256": "9ad9f09b7e3d91b7c9d9ac137bb62e268c9f2e329f5c913f0dc6739052484832",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1068.atlas"
+      },
+      {
+        "filename": "1068.json",
+        "size": 217252,
+        "sha256": "117d14db923f6a39afa6e408f0f3a6ff16b085030bfa662c0ad1cb5029543e83",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1068.json"
+      },
+      {
+        "filename": "1068.pkm",
+        "size": 65600,
+        "sha256": "e3a5f746391dd19bf49862213bab5613f766e68c4467bd5afe43f3d9751f4c54",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1068.pkm"
+      },
+      {
+        "filename": "1068.xc",
+        "size": 145816,
+        "sha256": "5dd7bdff7cfb67af824758936d2ccdf5aa024cb2f23b0a29082a479537a8b9a2",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1068.xc"
+      },
+      {
+        "filename": "1069.atlas",
+        "size": 2082,
+        "sha256": "2fb4c0940100a7e473fd4dc5e005f8ab763bbf4f1ba5538b52d31b888864c01b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069.atlas"
+      },
+      {
+        "filename": "1069.json",
+        "size": 218566,
+        "sha256": "7be81d2194ed208a0e7e1a2a9df55fb969bc688a394aa1b65ee94dc81e9c73a4",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069.json"
+      },
+      {
+        "filename": "1069.pkm",
+        "size": 65600,
+        "sha256": "ddce57f47aeab65589d22801a982946066063bf47405f953e72523c29dfe81c0",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069.pkm"
+      },
+      {
+        "filename": "1069.xc",
+        "size": 152039,
+        "sha256": "3e81ca078be3b534b276d369d74f109802aefe19274d922e92109e4b1911f29d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069.xc"
+      },
+      {
+        "filename": "1069c.atlas",
+        "size": 872,
+        "sha256": "ab80dcac24e49dcfd84b33a281b9e3ba25fdc48ac7350676c1007bd476a1b78e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069c.atlas"
+      },
+      {
+        "filename": "1069c.json",
+        "size": 9030,
+        "sha256": "50385c2828b393338958b4dd6853dc40c1a86510245596a9e86bed671f323ce9",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069c.json"
+      },
+      {
+        "filename": "1069c.pkm",
+        "size": 1048640,
+        "sha256": "7af0eb83dc4e57e8256fdb3f2c45518c2e1c44ca2c5d60c9eeadc8a9565ec9da",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069c.pkm"
+      },
+      {
+        "filename": "1069c.xc",
+        "size": 4991,
+        "sha256": "bb90069c5edf419a12ba6a1830893d54dc089c4c542a4d6575c4fca5a6664f08",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1069c.xc"
+      },
+      {
+        "filename": "1070.atlas",
+        "size": 2082,
+        "sha256": "5302a8e213bb743d6d0945bbe6da57c4aaccb343a5ddef9b31dd90d731816636",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1070.atlas"
+      },
+      {
+        "filename": "1070.json",
+        "size": 218566,
+        "sha256": "30729e1b6e31023678fc2ae64f0f64aa1496bdd6bb29f622d2903225533c9621",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1070.json"
+      },
+      {
+        "filename": "1070.pkm",
+        "size": 65600,
+        "sha256": "8ade1570d1377e04cae4be37971204e47fb0587218e1e206f86a344605386579",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1070.pkm"
+      },
+      {
+        "filename": "1070.xc",
+        "size": 152039,
+        "sha256": "36ff5a15297243e882374e1e086bce5edc703771934a1d660aaf2e7a933dd050",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1070.xc"
+      },
+      {
+        "filename": "1071.atlas",
+        "size": 2182,
+        "sha256": "ce0a86043df9ef3d39ac3e9f8aeea1db848ea55bee434dbebbf7ed205fca9265",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071.atlas"
+      },
+      {
+        "filename": "1071.json",
+        "size": 212467,
+        "sha256": "ec2a938bc5a3373552fdabf93fe9f32a83b1cf20e781af9855474215186f218e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071.json"
+      },
+      {
+        "filename": "1071.pkm",
+        "size": 65600,
+        "sha256": "a3560c1e9690080c82f6325fdaf1eebdb44afc5f8874faa259c0bb2c86bfb59c",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071.pkm"
+      },
+      {
+        "filename": "1071.xc",
+        "size": 141439,
+        "sha256": "a6dcbeaa0fc0947e6b4aa1e7f6f8e86dc34939571738876d0aba68c78cafc77d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071.xc"
+      },
+      {
+        "filename": "1071c.atlas",
+        "size": 862,
+        "sha256": "73440a04db88b9caead1f9fb3f025a9107a835f87a03c6abda66e1be5e6ed8ed",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071c.atlas"
+      },
+      {
+        "filename": "1071c.json",
+        "size": 8763,
+        "sha256": "8db2ecab06dcadc73db2360f651b48a2f247389b84cd03ef59a4a0264e569a9f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071c.json"
+      },
+      {
+        "filename": "1071c.pkm",
+        "size": 1048640,
+        "sha256": "9f5b6b9792408559e881a0abda296e89e236328662f0cabed16f716b01193f50",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071c.pkm"
+      },
+      {
+        "filename": "1071c.xc",
+        "size": 5196,
+        "sha256": "d340efe2cf44de2a30db75b290aecc5d2581d6625b70ab28f1c660d83c5cddf5",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1071c.xc"
+      },
+      {
+        "filename": "1072.atlas",
+        "size": 2569,
+        "sha256": "41597fb9e9787a85446ae171dbcfd009d82f6f92e101250da28010678acf3959",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072.atlas"
+      },
+      {
+        "filename": "1072.json",
+        "size": 309182,
+        "sha256": "6a2e8f30dbd70415a4e3fe730ffde7d20fa058e359b26eb3f8bf2a14a31ae4cc",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072.json"
+      },
+      {
+        "filename": "1072.pkm",
+        "size": 32832,
+        "sha256": "fad3895a48f993ac031fb18f1e9a80b634be330f7eacac31fcf7ec409e9838d7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072.pkm"
+      },
+      {
+        "filename": "1072.xc",
+        "size": 208962,
+        "sha256": "d9926493f481bef67fc7fcbbf45a3b91939f71a4506f88b3de6a3a9c4c4bc74b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072.xc"
+      },
+      {
+        "filename": "1072c.atlas",
+        "size": 2176,
+        "sha256": "5d0aa1a0af086600b69f6bbcb48ecf7cad4b13db2d09fa07ca8a9bdf8aedc8df",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072c.atlas"
+      },
+      {
+        "filename": "1072c.json",
+        "size": 51555,
+        "sha256": "7c27c7d3b8e29979fefad53bb6c5feae98cfa9860deb3f9b856c52bcc520dfb0",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072c.json"
+      },
+      {
+        "filename": "1072c.pkm",
+        "size": 1048640,
+        "sha256": "f362e7b1124da01d905afc93230338f91a05cc5f32c2dc76df02ae84a1bb0e28",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072c.pkm"
+      },
+      {
+        "filename": "1072c.xc",
+        "size": 37246,
+        "sha256": "bd086efa8bf2d6e855258fbcf5834663cfaf45960015416fb2f4ffaffe27321f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1072c.xc"
+      },
+      {
+        "filename": "1073.atlas",
+        "size": 4037,
+        "sha256": "9b69029ce846e48a5d113eb330ea857d045c7dd0409824a7b2797668af0d1e05",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073.atlas"
+      },
+      {
+        "filename": "1073.json",
+        "size": 399077,
+        "sha256": "b876a8a7c912bac65d8c08f0162641b5383bac1ea32ccb44078c30517e8b1503",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073.json"
+      },
+      {
+        "filename": "1073.pkm",
+        "size": 65600,
+        "sha256": "236e80af93a24a25685668777cb29680b375e2e61309de6777040231c6550aff",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073.pkm"
+      },
+      {
+        "filename": "1073.xc",
+        "size": 265308,
+        "sha256": "8e98e76711658aeb46e9a42b5af5d514c3886b7b7ec2ae5baf8eb2382de68093",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073.xc"
+      },
+      {
+        "filename": "1073c.atlas",
+        "size": 1178,
+        "sha256": "ded9e51e690d81857c6fea8b3a1e55dcf51118158024db76c78263ab0612cfc8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073c.atlas"
+      },
+      {
+        "filename": "1073c.json",
+        "size": 25908,
+        "sha256": "192c65df20cef0bb7042d6cf0b33f03c27f8b3dcd1941dc2c995189f7ac86eb7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073c.json"
+      },
+      {
+        "filename": "1073c.pkm",
+        "size": 1048640,
+        "sha256": "07e4276ce228b59bbcb824769422e8e75d872e9fc49e4e162dda8d15f5a0210a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073c.pkm"
+      },
+      {
+        "filename": "1073c.xc",
+        "size": 19811,
+        "sha256": "03d80616a758ea503b16f8515543d2beb2d786e62895c280e90c1ed3872b2d8d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1073c.xc"
+      },
+      {
+        "filename": "1074.atlas",
+        "size": 3678,
+        "sha256": "77a13ccea1b15f6660f24f3cba7f95c199e95241ab2429f277f868834060c428",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074.atlas"
+      },
+      {
+        "filename": "1074.json",
+        "size": 161065,
+        "sha256": "7aafd36fe0956dd1fc73af21ea040bfa8dfce753688fbe672fabf9a1d9f34b7f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074.json"
+      },
+      {
+        "filename": "1074.pkm",
+        "size": 131136,
+        "sha256": "f5dc38153078d887675f225b8f0e283ccf35b91ac52245e2adca8a68832cca2e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074.pkm"
+      },
+      {
+        "filename": "1074.xc",
+        "size": 153696,
+        "sha256": "5971ed1bd0f77ead6d7ee2c4d3d1968509795c2d68599ea28a325c6b89a65772",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074.xc"
+      },
+      {
+        "filename": "1074c.atlas",
+        "size": 2211,
+        "sha256": "c99e2fab72a648be9628581e25112103a941ff912caef906a204a7d941e9109f",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074c.atlas"
+      },
+      {
+        "filename": "1074c.json",
+        "size": 32340,
+        "sha256": "7d287d83df6224f25996a5d25a7f2fa46a6e229c30e9333001e93ffbbb0db400",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074c.json"
+      },
+      {
+        "filename": "1074c.pkm",
+        "size": 524352,
+        "sha256": "d71479884231324e10ad51f09e3c0e811927efedd273da43e49ea2581f445aa3",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074c.pkm"
+      },
+      {
+        "filename": "1074c.xc",
+        "size": 35637,
+        "sha256": "2a0a36fe8eaf18c966822282bba83fac5fe387c33cb68935b31b2aa6aa0cf9ea",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1074c.xc"
+      },
+      {
+        "filename": "1075.atlas",
+        "size": 2647,
+        "sha256": "2b3f7fedaaad0dc7255709abe0a189ff0a34d8cdf290d39386b4686afff7f8e7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075.atlas"
+      },
+      {
+        "filename": "1075.json",
+        "size": 159877,
+        "sha256": "24a98d87ef1314ef1ad22e5d4cebeff7ebd683c08811e2e3069b4730fd354c95",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075.json"
+      },
+      {
+        "filename": "1075.pkm",
+        "size": 65600,
+        "sha256": "e747027acfdf2fbf3ae95c9683432625d5b9755a361099728589d053cc4ccaf8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075.pkm"
+      },
+      {
+        "filename": "1075.xc",
+        "size": 163416,
+        "sha256": "52de65b5f404b3f1428e156431ac1dcadc2ab43d9ffde9ce5c0a1a29eca7b259",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075.xc"
+      },
+      {
+        "filename": "1075c.atlas",
+        "size": 1081,
+        "sha256": "be46ca7e287b615b4f167fc2c03344f6eea9c212e40db52da0ab9483cf9101d1",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075c.atlas"
+      },
+      {
+        "filename": "1075c.json",
+        "size": 12464,
+        "sha256": "e562afeae62681b2e2e33efe6d91b2b1e32bcbdd618c0ec9c2640ab61a4fd2d8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075c.json"
+      },
+      {
+        "filename": "1075c.pkm",
+        "size": 262208,
+        "sha256": "6823e519bfba0259afae64eed8c34468dfbc3bf7ca4bc2b9c422b96ab9a391dc",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075c.pkm"
+      },
+      {
+        "filename": "1075c.xc",
+        "size": 13750,
+        "sha256": "b07737d6b7432ae30e33f89c31c2ddf9d151c131db67ef3a83d585a3fe808e7e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1075c.xc"
+      },
+      {
+        "filename": "1076.atlas",
+        "size": 2653,
+        "sha256": "0c4e1e20736a2dade176c8fe6bfa8c473898deedf5fc94994a25e9f7613ddb77",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076.atlas"
+      },
+      {
+        "filename": "1076.json",
+        "size": 257703,
+        "sha256": "3cdd18a60c26bde916560244246410fae047c03f6bcec58ab99a8a634b5c661e",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076.json"
+      },
+      {
+        "filename": "1076.pkm",
+        "size": 32832,
+        "sha256": "a51e922a7421dbb126d0a90665f6408cfb2d3c883d89b8f99b444b9bd150503b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076.pkm"
+      },
+      {
+        "filename": "1076.xc",
+        "size": 235343,
+        "sha256": "77cdb5baebd71e211bb77cd0bab5f3a01a703ae1d26321725277948fad2ea8a1",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076.xc"
+      },
+      {
+        "filename": "1076c.atlas",
+        "size": 1706,
+        "sha256": "5f0aab333ec827ae99e87d6d7d05d62c67c17640e54189a32dfb8c303a360a89",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076c.atlas"
+      },
+      {
+        "filename": "1076c.json",
+        "size": 27048,
+        "sha256": "c7706bccb89baf475d2d61d1a325dbe09797affbbcd3547c7663e7cd1749d524",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076c.json"
+      },
+      {
+        "filename": "1076c.pkm",
+        "size": 524352,
+        "sha256": "bd5066c2e68d8c61e9d698e60603db5b400cc7b3b6dd157fc38f5f5089748eed",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076c.pkm"
+      },
+      {
+        "filename": "1076c.xc",
+        "size": 30294,
+        "sha256": "b50756e40de2925749f3aa13ab9d278aa7ab8332c278d0db041515904b8eb896",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1076c.xc"
+      },
+      {
+        "filename": "1077.atlas",
+        "size": 2623,
+        "sha256": "4a007893d336fb40048e7bfe6f36c1b2217ce28f29d91a85914c89f203304f41",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077.atlas"
+      },
+      {
+        "filename": "1077.json",
+        "size": 182912,
+        "sha256": "b2b28f117ed29aa24767df23fc6301a4af2bb94eda3325f866797e3f90c275b4",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077.json"
+      },
+      {
+        "filename": "1077.pkm",
+        "size": 32832,
+        "sha256": "11f5068b79fd668cbc1ea924fceb0cf90d298977157842e401da805e082d88d4",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077.pkm"
+      },
+      {
+        "filename": "1077.xc",
+        "size": 183198,
+        "sha256": "6a4a26b6ed6925290c142a38bf419b5357a49e24f4e271335c29dead87d50aee",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077.xc"
+      },
+      {
+        "filename": "1077c.atlas",
+        "size": 1720,
+        "sha256": "41627a9b2a287546220cf8410530b851e95932b14afb096213606f97f95ba446",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077c.atlas"
+      },
+      {
+        "filename": "1077c.json",
+        "size": 25566,
+        "sha256": "a47e6db1aa9a63dc542f0264aaf578c7495037b5085120ae68b58d873799fd47",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077c.json"
+      },
+      {
+        "filename": "1077c.pkm",
+        "size": 524352,
+        "sha256": "c673d2e421a73040c3d4ca35a2cfb7a4558b9a18459e977074dde3f6d78fd518",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077c.pkm"
+      },
+      {
+        "filename": "1077c.xc",
+        "size": 28217,
+        "sha256": "f9927e655dd1a20a4eb8f3f11a9b6a710a17671daed3644f732a3635e633b39d",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1077c.xc"
+      },
+      {
+        "filename": "1078.atlas",
+        "size": 3075,
+        "sha256": "27ad901cd5659947df45899b19af0b85c14d81ebe7169f7279f4db93bcf28a03",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078.atlas"
+      },
+      {
+        "filename": "1078.json",
+        "size": 265676,
+        "sha256": "baf655c0242df0d6e9ef1ff48b1f243b8dd76d1ae6d05c152770e67673009303",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078.json"
+      },
+      {
+        "filename": "1078.pkm",
+        "size": 131136,
+        "sha256": "4eb147e912b1f0cd874c92a8dabd76fdcb1d54c8a7d18151c05db9d0629e2b5c",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078.pkm"
+      },
+      {
+        "filename": "1078.xc",
+        "size": 275258,
+        "sha256": "4f035a153d73b65d7b3184f5edff4679d1d3b2f9026e1471d8cfec952ec2d50a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078.xc"
+      },
+      {
+        "filename": "1078c.atlas",
+        "size": 983,
+        "sha256": "0ffcaaa6487a6485a58d25ad0a88ac2b2766c3767f4a362d41ca602dedfcc29b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078c.atlas"
+      },
+      {
+        "filename": "1078c.json",
+        "size": 25652,
+        "sha256": "5be0f828716db2dd970de6127c000500ccdec0659377ccfa2e42bf974da374e3",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078c.json"
+      },
+      {
+        "filename": "1078c.pkm",
+        "size": 262208,
+        "sha256": "ff338aa468211a20de04f80397bf4203495c38c65fb57df005833c704c8e458c",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078c.pkm"
+      },
+      {
+        "filename": "1078c.xc",
+        "size": 29909,
+        "sha256": "cb4f43446c4e3d5f14d640b89f6414df3e1a9b00f29e5a1d5afbfaa017a4f0d8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1078c.xc"
+      },
+      {
+        "filename": "1118.atlas",
+        "size": 2476,
+        "sha256": "1a331cc16d183a6cebce2c34ad12225de95adf4b284dfdef47f12e6898841977",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118.atlas"
+      },
+      {
+        "filename": "1118.json",
+        "size": 340525,
+        "sha256": "60f55224a8e9b90a5c7dcef3c9696af64440fdf2d454640829690846598356f7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118.json"
+      },
+      {
+        "filename": "1118.pkm",
+        "size": 32832,
+        "sha256": "b3ca86709530b0f34913d3355a800e6684225d1910499bb45898e220c13387d5",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118.pkm"
+      },
+      {
+        "filename": "1118.xc",
+        "size": 272117,
+        "sha256": "b8c0788db51b1f3b9ef381e5cbfb70149e5b1bdeb34da5fff675e8913ed76510",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118.xc"
+      },
+      {
+        "filename": "1118c.atlas",
+        "size": 1464,
+        "sha256": "6eb1d75a0333e47f8a8be249e3446efc21221bc6286dd7edb11f4010d29ac878",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118c.atlas"
+      },
+      {
+        "filename": "1118c.json",
+        "size": 37191,
+        "sha256": "4f596d8356761c92c175abed4b430f228191d8121f111be3a1ca383209f97014",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118c.json"
+      },
+      {
+        "filename": "1118c.pkm",
+        "size": 524352,
+        "sha256": "28e9fc4ad8a84dd66f6e69ade0ed1c4008794b24f8c8df27b9e2d57d9d4e8111",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118c.pkm"
+      },
+      {
+        "filename": "1118c.xc",
+        "size": 24769,
+        "sha256": "ac9d9038e666f5b3f77e84a40ab42a76e34020016cf168e81ed02d6bb62946eb",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1118c.xc"
+      },
+      {
+        "filename": "1125.atlas",
+        "size": 2962,
+        "sha256": "986f5339ae5c3add21b55b1d0197d16289b0a310b30a26b641d863303c0d4eab",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125.atlas"
+      },
+      {
+        "filename": "1125.json",
+        "size": 307623,
+        "sha256": "a8f514f966f98949c0f05d59c5eb3733da508c96f2f11099ec227ae40cccf0f8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125.json"
+      },
+      {
+        "filename": "1125.pkm",
+        "size": 32832,
+        "sha256": "67ea63774922ac2cb866c851076b68cfbd00fcadeb82e41bbb3909dcea1b9f58",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125.pkm"
+      },
+      {
+        "filename": "1125.xc",
+        "size": 211746,
+        "sha256": "eba54f02784969bb507b58a9d4c903c0991e38568d32c21a0369d4d24d8cc401",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125.xc"
+      },
+      {
+        "filename": "1125c.atlas",
+        "size": 1457,
+        "sha256": "7f41008393c9dca5a3e61dc5a12d983a7641c23a07e4fedac918e8a1ac382b87",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125c.atlas"
+      },
+      {
+        "filename": "1125c.json",
+        "size": 26147,
+        "sha256": "66861e90bd2ae994152743f479e310ec135d7465cdb1530bb28e679cf699bf98",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125c.json"
+      },
+      {
+        "filename": "1125c.pkm",
+        "size": 524352,
+        "sha256": "59f88d4fa1ec9e9622d15ba245b50476c9d34c35ec12fa8eace97cec42440628",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125c.pkm"
+      },
+      {
+        "filename": "1125c.xc",
+        "size": 19200,
+        "sha256": "0a861078ca8881aa7c7a4ec8cb760289face902afd92665e7a45dd3800324b72",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1125c.xc"
+      },
+      {
+        "filename": "1153.atlas",
+        "size": 2644,
+        "sha256": "c52233f327e964cef9a4fc8078edb84a5045d8c69fe1446e6c42262e632b35ae",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153.atlas"
+      },
+      {
+        "filename": "1153.json",
+        "size": 383881,
+        "sha256": "b7e24a316e29998f82a3ad7725c81819c91fd1845d843ed7e25ce4878fd77168",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153.json"
+      },
+      {
+        "filename": "1153.pkm",
+        "size": 65600,
+        "sha256": "5f2546de13fbc0c12f784ff11ad0f42f1ef7e0f37f4abb7dd87a531646e909e9",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153.pkm"
+      },
+      {
+        "filename": "1153.xc",
+        "size": 250633,
+        "sha256": "2b11b0f3b0d1d0f0c1b37fde8fe76992f782d87638ac89cf67e96475dfa99f45",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153.xc"
+      },
+      {
+        "filename": "1153c.atlas",
+        "size": 1841,
+        "sha256": "031bfbe6b9066b31a1c9d223e4380cc0cadb2128fbcce4d0e1a071620d763977",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153c.atlas"
+      },
+      {
+        "filename": "1153c.json",
+        "size": 29957,
+        "sha256": "af80b9c8deebedf91144782c1c42b44d851aea829ef41f015f1bb0f3f736ac01",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153c.json"
+      },
+      {
+        "filename": "1153c.pkm",
+        "size": 524352,
+        "sha256": "9e380797d0a10dca81e4a28f5390da359d8d5b5ca01f1a6714b1b4328745ed28",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153c.pkm"
+      },
+      {
+        "filename": "1153c.xc",
+        "size": 18338,
+        "sha256": "d3470370e0658e3cb939c72f21db7f11e58f62e33984037c46d18b9e31833a00",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/1153c.xc"
+      },
+      {
+        "filename": "2043.atlas",
+        "size": 2277,
+        "sha256": "238bec075fbb234d841b3d071b97b8ec0cfea14bce0d5787ae09c56ee4834ce7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043.atlas"
+      },
+      {
+        "filename": "2043.json",
+        "size": 302110,
+        "sha256": "df6bc3c8f7970dbf8b93cbab400661bc4ad1f514407819345e91d44fd2003b99",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043.json"
+      },
+      {
+        "filename": "2043.pkm",
+        "size": 65600,
+        "sha256": "0c5f330c6d6633f796db030d4222b95ae8b8b587529b0f14f0fc0f066cd78982",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043.pkm"
+      },
+      {
+        "filename": "2043.xc",
+        "size": 236336,
+        "sha256": "a6fc697cd599a4ba22f4bd5a64a857dc31b7d1c1a934794120b23da776015ac8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043.xc"
+      },
+      {
+        "filename": "2043c.atlas",
+        "size": 1658,
+        "sha256": "d80f78428774ef41dd886625ccf254976b1e1c7d3781324dce28530c368c4087",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043c.atlas"
+      },
+      {
+        "filename": "2043c.json",
+        "size": 47422,
+        "sha256": "f412b7c47ac7ac62348696a40691fae0177909c495b72794295cf0b18c48a3dc",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043c.json"
+      },
+      {
+        "filename": "2043c.pkm",
+        "size": 524352,
+        "sha256": "abf12d88b16692597ccf045ea1b859606f5c2c738c1f5bc78e0066f0a830cbad",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043c.pkm"
+      },
+      {
+        "filename": "2043c.xc",
+        "size": 39964,
+        "sha256": "255ce5f6ae03a52734568a7099750051e17a4653e934c148b29bdcd25bf2ddd8",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2043c.xc"
+      },
+      {
+        "filename": "2046.atlas",
+        "size": 2576,
+        "sha256": "4e8903f1b5077e7fc6ab39c5959152464c8b11fda45154c068251472946866f5",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046.atlas"
+      },
+      {
+        "filename": "2046.json",
+        "size": 339271,
+        "sha256": "a35d6ea0f6a64eb96873383d47daeb423bf7a27e26e5bc48f02956775369722b",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046.json"
+      },
+      {
+        "filename": "2046.pkm",
+        "size": 65600,
+        "sha256": "29aa31e2eaf87fd7807634c5483cce31cf0d04c7d501739bab57089db2089752",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046.pkm"
+      },
+      {
+        "filename": "2046.xc",
+        "size": 289448,
+        "sha256": "4303e6d10c87bea880886c888190bcf98c4704411be0148bf5dc2d2350eaef97",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046.xc"
+      },
+      {
+        "filename": "2046c.atlas",
+        "size": 1265,
+        "sha256": "add753de618bd263e853ed05c57ca8bc626a574cb614cae0150c51243438a168",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046c.atlas"
+      },
+      {
+        "filename": "2046c.json",
+        "size": 25148,
+        "sha256": "ecedf0ee2000d78b61da7948d275e154ebb1d45905c31c7dc49be8e978305fba",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046c.json"
+      },
+      {
+        "filename": "2046c.pkm",
+        "size": 524352,
+        "sha256": "ccd8d202ec1735ab0f06f3a417616ad5e97511ca425ef8906e26e4e64b8b27be",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046c.pkm"
+      },
+      {
+        "filename": "2046c.xc",
+        "size": 14470,
+        "sha256": "5e31322882a39e9da9b760711ebd97498d3c9b5ed3066d0195c40a2ae046446a",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/2046c.xc"
+      },
+      {
+        "filename": "3033.atlas",
+        "size": 2366,
+        "sha256": "59786a018f0095f9caea1fe107388fce9158fa193f25ef608e9c533cc57491a7",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033.atlas"
+      },
+      {
+        "filename": "3033.json",
+        "size": 283633,
+        "sha256": "3bb810e7ba7572897560c39aa45113e6a9a7a8fd738cfc201b249e03742350c5",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033.json"
+      },
+      {
+        "filename": "3033.pkm",
+        "size": 32832,
+        "sha256": "1c8498be5347433f6ebb67fb672039476868c48617d6eb3cc2edb3d51005f753",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033.pkm"
+      },
+      {
+        "filename": "3033.xc",
+        "size": 182358,
+        "sha256": "df59f0ade308e5eac4522fadb922da0d01d76aeaa3c4ca5103990cc56bb55a81",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033.xc"
+      },
+      {
+        "filename": "3033c.atlas",
+        "size": 1178,
+        "sha256": "201e424fe34034cea89d49a75361532a8a7910d215d6bdcadaa3f4d1dca317b4",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033c.atlas"
+      },
+      {
+        "filename": "3033c.json",
+        "size": 19224,
+        "sha256": "21bf73cb4eec2bc214fa1ee1b84bfc7ecdbd9b33774c9401b7e8bef89ba7f207",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033c.json"
+      },
+      {
+        "filename": "3033c.pkm",
+        "size": 524352,
+        "sha256": "a003a15ee276ce4120984eaba480d5edb715bf9e9c966b16617f35f4177820fe",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033c.pkm"
+      },
+      {
+        "filename": "3033c.xc",
+        "size": 13256,
+        "sha256": "22000b6023136648811e3cd658aa3417e5e0dcb14ec715fc2b9d4248a0550e99",
+        "staged_path": "staging/assets/data/GameData/spine/actor/data/3033c.xc"
+      }
+    ]
+  },
+  "integrated_hero_roster": [
+    {
+      "assigned_id": 10081,
+      "original_dbg_id": 10061,
+      "name": "Super Saiyan 4 Gogeta",
+      "actor_id": 1062,
+      "card_spine_id": "1062c",
+      "die_music": "Die_young_woman",
+      "phyAct": 85,
+      "maxHp": 4320
+    },
+    {
+      "assigned_id": 10062,
+      "original_dbg_id": 10062,
+      "name": "Vados",
+      "actor_id": 1065,
+      "card_spine_id": "1065c",
+      "die_music": "Die_young_woman",
+      "phyAct": 180,
+      "maxHp": 2000
+    },
+    {
+      "assigned_id": 10083,
+      "original_dbg_id": 10063,
+      "name": "Towa",
+      "actor_id": 1066,
+      "card_spine_id": "1066c",
+      "die_music": "Die_young_woman",
+      "phyAct": 136,
+      "maxHp": 3500
+    },
+    {
+      "assigned_id": 10084,
+      "original_dbg_id": 10064,
+      "name": "Toppo",
+      "actor_id": 1067,
+      "card_spine_id": "1067c",
+      "die_music": "Die_young_woman",
+      "phyAct": 170,
+      "maxHp": 4000
+    },
+    {
+      "assigned_id": 10065,
+      "original_dbg_id": 10065,
+      "name": "Jiren",
+      "actor_id": 1069,
+      "card_spine_id": "1069c",
+      "die_music": "Die_young_woman",
+      "phyAct": 210,
+      "maxHp": 4000
+    },
+    {
+      "assigned_id": 10066,
+      "original_dbg_id": 10066,
+      "name": "Shin",
+      "actor_id": 1071,
+      "card_spine_id": "1071c",
+      "die_music": "Die_young_woman",
+      "phyAct": 180,
+      "maxHp": 4300
+    },
+    {
+      "assigned_id": 10067,
+      "original_dbg_id": 10067,
+      "name": "DC Majin Vegeta ",
+      "actor_id": 1072,
+      "card_spine_id": "1072c",
+      "die_music": "Die_young_men",
+      "phyAct": 230,
+      "maxHp": 4200
+    },
+    {
+      "assigned_id": 10068,
+      "original_dbg_id": 10068,
+      "name": "DC Super Saiyan 3 ",
+      "actor_id": 1073,
+      "card_spine_id": "1073c",
+      "die_music": "Die_young_men",
+      "phyAct": 185,
+      "maxHp": 4000
+    },
+    {
+      "assigned_id": 10069,
+      "original_dbg_id": 10069,
+      "name": "Super Saiyan Blue Vegito",
+      "actor_id": 1074,
+      "card_spine_id": "1074c",
+      "die_music": "Die_young_men",
+      "phyAct": 190,
+      "maxHp": 4010
+    },
+    {
+      "assigned_id": 10070,
+      "original_dbg_id": 10070,
+      "name": "Arale",
+      "actor_id": 1075,
+      "card_spine_id": "1075c",
+      "die_music": "Die_young_men",
+      "phyAct": 110,
+      "maxHp": 6354
+    }
+  ],
+  "preservation_check": {
+    "10060_ultra_ego_vegeta": "VERIFIED_PRESENT",
+    "10063_legendary_broly": "VERIFIED_PRESENT",
+    "10064_black_frieza": "VERIFIED_PRESENT",
+    "event_heroes_90001_90009": "VERIFIED_PRESENT"
+  }
+}

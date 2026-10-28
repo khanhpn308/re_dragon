@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-10-27T13:49:25+07:00",
+  "project_id": "fb6880376c06404f",
+  "task_key": "g1-baseline-source-verification",
+  "sources": {
+    "ReturnSaiyan-arm64.apk": {
+      "path": "/home/khanh/returnsaiyan-re/ReturnSaiyan-arm64.apk",
+      "sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+      "size_bytes": 137590901,
+      "status": "UNTOUCHED_VERIFIED"
+    },
+    "libaos_jogo.so": {
+      "path": "/home/khanh/returnsaiyan-re/libaos_jogo.so",
+      "sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f",
+      "size_bytes": 198980424,
+      "status": "UNTOUCHED_VERIFIED"
+    },
+    "libaos_jogo_nodebug.so": {
+      "path": "/home/khanh/returnsaiyan-re/libaos_jogo_nodebug.so",
+      "sha256": "13baab1d96c18153698bfcb7ca2c512f1c4051dff4e77ca22feb6caba7784e77",
+      "size_bytes": 29677192,
+      "status": "UNTOUCHED_VERIFIED"
+    }
+  },
+  "immutability_policy": "All patching and asset staging is performed in isolated staging trees (staging/); source binaries and APKs are strictly read-only and preserved."
+}

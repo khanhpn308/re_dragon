@@ -836,3 +836,63 @@ def resource_config(db,pid,max_concurrency):
     except Exception:
         db.rollback()
         raise
+
+
+def recover_blocked_android_device(db, pid, task_key, *, device_serial, adb_proof, operator_note):
+    """Explicit, evidence-gated environment recovery; not task acceptance.
+
+    No VERIFIED/SUBMITTED/DISPUTED task is changed. Requires a previously
+    device-blocked task and no other BLOCKED scopes. All writes are audited.
+    """
+    import re as _re
+    from . import core as _core
+    if not isinstance(adb_proof, dict) or adb_proof.get("device") != device_serial:
+        raise ValueError("Live ADB proof does not match pinned device")
+    if not adb_proof.get("required_reverse_ports") == [30001, 30008]:
+        raise ValueError("Required ADB reverse tunnel proof missing")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        pr = project(db, pid)
+        if pr["status"] not in {"BLOCKED", "ACTIVE"}:
+            raise ValueError("Project must be BLOCKED or ACTIVE, never accepted/stopped")
+        task = _task(db, pid, task_key)
+        if task["status"] not in {"BLOCKED", "REWORK", "PENDING"}:
+            raise ValueError("P3 is not in an environment-recoverable task state")
+        other = db.execute(
+            "SELECT task_key FROM auto_tasks WHERE project_id=? AND status='BLOCKED' AND task_key<>?",
+            (pid, task_key),
+        ).fetchall()
+        if other:
+            raise ValueError("Other blocked tasks need independent review")
+        old_note = (task["review_note"] or "")
+        if task["status"] == "BLOCKED":
+            if not (_re.search(r"RMX3461|10b3139c|ADB|Android test device|physical Android", old_note, _re.I)):
+                raise ValueError("P3 blocker does not establish an ADB/device cause")
+            db.execute(
+                "UPDATE auto_tasks SET status='REWORK', tries=0, "
+                "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL, "
+                "updated_at=? WHERE id=? AND status='BLOCKED'",
+                (_core.now(), task["id"]),
+            )
+            event(db, pid, task_key, "ANDROID_DEVICE_BLOCKER_REQUEUED", {
+                "device": device_serial, "adb_proof": adb_proof,
+                "old_tries": task["tries"], "previous_blocker": old_note[:1500],
+                "authorization": operator_note[:500],
+                "result": "REWORK_NOT_VERIFIED",
+            })
+        else:
+            event(db, pid, task_key, "ANDROID_DEVICE_RECOVERY_RECHECKED", {
+                "device": device_serial, "adb_proof": adb_proof,
+                "status_unchanged": task["status"],
+            })
+        if pr["status"] == "BLOCKED":
+            db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? WHERE id=?",
+                       (_core.now(),pid))
+            event(db,pid,None,"PROJECT_REOPENED_AFTER_DEVICE_RECOVERY",{
+                "task_key":task_key,"acceptance_unchanged":True,
+            })
+        db.commit()
+        return {"project": "ACTIVE", "task": "REWORK" if task["status"] == "BLOCKED" else task["status"]}
+    except Exception:
+        db.rollback()
+        raise

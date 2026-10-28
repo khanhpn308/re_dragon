@@ -1,0 +1,12 @@
+time=2026-10-28T07:28:16.878+07:00 level=INFO msg="connecting to PostgreSQL database..." dsn="postgres://returnsaiyan:returnsaiyan_pass@127.0.0.1:5432/returnsaiyan_dev?sslmode=disable"
+time=2026-10-28T07:28:16.902+07:00 level=INFO msg="database schema up-to-date" version=2
+time=2026-10-28T07:28:16.926+07:00 level=INFO msg="TCP Game Server started" addr=127.0.0.1:30001
+time=2026-10-28T07:28:25.813+07:00 level=INFO msg="client connection accepted" conn_id=conn-1 remote_addr=127.0.0.1:63466
+time=2026-10-28T07:28:25.822+07:00 level=INFO msg="handshake greeting sent" conn_id=conn-1 remote_addr=127.0.0.1:63466 seed=0x0DAB02D4 key=0x50
+time=2026-10-28T07:28:25.829+07:00 level=INFO msg="raw bytes received" conn_id=conn-1 remote_addr=127.0.0.1:63466 conn_id=conn-1 bytes=58 hex=00683868386750754063472642264524472f4d2d4b1b417c183c0e2a1f24023704540168096800643474457a592415370a6c0877166808761770
+time=2026-10-28T07:28:25.829+07:00 level=INFO msg="packet received" conn_id=conn-1 remote_addr=127.0.0.1:63466 conn_id=conn-1 opcode=0x00 len=54
+time=2026-10-28T07:28:25.829+07:00 level=INFO msg="login request received" module=session_handler conn_id=conn-1 username=guest1443138206 union_id=91184 version=aos-arm64/1.0.17
+time=2026-10-28T07:28:25.837+07:00 level=INFO msg="login successful, session established" module=session_handler username=guest1443138206 conn_id=conn-1 role_count=1
+time=2026-10-28T07:28:40.553+07:00 level=INFO msg="shutdown signal received"
+time=2026-10-28T07:28:40.553+07:00 level=INFO msg="shutting down TCP Game Server..."
+time=2026-10-28T07:28:40.553+07:00 level=INFO msg="TCP Game Server stopped gracefully"

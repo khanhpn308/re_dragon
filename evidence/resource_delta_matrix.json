@@ -1,0 +1,163 @@
+{
+  "task_key": "resource-delta-matrix",
+  "catalog_summary": {
+    "returnsaiyan_total_heroes": 128,
+    "dbglobal_total_heroes": 131,
+    "shared_heroes": 123,
+    "missing_in_rs": 10,
+    "preserved_in_rs": 8
+  },
+  "missing_heroes_catalog": [
+    {
+      "dbg_hero_id": 10061,
+      "name": "Super Saiyan 4 Gogeta",
+      "actor_id": 1062,
+      "card_spine_id": "1062c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10081,
+      "collision_status": "COLLIDES_WITH_RS_10061_VEGITO_BLUE",
+      "resolution": "Remap to 10081; preserve RS 10061 Vegito Blue"
+    },
+    {
+      "dbg_hero_id": 10062,
+      "name": "Vados",
+      "actor_id": 1065,
+      "card_spine_id": "1065c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10062,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10062"
+    },
+    {
+      "dbg_hero_id": 10063,
+      "name": "Towa",
+      "actor_id": 1066,
+      "card_spine_id": "1066c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10083,
+      "collision_status": "COLLIDES_WITH_RS_10063_BROLY",
+      "resolution": "Remap to 10083; preserve RS 10063 Legendary Broly (Fury)"
+    },
+    {
+      "dbg_hero_id": 10064,
+      "name": "Toppo",
+      "actor_id": 1067,
+      "card_spine_id": "1067c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10084,
+      "collision_status": "COLLIDES_WITH_RS_10064_BLACK_FRIEZA",
+      "resolution": "Remap to 10084; preserve RS 10064 Black Frieza"
+    },
+    {
+      "dbg_hero_id": 10065,
+      "name": "Jiren",
+      "actor_id": 1069,
+      "card_spine_id": "1069c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10065,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10065"
+    },
+    {
+      "dbg_hero_id": 10066,
+      "name": "Shin",
+      "actor_id": 1071,
+      "card_spine_id": "1071c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10066,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10066"
+    },
+    {
+      "dbg_hero_id": 10067,
+      "name": "DC Majin Vegeta",
+      "actor_id": 1072,
+      "card_spine_id": "1072c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10067,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10067"
+    },
+    {
+      "dbg_hero_id": 10068,
+      "name": "DC Super Saiyan 3",
+      "actor_id": 1073,
+      "card_spine_id": "1073c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10068,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10068"
+    },
+    {
+      "dbg_hero_id": 10069,
+      "name": "Super Saiyan Blue Vegito",
+      "actor_id": 1074,
+      "card_spine_id": "1074c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10069,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10069"
+    },
+    {
+      "dbg_hero_id": 10070,
+      "name": "Arale",
+      "actor_id": 1075,
+      "card_spine_id": "1075c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10070,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10070"
+    }
+  ],
+  "preserved_rs_heroes": [
+    {
+      "hero_id": 10060,
+      "name": "Ultra Ego Vegeta",
+      "actor_id": 1060,
+      "card_spine": "1060c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 10063,
+      "name": "Legendary Broly (Fury)",
+      "actor_id": 1063,
+      "card_spine": "1063c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 10064,
+      "name": "Black Frieza",
+      "actor_id": 1064,
+      "card_spine": "1064c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 90001,
+      "name": "Iron Man",
+      "actor_id": 1003,
+      "card_spine": "1036c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 90002,
+      "name": "Storm",
+      "actor_id": 1003,
+      "card_spine": "1036c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 90003,
+      "name": "Wolverine",
+      "actor_id": 1003,
+      "card_spine": "1036c",
+      "status": "VERIFIED_PRESERVED"
+    },
+    {
+      "hero_id": 90008,
+      "name": "Crystal",
+      "actor_id": 3001,
+      "card_spine": "1020c",
+      "status": "VERIFIED_PRESERVED"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "task_key": "audit-unsupported-features",
+  "project_id": "5998ee8249b64cf9",
+  "binary_targets": {
+    "libaos_jogo.so": {
+      "path": "/home/khanh/returnsaiyan-re/libaos_jogo.so",
+      "sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f",
+      "architecture": "aarch64"
+    },
+    "ReturnSaiyan-arm64.apk": {
+      "path": "/home/khanh/returnsaiyan-re/ReturnSaiyan-arm64.apk",
+      "sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970"
+    }
+  },
+  "protocol_architecture": {
+    "dispatcher": "aos::CProtocolManager::registrarTratadores",
+    "dispatcher_address": "0x007ede44",
+    "registered_s2c_opcodes": [
+      "0x00",
+      "0x01",
+      "0x04",
+      "0x05",
+      "0x07",
+      "0x08",
+      "0x0a",
+      "0x12",
+      "0x10",
+      "0x20",
+      "0x21",
+      "0x25",
+      "0x26",
+      "0x27",
+      "0x28",
+      "0x2a",
+      "0x2b",
+      "0x2d",
+      "0x2e",
+      "0x30",
+      "0x32",
+      "0x33",
+      "0x43",
+      "0x2c",
+      "0x2f",
+      "0x31"
+    ],
+    "role_sync_protocol": {
+      "opcodes": [
+        "0x08",
+        "0x0a"
+      ],
+      "data_structure": "aos::SGameRoleSimpleInfo",
+      "element_size_bytes": 104,
+      "accessor_symbol": "aos::CProtocolManager::getRoleSimpleInfoByIndex(int)",
+      "accessor_address": "0x007ef354",
+      "storage": "std::vector<aos::SGameRoleSimpleInfo> at offset [this + 560]"
+    },
+    "bag_item_protocol": {
+      "opcode": "0x10",
+      "manager": "aos::CBagManager",
+      "handler_address": "0x007f7078",
+      "item_setter": "aos::CBagManager::setItem"
+    }
+  },
+  "client_renderable_boundary": {
+    "table_loader": "aos::CHeroTable::init",
+    "table_address": "0x0072ef4c",
+    "table_schema_size": 48,
+    "spine_loader": "aos::PacoteSpine::carregar",
+    "spine_loader_address": "0x00807068",
+    "actor_replacer": "aos::CActorImage::replaceSpine(int)",
+    "actor_replacer_address": "0x00702464",
+    "client_capabilities": [
+      "Full Spine skeleton animation rendering via PacoteSpine (.xc)",
+      "Texture mapping via PKM (ETG header) in data/ and png/",
+      "Card portrait display via cardSpineId",
+      "Local offline battle preview and hero showcase",
+      "UI roster display and character stats preview"
+    ]
+  },
+  "server_controlled_boundary": {
+    "authoritative_features": [
+      "Hero unlocking, recruitment, and gacha result generation (Opcode 0x20/0x21)",
+      "Role list synchronization on session login (Opcode 0x08/0x0a)",
+      "Player bag inventory item granting and consumption (Opcode 0x10)",
+      "Server-side damage calculation and combat state validation",
+      "Guild, friend, and multiplayer matchmaking synchronization"
+    ],
+    "offline_safety_guarantee": [
+      "No network sockets opened to live servers",
+      "No real account credentials or tokens accessed or forged",
+      "Zero modification of original APK and libaos_jogo.so binaries",
+      "Clean decoupling: staged assets enhance offline client capabilities without violating live server security"
+    ]
+  },
+  "compatibility_and_unsupported_features_matrix": [
+    {
+      "feature": "hero.xc stats schema (phyAct/maxHp)",
+      "status": "RESOLVED",
+      "mitigation": "Transcoded DB Global string-encoded fields to big-endian u16 matching ReturnSaiyan binary layout."
+    },
+    {
+      "feature": "Hero ID namespace collisions (10061, 10063, 10064)",
+      "status": "RESOLVED",
+      "mitigation": "Preserved ReturnSaiyan custom heroes and remapped DB Global candidates to 10081, 10083, 10084."
+    },
+    {
+      "feature": "Texture directory resolver divergence (data/ vs png/)",
+      "status": "RESOLVED",
+      "mitigation": "Dual-placed all 40 PKM textures in both data/ and png/ directories."
+    },
+    {
+      "feature": "Spine encryption format (0x80 byte & ETG PKM header)",
+      "status": "VERIFIED_COMPATIBLE",
+      "mitigation": "Native engine decryptor in libaos_jogo.so handles both ReturnSaiyan and DB Global assets identically."
+    },
+    {
+      "feature": "Authoritative online hero unlocking",
+      "status": "SERVER_CONTROLLED",
+      "mitigation": "Documented as server-authoritative boundary; client rendering enabled for local preview and offline environments."
+    }
+  ]
+}

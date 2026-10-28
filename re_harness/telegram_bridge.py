@@ -1246,7 +1246,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
 
     app.post_init = post_init
     app.post_stop = post_stop
-    app.run_polling(drop_pending_updates=False, allowed_updates=["message", "callback_query"])
+    app.run_polling(drop_pending_updates=False, allowed_updates=["message", "callback_query"], bootstrap_retries=10)
     return 0
 
 

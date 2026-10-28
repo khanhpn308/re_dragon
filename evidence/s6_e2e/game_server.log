@@ -1,0 +1,6 @@
+time=2026-10-28T01:40:31.520+07:00 level=INFO msg="connecting to PostgreSQL database..." dsn="postgres://returnsaiyan:returnsaiyan_pass@127.0.0.1:5432/returnsaiyan_dev?sslmode=disable"
+time=2026-10-28T01:40:31.562+07:00 level=INFO msg="database schema up-to-date" version=2
+time=2026-10-28T01:40:31.587+07:00 level=INFO msg="TCP Game Server started" addr=127.0.0.1:30001
+time=2026-10-28T01:41:07.875+07:00 level=INFO msg="shutdown signal received"
+time=2026-10-28T01:41:07.875+07:00 level=INFO msg="shutting down TCP Game Server..."
+time=2026-10-28T01:41:07.876+07:00 level=INFO msg="TCP Game Server stopped gracefully"

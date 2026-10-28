@@ -1,0 +1,58 @@
+{
+  "test_run": "RS-UH-V2-ANDROID-PLAYABILITY-E2E",
+  "device": {
+    "id": "10b3139c",
+    "model": "RMX3461",
+    "resolution": "2412x1080"
+  },
+  "start_time": "2026-10-28T02:16:16Z",
+  "end_time": "2026-10-28T02:16:44Z",
+  "artifacts": {
+    "01_app_launch.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/01_app_launch.png",
+      "size": 3386999,
+      "sha256": "9c1475e28e9aa4cdfeb8d1088a588dfcdcf64b41c9cf51901a7ff7a1c2f94e46",
+      "timestamp": "2026-10-28T02:16:26Z",
+      "description": "App launched and title screen reached on physical RMX3461"
+    },
+    "02_server_selection.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/02_server_selection.png",
+      "size": 326597,
+      "sha256": "fbfa885fa7d91b8e9fb39fef447e3de39251a3ef8e2d5affc331886650d75cfb",
+      "timestamp": "2026-10-28T02:16:31Z",
+      "description": "Guest login authenticated; server card displayed with role info"
+    },
+    "03_world_entry.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/03_world_entry.png",
+      "size": 2306801,
+      "sha256": "e18bd23218c69f2a727c05d43b782f510f2af0cdff9e33defe1b0b74f12be9db",
+      "timestamp": "2026-10-28T02:16:38Z",
+      "description": "Game handshake completed; character loaded into game world"
+    },
+    "04_gameplay_movement.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/04_gameplay_movement.png",
+      "size": 2264230,
+      "sha256": "cd452444dd8e1befde12e04622508b5a6518442f17024e6f53f1716fcc55e964",
+      "timestamp": "2026-10-28T02:16:43Z",
+      "description": "Physical movement and action inputs executed on RMX3461"
+    }
+  },
+  "logs": {
+    "server_log": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/orchestrator_server.log",
+      "sha256": "643cb6837dacf8dbca2217b9a453304a2d616700b835834bae88e4a2f57eebd5"
+    },
+    "logcat_log": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/orchestrator_logcat.log",
+      "sha256": "17a88e613a57d100e29c347c529c7293af2479a25ef16db453f1d37f4c895762"
+    },
+    "updater_log": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/orchestrator_updater.log",
+      "sha256": "7265716e5284522e0b7225791481408e997b2c63f6ad1e1450ebbb1595519c20"
+    },
+    "db_persistence": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/s6_e2e/db_persistence.json",
+      "sha256": "5f15dfd674cea716e539c212a540deb08bcf1d77ab374985e343f75e72a43cbe"
+    }
+  }
+}

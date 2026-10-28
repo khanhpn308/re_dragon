@@ -1,0 +1,585 @@
+{
+  "binary_ground_truth": {
+    "loader_function": "aos::CHeroTable::init()",
+    "loader_address": "0x0072ef4c",
+    "schema_init_function": "aos::TabelasXC::TabelasXC()",
+    "schema_init_address": "0x007983b8",
+    "table_name": "hero",
+    "file_target": "assets/data/dataBin/hero.xc",
+    "column_count": 48,
+    "columns": [
+      [
+        "id",
+        "u32"
+      ],
+      [
+        "type",
+        "u8"
+      ],
+      [
+        "func",
+        "str"
+      ],
+      [
+        "name",
+        "str"
+      ],
+      [
+        "description",
+        "str"
+      ],
+      [
+        "animationId",
+        "u16"
+      ],
+      [
+        "photoId",
+        "u16"
+      ],
+      [
+        "atkType",
+        "u8"
+      ],
+      [
+        "moveSpeed",
+        "u16"
+      ],
+      [
+        "attackSpeed",
+        "u16"
+      ],
+      [
+        "phyAct",
+        "u16"
+      ],
+      [
+        "phyIgnore",
+        "u16"
+      ],
+      [
+        "phyDef",
+        "u16"
+      ],
+      [
+        "magicIgnore",
+        "u16"
+      ],
+      [
+        "magicDef",
+        "u16"
+      ],
+      [
+        "cri",
+        "u16"
+      ],
+      [
+        "maxHp",
+        "u16"
+      ],
+      [
+        "maxMp",
+        "u16"
+      ],
+      [
+        "mpRecover",
+        "u16"
+      ],
+      [
+        "dodge",
+        "u16"
+      ],
+      [
+        "skills",
+        "str"
+      ],
+      [
+        "skillsSeq",
+        "str"
+      ],
+      [
+        "ai",
+        "str"
+      ],
+      [
+        "scale",
+        "u8"
+      ],
+      [
+        "defaultStar",
+        "u8"
+      ],
+      [
+        "cardSpineId",
+        "str"
+      ],
+      [
+        "isOpen",
+        "u32"
+      ],
+      [
+        "namePhotoId",
+        "u32"
+      ],
+      [
+        "spineX",
+        "u32"
+      ],
+      [
+        "spineY",
+        "u32"
+      ],
+      [
+        "spineScale",
+        "u32"
+      ],
+      [
+        "dieMusic",
+        "str"
+      ],
+      [
+        "isGift",
+        "u32"
+      ],
+      [
+        "jobIcon",
+        "u32"
+      ],
+      [
+        "nameImgId",
+        "u32"
+      ],
+      [
+        "tenacity",
+        "u32"
+      ],
+      [
+        "hit",
+        "u32"
+      ],
+      [
+        "suckHp",
+        "u32"
+      ],
+      [
+        "rebound",
+        "u32"
+      ],
+      [
+        "srcHero",
+        "u32"
+      ],
+      [
+        "headIcon",
+        "u32"
+      ],
+      [
+        "energyIcon",
+        "str"
+      ],
+      [
+        "parterStr",
+        "str"
+      ],
+      [
+        "rebirthBuff",
+        "str"
+      ],
+      [
+        "rebirthBuffEffect",
+        "str"
+      ],
+      [
+        "isValue",
+        "u8"
+      ],
+      [
+        "intelligence",
+        "u32"
+      ],
+      [
+        "f_0xd8",
+        "u32"
+      ]
+    ],
+    "type_encoding": {
+      "u32": "4-byte big-endian unsigned int (type tag 1)",
+      "u16": "2-byte big-endian unsigned short (type tag 3)",
+      "u8": "1-byte unsigned char (type tag 5)",
+      "str": "4-byte big-endian length prefix + UTF-8 string payload (type tag 7)"
+    },
+    "schema_divergence": {
+      "ReturnSaiyan": "phyAct is u16 (2B), maxHp is u16 (2B)",
+      "DBGlobal_1_1_13": "phyAct is str (len+data), maxHp is str (len+data)"
+    }
+  },
+  "returnsaiyan_stats": {
+    "total_heroes": 128,
+    "total_bytes": 50601
+  },
+  "dbglobal_stats": {
+    "total_heroes": 131,
+    "total_bytes": 54140
+  },
+  "reconciliation": {
+    "unique_in_returnsaiyan": [
+      {
+        "id": 90001,
+        "name": "Iron Man",
+        "animationId": 1003,
+        "cardSpineId": "1036c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 90002,
+        "name": "Storm",
+        "animationId": 1003,
+        "cardSpineId": "1036c",
+        "dieMusic": "Die_young_woman"
+      },
+      {
+        "id": 90003,
+        "name": "Wolverine",
+        "animationId": 1003,
+        "cardSpineId": "1036c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 90008,
+        "name": "Crystal",
+        "animationId": 3001,
+        "cardSpineId": "1020c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 90009,
+        "name": "Crystal",
+        "animationId": 3001,
+        "cardSpineId": "1020c",
+        "dieMusic": "Die_young_men"
+      }
+    ],
+    "custom_hero_preservation_targets": [
+      {
+        "id": 10060,
+        "name": "Ultra Ego Vegeta",
+        "animationId": 1060,
+        "cardSpineId": "1060c",
+        "note": "ReturnSaiyan exclusive Ultra Ego Vegeta"
+      },
+      {
+        "id": 10063,
+        "name": "Legendary Broly (Fury)",
+        "animationId": 1063,
+        "cardSpineId": "1063c",
+        "note": "ReturnSaiyan exclusive Legendary Broly (Fury)"
+      },
+      {
+        "id": 10064,
+        "name": "Black Frieza",
+        "animationId": 1064,
+        "cardSpineId": "1064c",
+        "note": "ReturnSaiyan exclusive Black Frieza"
+      }
+    ],
+    "missing_dbglobal_heroes": [
+      {
+        "id": 10062,
+        "name": "Vados",
+        "animationId": 1065,
+        "cardSpineId": "1065c",
+        "dieMusic": "Die_young_woman"
+      },
+      {
+        "id": 10065,
+        "name": "Jiren",
+        "animationId": 1069,
+        "cardSpineId": "1069c",
+        "dieMusic": "Die_young_woman"
+      },
+      {
+        "id": 10066,
+        "name": "Shin",
+        "animationId": 1071,
+        "cardSpineId": "1071c",
+        "dieMusic": "Die_young_woman"
+      },
+      {
+        "id": 10067,
+        "name": "DC Majin Vegeta ",
+        "animationId": 1072,
+        "cardSpineId": "1072c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 10068,
+        "name": "DC Super Saiyan 3 ",
+        "animationId": 1073,
+        "cardSpineId": "1073c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 10069,
+        "name": "Super Saiyan Blue Vegito",
+        "animationId": 1074,
+        "cardSpineId": "1074c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 10070,
+        "name": "Arale",
+        "animationId": 1075,
+        "cardSpineId": "1075c",
+        "dieMusic": "Die_young_men"
+      },
+      {
+        "id": 90037,
+        "name": "Toppo",
+        "animationId": 1068,
+        "cardSpineId": "1067c",
+        "dieMusic": "Die_young_woman"
+      }
+    ],
+    "id_collision_analysis": [
+      {
+        "id": 10059,
+        "rs_hero": {
+          "name": "Red God Goku",
+          "animationId": 1059
+        },
+        "dbg_hero": {
+          "name": "Hit",
+          "animationId": 1059
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 10060,
+        "rs_hero": {
+          "name": "Ultra Ego Vegeta",
+          "animationId": 1060
+        },
+        "dbg_hero": {
+          "name": "Android 21",
+          "animationId": 1061
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 10061,
+        "rs_hero": {
+          "name": "Vegito Blue",
+          "animationId": 1061
+        },
+        "dbg_hero": {
+          "name": "Super Saiyan 4 Gogeta",
+          "animationId": 1062
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 10063,
+        "rs_hero": {
+          "name": "Legendary Broly (Fury)",
+          "animationId": 1063
+        },
+        "dbg_hero": {
+          "name": "Towa",
+          "animationId": 1066
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 10064,
+        "rs_hero": {
+          "name": "Black Frieza",
+          "animationId": 1064
+        },
+        "dbg_hero": {
+          "name": "Toppo",
+          "animationId": 1067
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90010,
+        "rs_hero": {
+          "name": "Crystal",
+          "animationId": 3001
+        },
+        "dbg_hero": {
+          "name": "Hit Doppelganger",
+          "animationId": 1060
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90022,
+        "rs_hero": {
+          "name": "Saiyan Goku",
+          "animationId": 1006
+        },
+        "dbg_hero": {
+          "name": "赛亚悟空",
+          "animationId": 1006
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90023,
+        "rs_hero": {
+          "name": "Buu Clone",
+          "animationId": 1031
+        },
+        "dbg_hero": {
+          "name": "布欧分身",
+          "animationId": 1031
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90024,
+        "rs_hero": {
+          "name": "4-Star Weak Man",
+          "animationId": 1030
+        },
+        "dbg_hero": {
+          "name": "四星战五渣",
+          "animationId": 1030
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90025,
+        "rs_hero": {
+          "name": "5-Star Weak Man",
+          "animationId": 1030
+        },
+        "dbg_hero": {
+          "name": "五星战五渣",
+          "animationId": 1030
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90026,
+        "rs_hero": {
+          "name": "6-Star Weak Man",
+          "animationId": 1030
+        },
+        "dbg_hero": {
+          "name": "六星战五渣",
+          "animationId": 1030
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90027,
+        "rs_hero": {
+          "name": "7-Star Weak Man",
+          "animationId": 1030
+        },
+        "dbg_hero": {
+          "name": "七星战五渣",
+          "animationId": 1030
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90029,
+        "rs_hero": {
+          "name": "Maid",
+          "animationId": 1038
+        },
+        "dbg_hero": {
+          "name": "女仆",
+          "animationId": 1038
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90030,
+        "rs_hero": {
+          "name": "Buu Clone",
+          "animationId": 1042
+        },
+        "dbg_hero": {
+          "name": "布欧分身",
+          "animationId": 1042
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90031,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90032,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90033,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90034,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90035,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      },
+      {
+        "id": 90036,
+        "rs_hero": {
+          "name": "Gotenks Ghost",
+          "animationId": 2033
+        },
+        "dbg_hero": {
+          "name": "悟天克斯影子",
+          "animationId": 2033
+        },
+        "resolution": "Preserve RS custom hero ID in-place; remap DB Global hero to safe available ID range (e.g. 10080+)"
+      }
+    ]
+  }
+}

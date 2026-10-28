@@ -1,0 +1,51 @@
+{
+  "test_run": "RS-UH-V2-P4-ACTION-VERIFICATION",
+  "device": {
+    "id": "10b3139c",
+    "model": "RMX3461",
+    "resolution": "2412x1080"
+  },
+  "artifacts": {
+    "04a_pre_movement.png": {
+      "path": "evidence/s6_e2e/04a_pre_movement.png",
+      "size": 1000742,
+      "sha256": "94095e00237c9963fb23a66d445250dab2c04ed93ef1d357ad1a0747d8094745",
+      "description": "Baseline position in game world before directed physical movement"
+    },
+    "04b_post_movement.png": {
+      "path": "evidence/s6_e2e/04b_post_movement.png",
+      "size": 1495191,
+      "sha256": "f0f60be8554c728b7ea49e2b1feb773538eaa39a57a4a982663591dee465dd8b",
+      "description": "Position in game world after directional physical movement"
+    },
+    "04c_combat_skill.png": {
+      "path": "evidence/s6_e2e/04c_combat_skill.png",
+      "size": 1676381,
+      "sha256": "e3cb4f7028b41eb245180ad8468e2912de1f239a2f09f1d595fd074cdb7514d6",
+      "description": "Combat skill invocation and combat action effect"
+    },
+    "04d_hero_roster.png": {
+      "path": "evidence/s6_e2e/04d_hero_roster.png",
+      "size": 1689425,
+      "sha256": "f93343be6e84be69b37a51bba29fd3d58970d05491b84d7e7dabd3e50279250e",
+      "description": "Hero roster and character management UI"
+    }
+  },
+  "logs": {
+    "server_log": {
+      "path": "evidence/s6_e2e/p4_server.log",
+      "size": 8227,
+      "sha256": "c94203989421675f5e44e5f31b2629251c14bab19a7f5446a06a8db28245fb79"
+    },
+    "logcat_log": {
+      "path": "evidence/s6_e2e/p4_logcat.log",
+      "size": 550838,
+      "sha256": "315e591c1ea17027d7854dfe6e8bc85d33265fefc4a73556458029b35cd4e32f"
+    },
+    "updater_log": {
+      "path": "evidence/s6_e2e/p4_updater.log",
+      "size": 396,
+      "sha256": "bc5b7dcd74509e86b4635723c2d120aa61b952726140d43b876f4316ab0b1911"
+    }
+  }
+}

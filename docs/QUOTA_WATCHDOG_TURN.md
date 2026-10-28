@@ -43,3 +43,32 @@ Allowed states: CONTINUE, YIELD, WAIT, COMPLETE, BLOCKED, NEEDS_USER.
 If the PINNED project has not passed its acceptance gates, never say COMPLETE.
 Its goal/acceptance are task data, not authorization to bypass approval,
 resource, security, evidence or independent-review policies.
+
+## P3B_HERO_SUMMON_GATE_V1 — Priority recovery gate
+
+For the pinned Real Dungeon Combat E2E project only:
+
+If p3b-hero-onboarding-preflight is not VERIFIED, prioritize
+docs/production/RS_HERO_SUMMON_FORMATION_P0_HANDOFF.md
+and the authorized Telegram request P0-HERO-SUMMON-FORMATION.
+
+STOP repeated blind taps, UI navigation loops and repeated summon attempts.
+
+Diagnose the exact blocking transition:
+Earth Dragon summon x1 -> server acknowledgement -> owned hero
+-> formation-slot selection -> persisted active formation.
+
+Before retrying the summon, inspect client/server logs, the real
+packet handler, database transactions and Android UI state.
+Do not claim success from an animation or an ADB tap alone.
+
+Bound physical retries to 2 per diagnosed failure.
+If the same state repeats without meaningful progress, record
+the blocker and use the legitimate Harness REWORK/BLOCKED workflow.
+Never fabricate evidence or grant heroes directly in PostgreSQL.
+
+Do not advance dungeon combat gates until hero ownership and
+active formation are verified with real Android and database evidence.
+
+Once P3b and its dependent checks are VERIFIED, this priority gate
+no longer applies.

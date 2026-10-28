@@ -18,9 +18,24 @@ import zipfile
 from . import autonomy, core, runtime_state
 
 TARGET = "s6-android-go-e2e"
+TARGETS = ("s6-android-go-e2e", "p3-e2e-gameplay-orchestrator")
 MODEL = "RMX3461"
 APK = "dist/ReturnSaiyan-UnifiedHeroes-signed.apk"
+APKS = (
+    "dist/ReturnSaiyan-UnifiedHeroes-v2-signed.apk",
+    "dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+)
 ADB_BLOCKER = "no local adb binary or android test device/emulator available"
+
+
+def _is_adb_blocker(note: str) -> bool:
+    low = str(note or "").lower().strip()
+    return (
+        low.startswith(ADB_BLOCKER)
+        or "not detected on adb" in low
+        or "no local adb binary" in low
+        or ("android test device" in low and "connect the device" in low)
+    )
 
 
 class NotReady(ValueError):
@@ -59,8 +74,15 @@ def _adb_probe(expected_model=MODEL, run=_run):
     return {"serial": serial, "model": expected_model}
 
 
-def _apk_probe(root: Path, relative=APK):
+def _apk_probe(root: Path, relative=None):
     root = root.resolve()
+    if relative is None:
+        for cand in APKS:
+            if (root / cand).resolve().is_file():
+                relative = cand
+                break
+        if relative is None:
+            relative = APK
     p = (root / relative).resolve()
     if not p.is_relative_to(root) or not p.is_file() or p.suffix.lower() != ".apk":
         raise NotReady("Local candidate APK missing/outside repository")

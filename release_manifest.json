@@ -1,0 +1,221 @@
+{
+  "project": {
+    "id": "fb6880376c06404f",
+    "name": "ReturnSaiyan — Unified Heroes Edition (RS-UH-PROD-V1)",
+    "status": "COMPLETED_AUDITED",
+    "version": "1.0.0-unified",
+    "timestamp": "2026-10-27T14:10:00+07:00"
+  },
+  "source_immutability": {
+    "ReturnSaiyan-arm64.apk": {
+      "path": "/home/khanh/returnsaiyan-re/ReturnSaiyan-arm64.apk",
+      "sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+      "size_bytes": 137590901,
+      "status": "UNTOUCHED_VERIFIED"
+    },
+    "libaos_jogo.so": {
+      "path": "/home/khanh/returnsaiyan-re/libaos_jogo.so",
+      "sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f",
+      "size_bytes": 198980424,
+      "status": "UNTOUCHED_VERIFIED"
+    }
+  },
+  "packaged_artifact": {
+    "path": "/home/khanh/returnsaiyan-re/dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+    "sha256": "246802996c4c51b11fd0f63f1f79638f50101014b5bade0d7d232cf06da6ae1a",
+    "size_bytes": 144145764,
+    "zipalign": "4-byte page-aligned",
+    "apksigner": "v1, v2, v3 verified"
+  },
+  "unified_roster": {
+    "total_heroes": 138,
+    "original_returnsaiyan_preserved": 128,
+    "new_candidate_heroes_integrated": 10,
+    "hero_xc": {
+      "path": "staging/assets/data/dataBin/hero.xc",
+      "size_bytes": 55084,
+      "sha256": "13e73693c3d0a8d15c69008435811c9d2e7b38c1c70ff5e0f6eb0bc8a16a0bec",
+      "schema_columns": 48,
+      "roundtrip_delta_bytes": 0
+    },
+    "integrated_candidates": [
+      {
+        "assigned_id": 10081,
+        "original_dbg_id": 10061,
+        "name": "Super Saiyan 4 Gogeta",
+        "animation_id": 1062,
+        "card_spine_id": "1062c",
+        "die_music": "Die_young_men",
+        "phyAct": 85,
+        "maxHp": 4320
+      },
+      {
+        "assigned_id": 10062,
+        "original_dbg_id": 10062,
+        "name": "Vados",
+        "animation_id": 1065,
+        "card_spine_id": "1065c",
+        "die_music": "Die_young_woman",
+        "phyAct": 180,
+        "maxHp": 2000
+      },
+      {
+        "assigned_id": 10083,
+        "original_dbg_id": 10063,
+        "name": "Towa",
+        "animation_id": 1066,
+        "card_spine_id": "1066c",
+        "die_music": "Die_young_woman",
+        "phyAct": 136,
+        "maxHp": 3500
+      },
+      {
+        "assigned_id": 10084,
+        "original_dbg_id": 10064,
+        "name": "Toppo",
+        "animation_id": 1067,
+        "card_spine_id": "1067c",
+        "die_music": "Die_young_men",
+        "phyAct": 170,
+        "maxHp": 4000
+      },
+      {
+        "assigned_id": 10065,
+        "original_dbg_id": 10065,
+        "name": "Jiren",
+        "animation_id": 1069,
+        "card_spine_id": "1069c",
+        "die_music": "Die_young_woman",
+        "phyAct": 210,
+        "maxHp": 4000
+      },
+      {
+        "assigned_id": 10066,
+        "original_dbg_id": 10066,
+        "name": "Shin",
+        "animation_id": 1071,
+        "card_spine_id": "1071c",
+        "die_music": "Die_young_woman",
+        "phyAct": 180,
+        "maxHp": 4300
+      },
+      {
+        "assigned_id": 10067,
+        "original_dbg_id": 10067,
+        "name": "DC Majin Vegeta ",
+        "animation_id": 1072,
+        "card_spine_id": "1072c",
+        "die_music": "Die_young_men",
+        "phyAct": 230,
+        "maxHp": 4200
+      },
+      {
+        "assigned_id": 10068,
+        "original_dbg_id": 10068,
+        "name": "DC Super Saiyan 3 ",
+        "animation_id": 1073,
+        "card_spine_id": "1073c",
+        "die_music": "Die_young_men",
+        "phyAct": 185,
+        "maxHp": 4000
+      },
+      {
+        "assigned_id": 10069,
+        "original_dbg_id": 10069,
+        "name": "Super Saiyan Blue Vegito",
+        "animation_id": 1074,
+        "card_spine_id": "1074c",
+        "die_music": "Die_young_men",
+        "phyAct": 190,
+        "maxHp": 4010
+      },
+      {
+        "assigned_id": 10070,
+        "original_dbg_id": 10070,
+        "name": "Arale",
+        "animation_id": 1075,
+        "card_spine_id": "1075c",
+        "die_music": "Die_young_men",
+        "phyAct": 110,
+        "maxHp": 6354
+      }
+    ],
+    "preserved_returnsaiyan_custom_heroes": [
+      {
+        "id": 10060,
+        "name": "Ultra Ego Vegeta",
+        "animation_id": 1060,
+        "card_spine_id": "1060c",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 10061,
+        "name": "Vegito Blue",
+        "animation_id": 1061,
+        "card_spine_id": "1061c",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 10063,
+        "name": "Legendary Broly (Fury)",
+        "animation_id": 1063,
+        "card_spine_id": "1063c",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 10064,
+        "name": "Black Frieza",
+        "animation_id": 1064,
+        "card_spine_id": "1064c",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 90001,
+        "name": "Iron Man",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 90002,
+        "name": "Storm",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 90003,
+        "name": "Wolverine",
+        "status": "PRESERVED"
+      },
+      {
+        "id": 90008,
+        "name": "Crystal",
+        "status": "PRESERVED"
+      }
+    ]
+  },
+  "spine_assets": {
+    "staged_data_files": 160,
+    "staged_data_bytes": 25593369,
+    "staged_png_textures": 40,
+    "actors_covered": [
+      1062, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073,
+      1074, 1075, 1076, 1077, 1078, 1118, 1125, 1153, 2043, 2046, 3033
+    ],
+    "dual_placement_parity": true
+  },
+  "verification_test_suite": {
+    "integrity_tests": "tests/test_staged_asset_integrity.py (6 passed)",
+    "packaging_tests": "tests/test_packaged_apk_regression.py (3 passed)",
+    "full_regression_tests": "tests/ (174 passed, 1 skipped)",
+    "status": "PASS"
+  },
+  "runtime_evaluation": {
+    "adb_available": false,
+    "client_resident_assets": "VERIFIED_READY",
+    "server_mechanics_boundary": "OFFLINE_ISOLATION_ENFORCED"
+  },
+  "packaging_and_rollback": {
+    "staging_tree": "staging/assets",
+    "dist_tree": "dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+    "reversible": true,
+    "rollback_instructions": "To revert completely: delete dist/ and staging/ directories; original ReturnSaiyan-arm64.apk is untouched."
+  }
+}

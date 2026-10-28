@@ -1,0 +1,88 @@
+{
+  "task_key": "P3b-hero-onboarding-preflight",
+  "run_id": "20261028_054108",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T05:41:08Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/01_main_lobby_pre.png",
+      "size": 2299763,
+      "sha256": "d63b358c24bae8866a5c0ee1696fbed22ab234e8d1bc91b65546650679b41079",
+      "timestamp": "2026-10-28T05:41:30Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before Tri\u1ec7u h\u1ed3i navigation"
+    },
+    "02_trieu_hoi_screen.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/02_trieu_hoi_screen.png",
+      "size": 2323290,
+      "sha256": "86521bedc0ad02badeb7126aee9a9af93ee4293b449a76f17468bb650c03adea",
+      "timestamp": "2026-10-28T05:41:35Z",
+      "description": "Screen captured after tapping Tri\u1ec7u h\u1ed3i entry button"
+    },
+    "02_trieu_hoi_bottom.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/02_trieu_hoi_bottom.png",
+      "sha256": "632563dd81c342a9f2e82bf530b1524e528c126a1c3636b3ee7abe81272b73ee",
+      "description": "Cropped bottom wish / summon action buttons"
+    },
+    "03_summon_result.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/03_summon_result.png",
+      "size": 2323244,
+      "sha256": "b98a9ea7b8464209891fabccb2d7b16328474b485d66d3a4779ace56e6e4c2c3",
+      "timestamp": "2026-10-28T05:41:40Z",
+      "description": "Screen captured after wishing on Dragon God of Earth, revealing summon result"
+    },
+    "04_summon_dismissed.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/04_summon_dismissed.png",
+      "size": 2323292,
+      "sha256": "0b3b0539758e1cedb1c021a382fb18407ffe4a8103aa3e7e9600ae5694705499",
+      "timestamp": "2026-10-28T05:41:46Z",
+      "description": "Screen captured after dismissing summon result dialog"
+    },
+    "05_lobby_post_summon.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/05_lobby_post_summon.png",
+      "size": 2303015,
+      "sha256": "21f579349f2899209c811f044ca6c1875e4fdea401f887fdd87179f32f0e7cf0",
+      "timestamp": "2026-10-28T05:41:50Z",
+      "description": "Main Lobby screen after returning from summon"
+    },
+    "06_formation_with_hero.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/06_formation_with_hero.png",
+      "size": 1141409,
+      "sha256": "b1feeb4639e104f00e7cec1d47dbbd360a2c12916b740e3e876f276400123553",
+      "timestamp": "2026-10-28T05:41:54Z",
+      "description": "Formation & Roster UI showing owned heroes after summon"
+    },
+    "07_formation_assigned.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054108/07_formation_assigned.png",
+      "size": 1141409,
+      "sha256": "b1feeb4639e104f00e7cec1d47dbbd360a2c12916b740e3e876f276400123553",
+      "timestamp": "2026-10-28T05:41:59Z",
+      "description": "Final formation UI displaying assigned hero in active battle formation"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY"
+  },
+  "steps": [],
+  "action_summon": {
+    "target": "trieu_hoi",
+    "screen_coords": [
+      666,
+      1000
+    ],
+    "timestamp": "2026-10-28T05:41:31Z"
+  },
+  "action_wish": {
+    "target": "uoc_1_lan",
+    "screen_coords": [
+      520,
+      950
+    ],
+    "currency": "Dragon Balls (free non-premium)",
+    "timestamp": "2026-10-28T05:41:36Z"
+  },
+  "database_verification": "count \n-------\n     0\n(1 row)\n\n account_id | hero_id | unlocked_at | source \n------------+---------+-------------+--------\n(0 rows)\n\n id  |       name       | hero_code | level \n-----+------------------+-----------+-------\n 439 | crash_u_92566    | 10001     |     1\n 438 | contend_u_31258  | 10001     |     1\n 437 | mix_usr_49643_19 | 10001     |     1\n 436 | mix_usr_96769_18 | 10001     |     1\n 435 | mix_usr_21793_17 | 10001     |     1\n(5 rows)",
+  "status": "PASS",
+  "end_time": "2026-10-28T05:41:59Z"
+}

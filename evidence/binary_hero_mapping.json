@@ -1,0 +1,65 @@
+{
+  "binary_metadata": {
+    "target": "libaos_jogo.so",
+    "arch": "AArch64 (ELF 64-bit LSB shared object)",
+    "sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f"
+  },
+  "verified_routines": [
+    {
+      "symbol": "aos::CHeroTable::init()",
+      "mangled": "_ZN3aos10CHeroTable4initEv",
+      "address": "0x0072ef4c",
+      "size_bytes": 5200,
+      "role": "Loads hero.xc table, instantiates aos::_Hero_St (456 bytes) structs, links animationId to actor model."
+    },
+    {
+      "symbol": "aos::TabelasXC::TabelasXC()",
+      "mangled": "_ZN3aos9TabelasXCC1Ev",
+      "address": "0x0079212c",
+      "hero_schema_init_addr": "0x007983b8",
+      "size_bytes": 63932,
+      "role": "Registers 48-column schema for hero.xc (rodata string 0x118ea25) with LeitorXC type tags."
+    },
+    {
+      "symbol": "aos::TabelaXC::carregar(std::vector<unsigned char> const&)",
+      "mangled": "_ZN3aos8TabelaXC8carregarERKNSt6__ndk16vectorIhNS1_9allocatorIhEEEE",
+      "address": "0x00791380",
+      "size_bytes": 2376,
+      "role": "Binary XC stream parser using jump table at 0x7914ac dispatching to LeitorXC methods."
+    },
+    {
+      "symbol": "aos::CActorImage::replaceSpine(int)",
+      "mangled": "_ZN3aos11CActorImage12replaceSpineEi",
+      "address": "0x00702464",
+      "size_bytes": 260,
+      "role": "Dynamic spine animation and actor skeleton switcher using numeric actor IDs."
+    }
+  ],
+  "mapping_rules": {
+    "skeleton_binary": "assets/data/GameData/spine/actor/data/{animationId}.xc",
+    "skeleton_json_alternate": "assets/data/GameData/spine/actor/data/{animationId}.json",
+    "texture_atlas": "assets/data/GameData/spine/actor/data/{animationId}.atlas",
+    "texture_pkm": "assets/data/GameData/spine/actor/png/{animationId}.pkm",
+    "texture_pkm_data_fallback": "assets/data/GameData/spine/actor/data/{animationId}.pkm",
+    "card_spine_skeleton": "assets/data/GameData/spine/actor/data/{cardSpineId}.xc",
+    "card_spine_atlas": "assets/data/GameData/spine/actor/data/{cardSpineId}.atlas"
+  },
+  "rodata_string_provenance": {
+    "hero_table_key": {
+      "addr": "0x0118b3d0",
+      "val": "hero"
+    },
+    "hero_xc_filename": {
+      "addr": "0x0118ea25",
+      "val": "hero.xc"
+    },
+    "animation_id_column": {
+      "addr": "0x0118b3d5",
+      "val": "animationId"
+    },
+    "spine_path_template": {
+      "addr": "0x01155988",
+      "val": "data/GameData/spine/actor/data/"
+    }
+  }
+}

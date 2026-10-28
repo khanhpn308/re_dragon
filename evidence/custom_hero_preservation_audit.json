@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-10-27T13:56:00+07:00",
+  "project_id": "fb6880376c06404f",
+  "task_key": "g4-custom-hero-preservation-audit",
+  "original_rs_hero_count": 128,
+  "staged_hero_count": 138,
+  "mismatches_count": 0,
+  "preservation_status": "100% VERIFIED",
+  "custom_exclusive_heroes": [
+    {
+      "id": 10060,
+      "name": "Ultra Ego Vegeta",
+      "animationId": 1060,
+      "cardSpineId": "1060c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 10061,
+      "name": "Vegito Blue",
+      "animationId": 1061,
+      "cardSpineId": "1061c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 10063,
+      "name": "Legendary Broly (Fury)",
+      "animationId": 1063,
+      "cardSpineId": "1063c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 10064,
+      "name": "Black Frieza",
+      "animationId": 1064,
+      "cardSpineId": "1064c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 90001,
+      "name": "Iron Man",
+      "animationId": 1003,
+      "cardSpineId": "1036c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 90002,
+      "name": "Storm",
+      "animationId": 1003,
+      "cardSpineId": "1036c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 90003,
+      "name": "Wolverine",
+      "animationId": 1003,
+      "cardSpineId": "1036c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 90008,
+      "name": "Crystal",
+      "animationId": 3001,
+      "cardSpineId": "1020c",
+      "status": "PRESERVED_EXACT"
+    },
+    {
+      "id": 90009,
+      "name": "Crystal",
+      "animationId": 3001,
+      "cardSpineId": "1020c",
+      "status": "PRESERVED_EXACT"
+    }
+  ]
+}

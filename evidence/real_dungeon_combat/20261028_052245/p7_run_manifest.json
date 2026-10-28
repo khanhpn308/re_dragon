@@ -1,0 +1,63 @@
+{
+  "task_key": "P7-hero-roster-independent-verification",
+  "run_id": "20261028_052245",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T05:22:46Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052245/01_main_lobby_pre.png",
+      "size": 2304939,
+      "sha256": "7b33c8db51b36ee946048b3107b1bc0e28348562e62fc3fafabcf926ebc30912",
+      "timestamp": "2026-10-28T05:23:09Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before \u0110\u1ed3ng \u0111\u1ed9i / Hero Roster navigation"
+    },
+    "01_lobby_dong_doi_button.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052245/01_lobby_dong_doi_button.png",
+      "sha256": "4861bb21c7a6f3fe1aeae6469eb43255bdc5dcc6164197f46da6f0607da90831",
+      "description": "Cropped bottom navigation bar showing \u0110\u1ed3ng \u0111\u1ed9i (Hero Roster) entry button"
+    },
+    "02_hero_roster_post.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052245/02_hero_roster_post.png",
+      "size": 593058,
+      "sha256": "406f7035261a90a2d9fe8f348f4a94b6abc999cfc78207c74fdff6b8b923dbfa",
+      "timestamp": "2026-10-28T05:23:13Z",
+      "state": "CHIEN_DAU_MENU",
+      "confidence": 0.75,
+      "reason": "Chi\u1ebfn \u0111\u1ea5u battle mode selection menu detected",
+      "description": "Screen captured after tapping \u0110\u1ed3ng \u0111\u1ed9i entry button"
+    },
+    "02_hero_roster_header.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052245/02_hero_roster_header.png",
+      "sha256": "abc3ef502b33268a6c47eec5dcc4b479a00779dc17c25a5fde4ea8c0be31297e",
+      "description": "Cropped header of Hero Roster UI"
+    },
+    "02_hero_roster_center.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052245/02_hero_roster_center.png",
+      "sha256": "20261bd62f060125e1c50ae48292d20790c908295cee8aa93a33dca5616411ed",
+      "description": "Cropped center of Hero Roster UI displaying character slots and attributes"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY",
+    "post_navigation": "CHIEN_DAU_MENU"
+  },
+  "action": {
+    "target": "dong_doi",
+    "normalized_coords": [
+      0.458,
+      0.926
+    ],
+    "screen_coords": [
+      1125,
+      1000
+    ],
+    "timestamp": "2026-10-28T05:23:09Z"
+  },
+  "is_adventure_mode_substitution": false,
+  "distinct_from_adventure": true,
+  "database_verification": "count \n-------\n     0\n(1 row)\n\n id  |       name       | hero_code | level \n-----+------------------+-----------+-------\n 439 | crash_u_92566    | 10001     |     1\n 438 | contend_u_31258  | 10001     |     1\n 437 | mix_usr_49643_19 | 10001     |     1\n 436 | mix_usr_96769_18 | 10001     |     1\n 435 | mix_usr_21793_17 | 10001     |     1\n(5 rows)",
+  "end_time": "2026-10-28T05:23:13Z",
+  "status": "PASS"
+}

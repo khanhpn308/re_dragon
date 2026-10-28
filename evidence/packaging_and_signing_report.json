@@ -1,0 +1,33 @@
+{
+  "task_key": "g5-unified-apk-packaging-signing-rollback",
+  "timestamp": "2026-10-27T14:00:00+07:00",
+  "source_baseline": {
+    "path": "/home/khanh/returnsaiyan-re/ReturnSaiyan-arm64.apk",
+    "sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+    "status": "UNTOUCHED_VERIFIED"
+  },
+  "packaged_apk": {
+    "path": "/home/khanh/returnsaiyan-re/dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+    "sha256": "246802996c4c51b11fd0f63f1f79638f50101014b5bade0d7d232cf06da6ae1a",
+    "size_bytes": 144145764,
+    "preserved_entries": 5891,
+    "replaced_entries": 1,
+    "added_entries": 200,
+    "zipalign_alignment": "4-byte aligned",
+    "apksigner_verification": {
+      "verified": true,
+      "v1_scheme": true,
+      "v2_scheme": true,
+      "v3_scheme": true
+    }
+  },
+  "rollback_procedure": {
+    "action": "Complete Reversal to Stock ReturnSaiyan",
+    "steps": [
+      "1. Remove dist/ReturnSaiyan-UnifiedHeroes-signed.apk",
+      "2. Staging tree in staging/assets/ remains non-destructive and isolated",
+      "3. Use untouched ReturnSaiyan-arm64.apk (SHA256: 69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970) as canonical reference",
+      "4. No original game binaries or native .so libraries were modified in-place."
+    ]
+  }
+}

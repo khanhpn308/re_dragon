@@ -1,0 +1,43 @@
+{
+  "task_key": "P3b-hero-onboarding-preflight",
+  "run_id": "20261028_052851",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T05:28:51Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052851/01_main_lobby_pre.png",
+      "size": 2296883,
+      "sha256": "af105bc56d9f3a9798f3cc51fd822b607ae30cd89603447c245af76511b5350c",
+      "timestamp": "2026-10-28T05:29:31Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before Tri\u1ec7u h\u1ed3i navigation"
+    },
+    "02_trieu_hoi_screen.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052851/02_trieu_hoi_screen.png",
+      "size": 2323241,
+      "sha256": "cde063de641090adcf10b6e1c4c57e72c48e5bf1c9b963206918b0d0a5b1e801",
+      "timestamp": "2026-10-28T05:29:36Z",
+      "description": "Screen captured after tapping Tri\u1ec7u h\u1ed3i entry button"
+    },
+    "02_trieu_hoi_bottom.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_052851/02_trieu_hoi_bottom.png",
+      "sha256": "2a9db77fc696197218c37e4e978a3f17bf5d8788cacd636b3a3318804d1f0109",
+      "description": "Cropped bottom wish / summon action buttons"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY"
+  },
+  "steps": [],
+  "action_summon": {
+    "target": "trieu_hoi",
+    "screen_coords": [
+      666,
+      1000
+    ],
+    "timestamp": "2026-10-28T05:29:32Z"
+  },
+  "status": "INITIAL_SCREEN_CAPTURED",
+  "end_time": "2026-10-28T05:29:36Z"
+}

@@ -1,0 +1,2 @@
+[console_scripts]
+re-dragon = re_harness.cli:main

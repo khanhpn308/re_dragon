@@ -1,0 +1,59 @@
+time=2026-10-28T12:45:32.571+07:00 level=INFO msg="connecting to PostgreSQL database..." dsn="postgres://returnsaiyan:returnsaiyan_pass@127.0.0.1:5432/returnsaiyan_dev?sslmode=disable"
+time=2026-10-28T12:45:32.603+07:00 level=INFO msg="database schema up-to-date" version=2
+time=2026-10-28T12:45:32.629+07:00 level=INFO msg="TCP Game Server started" addr=127.0.0.1:30001
+time=2026-10-28T12:45:39.205+07:00 level=INFO msg="client connection accepted" conn_id=conn-1 remote_addr=127.0.0.1:58042
+time=2026-10-28T12:45:39.205+07:00 level=INFO msg="handshake greeting sent" conn_id=conn-1 remote_addr=127.0.0.1:58042 seed=0xDF770B31 key=0x94
+time=2026-10-28T12:45:39.225+07:00 level=INFO msg="raw bytes received" conn_id=conn-1 remote_addr=127.0.0.1:58042 conn_id=conn-1 bytes=58 hex=00ac38ac38a350b140a747e242e245e047eb4de94bdf41b818f80eee1fe002f3049001ac09ac00a034b045be59e015f30aa808b316ac08b217b4
+time=2026-10-28T12:45:39.225+07:00 level=INFO msg="packet received" conn_id=conn-1 remote_addr=127.0.0.1:58042 conn_id=conn-1 opcode=0x00 len=54
+time=2026-10-28T12:45:39.225+07:00 level=INFO msg="login request received" module=session_handler conn_id=conn-1 username=guest1443138206 union_id=91184 version=aos-arm64/1.0.17
+time=2026-10-28T12:45:39.239+07:00 level=INFO msg="login successful, session established" module=session_handler username=guest1443138206 conn_id=conn-1 role_count=1
+time=2026-10-28T12:45:45.265+07:00 level=INFO msg="client connection accepted" conn_id=conn-2 remote_addr=127.0.0.1:55379
+time=2026-10-28T12:45:45.265+07:00 level=INFO msg="handshake greeting sent" conn_id=conn-2 remote_addr=127.0.0.1:55379 seed=0x28A6296A key=0x35
+time=2026-10-28T12:45:45.292+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=70 hex=0071446356237723212373202575717c70717023707072262671222120747625252723217676262a7d7f2e28282b2978757072262474747726767225297d782c2a7a7e7f2825
+time=2026-10-28T12:45:45.292+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x12 len=66
+time=2026-10-28T12:45:45.292+07:00 level=INFO msg="game server handshake token received" module=session_handler conn_id=conn-2 token=aa77ef0e18944ff57a5bf64a7f5717b5e9b7d3567d807a7e56de1b9a0a3e14b8
+time=2026-10-28T12:45:45.292+07:00 level=INFO msg="game server handshake successful" module=session_handler conn_id=conn-2 username=guest1443138206 roles=1
+time=2026-10-28T12:45:45.325+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=30 hex=00271303360d48114509591e11481c47151a5905003d0a2f1a2d292a1f2a
+time=2026-10-28T12:45:45.325+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=16
+time=2026-10-28T12:45:45.325+07:00 level=INFO msg="client language setting received" module=session_handler lang=player:lang:vi
+time=2026-10-28T12:45:45.325+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x10 len=6
+time=2026-10-28T12:45:45.325+07:00 level=INFO msg="player entered world" module=session_handler username=guest1443138206 role_id=16 role_name=guest1443138206 hero_code=10001
+time=2026-10-28T12:45:45.433+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=54 hex=002b1d0d3817431554084b17561a15520254095d065404753266242b73277b2000211000351042025e0f5f5016460142125514481040
+time=2026-10-28T12:45:45.433+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=28
+time=2026-10-28T12:45:45.434+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=18
+time=2026-10-28T12:45:45.434+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=98 hex=0015253500297d2b6a36752968242b591e4a1b4b3f6928277d3868333c3034303d3c00152636032a7e286935762a6b27284914540c5b2f7938376d2878232c2024202d2c00291b0b3e134711500c4f13521e11400753015b00663c7c252a7035653e
+time=2026-10-28T12:45:45.434+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=30
+time=2026-10-28T12:45:45.435+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 199.00458ms"
+time=2026-10-28T12:45:45.435+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=30
+time=2026-10-28T12:45:45.435+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 198.865877ms"
+time=2026-10-28T12:45:45.435+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=26
+time=2026-10-28T12:45:45.435+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 198.847277ms"
+time=2026-10-28T12:45:45.435+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=36 hex=00271a0a3f04411b5e510852005c0762387d3d78003b0717221d451f481c404f1550005b
+time=2026-10-28T12:45:45.435+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=16
+time=2026-10-28T12:45:45.435+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=12
+time=2026-10-28T12:45:45.514+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=24 hex=00231c0c391e5d01444b1154045f3c602552065434686760
+time=2026-10-28T12:45:45.514+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=20
+time=2026-10-28T12:45:54.763+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=21 hex=002618083d0756114507712562333c662373282723
+time=2026-10-28T12:45:54.763+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=17
+time=2026-10-28T12:45:55.269+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=4 hex=00370e2a
+time=2026-10-28T12:45:55.270+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x11 len=0
+time=2026-10-28T12:46:05.298+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=4 hex=00370f2b
+time=2026-10-28T12:46:05.299+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x11 len=0
+time=2026-10-28T12:46:13.957+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=152 hex=002b1000351a4e185905461a5b17185f0f5904500b5909783f6b29267e2a762d00211b0b3e1b49095504545b1d4d0a49195e1f431b4b00153020153c683e7f23603c7d313e4c0b5f0e5e2a7c3d32682d7d2629252125282900153121143d693f7e22613d7c303f5e03431b4c386e2f207a3f6f343b3733373a3b00290e1e2b06520445195a06470b04551246144e15732969303f6520702b
+time=2026-10-28T12:46:13.958+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=28
+time=2026-10-28T12:46:13.958+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=18
+time=2026-10-28T12:46:13.958+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=30
+time=2026-10-28T12:46:13.958+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 199.9359ms"
+time=2026-10-28T12:46:13.958+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=30
+time=2026-10-28T12:46:13.958+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 199.8157ms"
+time=2026-10-28T12:46:13.958+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=26
+time=2026-10-28T12:46:13.958+07:00 level=WARN msg="skill execution rejected" module=session_handler conn_id=conn-2 role_id=16 skill_id=1953068649 reason="skill is still on cooldown: Ability_1953068649 available in 199.791901ms"
+time=2026-10-28T12:46:13.990+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=24 hex=00230515200744185d52084d1d4625793c4b1f4d2d717e79
+time=2026-10-28T12:46:13.991+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x25 len=20
+time=2026-10-28T12:46:15.305+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=4 hex=00371632
+time=2026-10-28T12:46:15.305+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x11 len=0
+time=2026-10-28T12:46:25.333+07:00 level=INFO msg="raw bytes received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 bytes=4 hex=00371733
+time=2026-10-28T12:46:25.333+07:00 level=INFO msg="packet received" conn_id=conn-2 remote_addr=127.0.0.1:55379 conn_id=conn-2 opcode=0x11 len=0
+time=2026-10-28T12:46:27.437+07:00 level=INFO msg="shutdown signal received"
+time=2026-10-28T12:46:27.437+07:00 level=INFO msg="shutting down TCP Game Server..."
+time=2026-10-28T12:46:27.437+07:00 level=INFO msg="TCP Game Server stopped gracefully"

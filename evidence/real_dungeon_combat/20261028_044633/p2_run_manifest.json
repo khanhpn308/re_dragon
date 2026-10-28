@@ -1,0 +1,63 @@
+{
+  "task_key": "P2-pho-ban-navigation-trace",
+  "run_id": "20261028_044633",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T04:46:33Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_044633/01_main_lobby_pre.png",
+      "size": 2305953,
+      "sha256": "59981c431650de85a9256104ec7497cfbbfc3b567ecb1c8f67b2d1a4486a5d1c",
+      "timestamp": "2026-10-28T04:46:56Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before Ph\u00f3 b\u1ea3n navigation"
+    },
+    "01_lobby_bottom_right_buttons.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_044633/01_lobby_bottom_right_buttons.png",
+      "sha256": "6050aea9cf752cb8076d715fdff40529471f8f76fb4336d0cb67be5ad0b12e7b",
+      "description": "Cropped bottom-right action area showing Ph\u00f3 b\u1ea3n and Chi\u1ebfn \u0111\u1ea5u entries"
+    },
+    "02_pho_ban_post.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_044633/02_pho_ban_post.png",
+      "size": 2059401,
+      "sha256": "9ec0584d3e138159772482e7a5dbe3da2ed1e18a9f712308936c4f3ba5d0c5e9",
+      "timestamp": "2026-10-28T04:47:00Z",
+      "state": "PHO_BAN_MENU",
+      "confidence": 0.92,
+      "reason": "Ph\u00f3 b\u1ea3n main interface (fuben_zhujiemian) detected with instance cards and navigation header",
+      "description": "Screen captured after tapping Ph\u00f3 b\u1ea3n entry button"
+    },
+    "02_pho_ban_header.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_044633/02_pho_ban_header.png",
+      "sha256": "5e5a5753e27f7c209bd1a0990183ea04a92f3419c5c66aa45e6ea8364e1cfc6a",
+      "description": "Cropped header of Ph\u00f3 b\u1ea3n screen"
+    },
+    "02_pho_ban_center_stages.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_044633/02_pho_ban_center_stages.png",
+      "sha256": "f3c20b8e35384d735a1b1c3fae045f015bcac45cdf4ce588e85a569196a143e3",
+      "description": "Cropped central instance/stage selection list"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY",
+    "post_navigation": "PHO_BAN_MENU"
+  },
+  "action": {
+    "target": "pho_ban",
+    "normalized_coords": [
+      0.824,
+      0.904
+    ],
+    "screen_coords": [
+      1828,
+      976
+    ],
+    "timestamp": "2026-10-28T04:46:56Z"
+  },
+  "is_adventure_mode_substitution": false,
+  "distinct_from_adventure": true,
+  "end_time": "2026-10-28T04:47:01Z",
+  "status": "PASS",
+  "cocos_scene": "fuben_zhujiemian"
+}

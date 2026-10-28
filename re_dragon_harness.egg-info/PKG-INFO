@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: re-dragon-harness
+Version: 0.7.1
+Summary: Agent-driven reverse engineering goal controller and MCP harness
+Requires-Python: >=3.10
+Provides-Extra: telegram
+Requires-Dist: python-telegram-bot<24,>=22; extra == "telegram"

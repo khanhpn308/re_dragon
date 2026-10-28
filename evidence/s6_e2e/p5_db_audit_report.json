@@ -1,0 +1,144 @@
+{
+  "audit_run": "RS-UH-V2-P5-POSTGRESQL-PERSISTENCE-AUDIT",
+  "timestamp_start": "2026-10-28T02:28:19.059788+00:00",
+  "timestamp_end": "2026-10-28T02:28:22.930502+00:00",
+  "target_account": {
+    "account_id": 14,
+    "username": "guest1443138206",
+    "role_id": 24,
+    "role_name": "guest1443138206",
+    "hero_code": "10001",
+    "origin_source": "CANONICAL_BASELINE"
+  },
+  "summary": {
+    "checks_total": 10,
+    "checks_passed": 10,
+    "checks_failed": 0,
+    "overall_status": "PASS"
+  },
+  "checks": [
+    {
+      "check": "accounts_record_schema_and_integrity",
+      "status": "PASS",
+      "details": {
+        "account_id": 14,
+        "username": "guest1443138206",
+        "status": "ACTIVE",
+        "salt_len": 32,
+        "salt_valid_hex": true,
+        "hash_len": 64,
+        "hash_valid_sha256": true,
+        "created_at": "2026-10-28T02:16:27.226331+00:00",
+        "updated_at": "2026-10-28T02:16:27.226331+00:00"
+      }
+    },
+    {
+      "check": "roles_starter_character_integrity",
+      "status": "PASS",
+      "details": {
+        "role_id": 24,
+        "account_id": 14,
+        "name": "guest1443138206",
+        "hero_code": "10001",
+        "level": 1,
+        "exp": 0,
+        "gender": 1,
+        "status": 0,
+        "vip": 0,
+        "origin_source": "CANONICAL_BASELINE",
+        "external_hero_id": null
+      }
+    },
+    {
+      "check": "roster_unlocks_table_consistency",
+      "status": "PASS",
+      "details": {
+        "account_id": 14,
+        "explicit_unlock_count": 0,
+        "starter_hero_code": "10001",
+        "starter_origin": "CANONICAL_BASELINE (inherently accessible)",
+        "donor_gating_contract": "roster_unlocks holds server-gated Global donor entitlements"
+      }
+    },
+    {
+      "check": "roster_unlocks_acid_grant_and_revoke",
+      "status": "PASS",
+      "details": {
+        "account_id": 14,
+        "test_hero_id": 10081,
+        "grant_verified": true,
+        "revoke_verified": true
+      }
+    },
+    {
+      "check": "player_progression_upsert_and_read",
+      "status": "PASS",
+      "details": {
+        "role_id": 24,
+        "stage_id": 1,
+        "stage_progress": 0,
+        "stars": 0,
+        "updated_at": "2026-10-28T02:28:20.719553+00:00"
+      }
+    },
+    {
+      "check": "player_inventories_consistency",
+      "status": "PASS",
+      "details": {
+        "role_id": 24,
+        "inventory_slot_count": 0,
+        "starter_inventory_state": "Default equipment loaded in-memory; zero uncommitted or corrupted slots"
+      }
+    },
+    {
+      "check": "sessions_table_lifecycle",
+      "status": "PASS",
+      "details": {
+        "account_id": 14,
+        "persisted_sessions": 0,
+        "session_architecture": "In-memory SessionManager for high-throughput 5,000 CCU; clean shutdown/disconnect lifecycle"
+      }
+    },
+    {
+      "check": "foreign_key_referential_integrity",
+      "status": "PASS",
+      "details": {
+        "orphaned_roles": 0,
+        "orphaned_roster_unlocks": 0,
+        "orphaned_player_progression": 0,
+        "orphaned_player_inventories": 0,
+        "orphaned_sessions": 0,
+        "total_orphaned_records": 0
+      }
+    },
+    {
+      "check": "zero_uncommitted_transactions_and_locks",
+      "status": "PASS",
+      "details": {
+        "idle_in_transaction_count": 0,
+        "active_hanging_queries": 0,
+        "unassigned_or_blocking_locks": 0
+      }
+    },
+    {
+      "check": "schema_migration_version",
+      "status": "PASS",
+      "details": {
+        "current_version": 2,
+        "expected_minimum_version": 2,
+        "migrations": [
+          {
+            "version": 1,
+            "name": "init_schema",
+            "applied_at": "2026-10-28T02:14:56.087429+00:00"
+          },
+          {
+            "version": 2,
+            "name": "unified_heroes_source_mapping",
+            "applied_at": "2026-10-28T02:14:56.212549+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

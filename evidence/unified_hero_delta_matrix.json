@@ -1,0 +1,1378 @@
+{
+  "summary": {
+    "missing_actor_count": 21,
+    "candidate_hero_count": 10,
+    "total_staged_asset_files": 160,
+    "total_staged_asset_bytes": 25593369
+  },
+  "collision_safe_hero_remapping": [
+    {
+      "dbg_hero_id": 10061,
+      "name": "Super Saiyan 4 Gogeta",
+      "actor_id": 1062,
+      "card_spine_id": "1062c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10081,
+      "collision_status": "COLLIDES_WITH_RS_10061_VEGITO_BLUE",
+      "resolution": "Remap to 10081; preserve RS 10061 Vegito Blue"
+    },
+    {
+      "dbg_hero_id": 10062,
+      "name": "Vados",
+      "actor_id": 1065,
+      "card_spine_id": "1065c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10062,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10062"
+    },
+    {
+      "dbg_hero_id": 10063,
+      "name": "Towa",
+      "actor_id": 1066,
+      "card_spine_id": "1066c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10083,
+      "collision_status": "COLLIDES_WITH_RS_10063_BROLY",
+      "resolution": "Remap to 10083; preserve RS 10063 Legendary Broly (Fury)"
+    },
+    {
+      "dbg_hero_id": 10064,
+      "name": "Toppo",
+      "actor_id": 1067,
+      "card_spine_id": "1067c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10084,
+      "collision_status": "COLLIDES_WITH_RS_10064_BLACK_FRIEZA",
+      "resolution": "Remap to 10084; preserve RS 10064 Black Frieza"
+    },
+    {
+      "dbg_hero_id": 10065,
+      "name": "Jiren",
+      "actor_id": 1069,
+      "card_spine_id": "1069c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10065,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10065"
+    },
+    {
+      "dbg_hero_id": 10066,
+      "name": "Shin",
+      "actor_id": 1071,
+      "card_spine_id": "1071c",
+      "die_music": "Die_young_woman",
+      "assigned_rs_hero_id": 10066,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10066"
+    },
+    {
+      "dbg_hero_id": 10067,
+      "name": "DC Majin Vegeta",
+      "actor_id": 1072,
+      "card_spine_id": "1072c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10067,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10067"
+    },
+    {
+      "dbg_hero_id": 10068,
+      "name": "DC Super Saiyan 3",
+      "actor_id": 1073,
+      "card_spine_id": "1073c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10068,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10068"
+    },
+    {
+      "dbg_hero_id": 10069,
+      "name": "Super Saiyan Blue Vegito",
+      "actor_id": 1074,
+      "card_spine_id": "1074c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10069,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10069"
+    },
+    {
+      "dbg_hero_id": 10070,
+      "name": "Arale",
+      "actor_id": 1075,
+      "card_spine_id": "1075c",
+      "die_music": "Die_young_men",
+      "assigned_rs_hero_id": 10070,
+      "collision_status": "FREE_SLOT_IN_RS",
+      "resolution": "Assign directly to 10070"
+    }
+  ],
+  "actor_asset_manifest": {
+    "1062": {
+      "file_count": 8,
+      "total_bytes": 1547577,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062.atlas",
+          "filename": "1062.atlas",
+          "size_bytes": 3370,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062.json",
+          "filename": "1062.json",
+          "size_bytes": 235199,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062.pkm",
+          "filename": "1062.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1062.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062.xc",
+          "filename": "1062.xc",
+          "size_bytes": 153563,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062c.atlas",
+          "filename": "1062c.atlas",
+          "size_bytes": 1750,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062c.json",
+          "filename": "1062c.json",
+          "size_bytes": 23532,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062c.pkm",
+          "filename": "1062c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1062c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1062c.xc",
+          "filename": "1062c.xc",
+          "size_bytes": 15923,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1062c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1065": {
+      "file_count": 8,
+      "total_bytes": 1639100,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065.atlas",
+          "filename": "1065.atlas",
+          "size_bytes": 2739,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065.json",
+          "filename": "1065.json",
+          "size_bytes": 279935,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065.pkm",
+          "filename": "1065.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1065.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065.xc",
+          "filename": "1065.xc",
+          "size_bytes": 200628,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065c.atlas",
+          "filename": "1065c.atlas",
+          "size_bytes": 1844,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065c.json",
+          "filename": "1065c.json",
+          "size_bytes": 24150,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065c.pkm",
+          "filename": "1065c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1065c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1065c.xc",
+          "filename": "1065c.xc",
+          "size_bytes": 15564,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1065c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1066": {
+      "file_count": 8,
+      "total_bytes": 1538547,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066.atlas",
+          "filename": "1066.atlas",
+          "size_bytes": 3070,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066.json",
+          "filename": "1066.json",
+          "size_bytes": 226450,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066.pkm",
+          "filename": "1066.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1066.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066.xc",
+          "filename": "1066.xc",
+          "size_bytes": 151094,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066c.atlas",
+          "filename": "1066c.atlas",
+          "size_bytes": 1852,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066c.json",
+          "filename": "1066c.json",
+          "size_bytes": 24531,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066c.pkm",
+          "filename": "1066c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1066c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1066c.xc",
+          "filename": "1066c.xc",
+          "size_bytes": 17310,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1066c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1067": {
+      "file_count": 8,
+      "total_bytes": 1496363,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067.atlas",
+          "filename": "1067.atlas",
+          "size_bytes": 2391,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067.json",
+          "filename": "1067.json",
+          "size_bytes": 217007,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067.pkm",
+          "filename": "1067.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1067.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067.xc",
+          "filename": "1067.xc",
+          "size_bytes": 145848,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067c.atlas",
+          "filename": "1067c.atlas",
+          "size_bytes": 1075,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067c.json",
+          "filename": "1067c.json",
+          "size_bytes": 10043,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067c.pkm",
+          "filename": "1067c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1067c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1067c.xc",
+          "filename": "1067c.xc",
+          "size_bytes": 5759,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1067c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1068": {
+      "file_count": 4,
+      "total_bytes": 431060,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1068.atlas",
+          "filename": "1068.atlas",
+          "size_bytes": 2392,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1068.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1068.json",
+          "filename": "1068.json",
+          "size_bytes": 217252,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1068.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1068.pkm",
+          "filename": "1068.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1068.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1068.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1068.xc",
+          "filename": "1068.xc",
+          "size_bytes": 145816,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1068.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1069": {
+      "file_count": 8,
+      "total_bytes": 1501820,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069.atlas",
+          "filename": "1069.atlas",
+          "size_bytes": 2082,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069.json",
+          "filename": "1069.json",
+          "size_bytes": 218566,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069.pkm",
+          "filename": "1069.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1069.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069.xc",
+          "filename": "1069.xc",
+          "size_bytes": 152039,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069c.atlas",
+          "filename": "1069c.atlas",
+          "size_bytes": 872,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069c.json",
+          "filename": "1069c.json",
+          "size_bytes": 9030,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069c.pkm",
+          "filename": "1069c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1069c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1069c.xc",
+          "filename": "1069c.xc",
+          "size_bytes": 4991,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1069c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1070": {
+      "file_count": 4,
+      "total_bytes": 438287,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1070.atlas",
+          "filename": "1070.atlas",
+          "size_bytes": 2082,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1070.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1070.json",
+          "filename": "1070.json",
+          "size_bytes": 218566,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1070.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1070.pkm",
+          "filename": "1070.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1070.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1070.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1070.xc",
+          "filename": "1070.xc",
+          "size_bytes": 152039,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1070.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1071": {
+      "file_count": 8,
+      "total_bytes": 1485149,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071.atlas",
+          "filename": "1071.atlas",
+          "size_bytes": 2182,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071.json",
+          "filename": "1071.json",
+          "size_bytes": 212467,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071.pkm",
+          "filename": "1071.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1071.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071.xc",
+          "filename": "1071.xc",
+          "size_bytes": 141439,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071c.atlas",
+          "filename": "1071c.atlas",
+          "size_bytes": 862,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071c.json",
+          "filename": "1071c.json",
+          "size_bytes": 8763,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071c.pkm",
+          "filename": "1071c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1071c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1071c.xc",
+          "filename": "1071c.xc",
+          "size_bytes": 5196,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1071c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1072": {
+      "file_count": 8,
+      "total_bytes": 1693162,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072.atlas",
+          "filename": "1072.atlas",
+          "size_bytes": 2569,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072.json",
+          "filename": "1072.json",
+          "size_bytes": 309182,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072.pkm",
+          "filename": "1072.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1072.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072.xc",
+          "filename": "1072.xc",
+          "size_bytes": 208962,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072c.atlas",
+          "filename": "1072c.atlas",
+          "size_bytes": 2176,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072c.json",
+          "filename": "1072c.json",
+          "size_bytes": 51555,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072c.pkm",
+          "filename": "1072c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1072c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1072c.xc",
+          "filename": "1072c.xc",
+          "size_bytes": 37246,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1072c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1073": {
+      "file_count": 8,
+      "total_bytes": 1829559,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073.atlas",
+          "filename": "1073.atlas",
+          "size_bytes": 4037,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073.json",
+          "filename": "1073.json",
+          "size_bytes": 399077,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073.pkm",
+          "filename": "1073.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1073.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073.xc",
+          "filename": "1073.xc",
+          "size_bytes": 265308,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073c.atlas",
+          "filename": "1073c.atlas",
+          "size_bytes": 1178,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073c.json",
+          "filename": "1073c.json",
+          "size_bytes": 25908,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073c.pkm",
+          "filename": "1073c.pkm",
+          "size_bytes": 1048640,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1073c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1073c.xc",
+          "filename": "1073c.xc",
+          "size_bytes": 19811,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1073c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1074": {
+      "file_count": 8,
+      "total_bytes": 1044115,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074.atlas",
+          "filename": "1074.atlas",
+          "size_bytes": 3678,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074.json",
+          "filename": "1074.json",
+          "size_bytes": 161065,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074.pkm",
+          "filename": "1074.pkm",
+          "size_bytes": 131136,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1074.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074.xc",
+          "filename": "1074.xc",
+          "size_bytes": 153696,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074c.atlas",
+          "filename": "1074c.atlas",
+          "size_bytes": 2211,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074c.json",
+          "filename": "1074c.json",
+          "size_bytes": 32340,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074c.pkm",
+          "filename": "1074c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1074c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1074c.xc",
+          "filename": "1074c.xc",
+          "size_bytes": 35637,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1074c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1075": {
+      "file_count": 8,
+      "total_bytes": 681043,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075.atlas",
+          "filename": "1075.atlas",
+          "size_bytes": 2647,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075.json",
+          "filename": "1075.json",
+          "size_bytes": 159877,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075.pkm",
+          "filename": "1075.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1075.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075.xc",
+          "filename": "1075.xc",
+          "size_bytes": 163416,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075c.atlas",
+          "filename": "1075c.atlas",
+          "size_bytes": 1081,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075c.json",
+          "filename": "1075c.json",
+          "size_bytes": 12464,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075c.pkm",
+          "filename": "1075c.pkm",
+          "size_bytes": 262208,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1075c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1075c.xc",
+          "filename": "1075c.xc",
+          "size_bytes": 13750,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1075c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1076": {
+      "file_count": 8,
+      "total_bytes": 1111931,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076.atlas",
+          "filename": "1076.atlas",
+          "size_bytes": 2653,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076.json",
+          "filename": "1076.json",
+          "size_bytes": 257703,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076.pkm",
+          "filename": "1076.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1076.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076.xc",
+          "filename": "1076.xc",
+          "size_bytes": 235343,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076c.atlas",
+          "filename": "1076c.atlas",
+          "size_bytes": 1706,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076c.json",
+          "filename": "1076c.json",
+          "size_bytes": 27048,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076c.pkm",
+          "filename": "1076c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1076c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1076c.xc",
+          "filename": "1076c.xc",
+          "size_bytes": 30294,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1076c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1077": {
+      "file_count": 8,
+      "total_bytes": 981420,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077.atlas",
+          "filename": "1077.atlas",
+          "size_bytes": 2623,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077.json",
+          "filename": "1077.json",
+          "size_bytes": 182912,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077.pkm",
+          "filename": "1077.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1077.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077.xc",
+          "filename": "1077.xc",
+          "size_bytes": 183198,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077c.atlas",
+          "filename": "1077c.atlas",
+          "size_bytes": 1720,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077c.json",
+          "filename": "1077c.json",
+          "size_bytes": 25566,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077c.pkm",
+          "filename": "1077c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1077c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1077c.xc",
+          "filename": "1077c.xc",
+          "size_bytes": 28217,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1077c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1078": {
+      "file_count": 8,
+      "total_bytes": 993897,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078.atlas",
+          "filename": "1078.atlas",
+          "size_bytes": 3075,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078.json",
+          "filename": "1078.json",
+          "size_bytes": 265676,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078.pkm",
+          "filename": "1078.pkm",
+          "size_bytes": 131136,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1078.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078.xc",
+          "filename": "1078.xc",
+          "size_bytes": 275258,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078c.atlas",
+          "filename": "1078c.atlas",
+          "size_bytes": 983,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078c.json",
+          "filename": "1078c.json",
+          "size_bytes": 25652,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078c.pkm",
+          "filename": "1078c.pkm",
+          "size_bytes": 262208,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1078c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1078c.xc",
+          "filename": "1078c.xc",
+          "size_bytes": 29909,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1078c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1118": {
+      "file_count": 8,
+      "total_bytes": 1235726,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118.atlas",
+          "filename": "1118.atlas",
+          "size_bytes": 2476,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118.json",
+          "filename": "1118.json",
+          "size_bytes": 340525,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118.pkm",
+          "filename": "1118.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1118.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118.xc",
+          "filename": "1118.xc",
+          "size_bytes": 272117,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118c.atlas",
+          "filename": "1118c.atlas",
+          "size_bytes": 1464,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118c.json",
+          "filename": "1118c.json",
+          "size_bytes": 37191,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118c.pkm",
+          "filename": "1118c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1118c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1118c.xc",
+          "filename": "1118c.xc",
+          "size_bytes": 24769,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1118c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1125": {
+      "file_count": 8,
+      "total_bytes": 1126319,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125.atlas",
+          "filename": "1125.atlas",
+          "size_bytes": 2962,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125.json",
+          "filename": "1125.json",
+          "size_bytes": 307623,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125.pkm",
+          "filename": "1125.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1125.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125.xc",
+          "filename": "1125.xc",
+          "size_bytes": 211746,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125c.atlas",
+          "filename": "1125c.atlas",
+          "size_bytes": 1457,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125c.json",
+          "filename": "1125c.json",
+          "size_bytes": 26147,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125c.pkm",
+          "filename": "1125c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1125c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1125c.xc",
+          "filename": "1125c.xc",
+          "size_bytes": 19200,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1125c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "1153": {
+      "file_count": 8,
+      "total_bytes": 1277246,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153.atlas",
+          "filename": "1153.atlas",
+          "size_bytes": 2644,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153.json",
+          "filename": "1153.json",
+          "size_bytes": 383881,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153.pkm",
+          "filename": "1153.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1153.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153.xc",
+          "filename": "1153.xc",
+          "size_bytes": 250633,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153c.atlas",
+          "filename": "1153c.atlas",
+          "size_bytes": 1841,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153c.json",
+          "filename": "1153c.json",
+          "size_bytes": 29957,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153c.pkm",
+          "filename": "1153c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/1153c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/1153c.xc",
+          "filename": "1153c.xc",
+          "size_bytes": 18338,
+          "target_data_path": "assets/data/GameData/spine/actor/data/1153c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "2043": {
+      "file_count": 8,
+      "total_bytes": 1219719,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043.atlas",
+          "filename": "2043.atlas",
+          "size_bytes": 2277,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043.json",
+          "filename": "2043.json",
+          "size_bytes": 302110,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043.pkm",
+          "filename": "2043.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/2043.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043.xc",
+          "filename": "2043.xc",
+          "size_bytes": 236336,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043c.atlas",
+          "filename": "2043c.atlas",
+          "size_bytes": 1658,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043c.json",
+          "filename": "2043c.json",
+          "size_bytes": 47422,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043c.pkm",
+          "filename": "2043c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/2043c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2043c.xc",
+          "filename": "2043c.xc",
+          "size_bytes": 39964,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2043c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "2046": {
+      "file_count": 8,
+      "total_bytes": 1262130,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046.atlas",
+          "filename": "2046.atlas",
+          "size_bytes": 2576,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046.json",
+          "filename": "2046.json",
+          "size_bytes": 339271,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046.pkm",
+          "filename": "2046.pkm",
+          "size_bytes": 65600,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/2046.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046.xc",
+          "filename": "2046.xc",
+          "size_bytes": 289448,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046c.atlas",
+          "filename": "2046c.atlas",
+          "size_bytes": 1265,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046c.json",
+          "filename": "2046c.json",
+          "size_bytes": 25148,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046c.pkm",
+          "filename": "2046c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/2046c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/2046c.xc",
+          "filename": "2046c.xc",
+          "size_bytes": 14470,
+          "target_data_path": "assets/data/GameData/spine/actor/data/2046c.xc",
+          "target_png_path": null
+        }
+      ]
+    },
+    "3033": {
+      "file_count": 8,
+      "total_bytes": 1059199,
+      "files": [
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033.atlas",
+          "filename": "3033.atlas",
+          "size_bytes": 2366,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033.json",
+          "filename": "3033.json",
+          "size_bytes": 283633,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033.pkm",
+          "filename": "3033.pkm",
+          "size_bytes": 32832,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/3033.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033.xc",
+          "filename": "3033.xc",
+          "size_bytes": 182358,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033.xc",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033c.atlas",
+          "filename": "3033c.atlas",
+          "size_bytes": 1178,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033c.atlas",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033c.json",
+          "filename": "3033c.json",
+          "size_bytes": 19224,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033c.json",
+          "target_png_path": null
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033c.pkm",
+          "filename": "3033c.pkm",
+          "size_bytes": 524352,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033c.pkm",
+          "target_png_path": "assets/data/GameData/spine/actor/png/3033c.pkm"
+        },
+        {
+          "source_path": "assets/data/GameData/spine/actor/data/3033c.xc",
+          "filename": "3033c.xc",
+          "size_bytes": 13256,
+          "target_data_path": "assets/data/GameData/spine/actor/data/3033c.xc",
+          "target_png_path": null
+        }
+      ]
+    }
+  },
+  "preservation_guarantees": [
+    {
+      "hero_id": 10060,
+      "name": "Ultra Ego Vegeta",
+      "actor_id": 1060,
+      "status": "PRESERVED"
+    },
+    {
+      "hero_id": 10063,
+      "name": "Legendary Broly (Fury)",
+      "actor_id": 1063,
+      "status": "PRESERVED"
+    },
+    {
+      "hero_id": 10064,
+      "name": "Black Frieza",
+      "actor_id": 1064,
+      "status": "PRESERVED"
+    }
+  ]
+}

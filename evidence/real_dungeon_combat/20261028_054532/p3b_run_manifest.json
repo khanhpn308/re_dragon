@@ -1,0 +1,95 @@
+{
+  "task_key": "P3b-hero-onboarding-preflight",
+  "run_id": "20261028_054532",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T05:45:32Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/01_main_lobby_pre.png",
+      "size": 2301726,
+      "sha256": "39049e00207dc831f2495caed44f9353b1a1f099fc01652cbad491d28cc78bbb",
+      "timestamp": "2026-10-28T05:45:54Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before Tri\u1ec7u h\u1ed3i navigation"
+    },
+    "02_trieu_hoi_screen.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/02_trieu_hoi_screen.png",
+      "size": 2323284,
+      "sha256": "cdc4da97ee16ee5e568d9668fe2f83920ed9b273988079a3ab3f236ff594a058",
+      "timestamp": "2026-10-28T05:45:59Z",
+      "description": "Screen captured after tapping Tri\u1ec7u h\u1ed3i entry button"
+    },
+    "02_trieu_hoi_bottom.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/02_trieu_hoi_bottom.png",
+      "sha256": "345bfe2aca49db1dbbc920ef471fc57d384ec6b1180ad4593758a90b13532101",
+      "description": "Cropped bottom wish / summon action buttons"
+    },
+    "02b_trieu_hoi_hero_tab.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/02b_trieu_hoi_hero_tab.png",
+      "size": 2323245,
+      "sha256": "4598e685d2c33ca51b483bd8d575357cb93b9306ca801f59b6e512267c13563a",
+      "timestamp": "2026-10-28T05:46:02Z",
+      "description": "Screen captured after switching to 'Anh h\u00f9ng' (Heroes) summon tab"
+    },
+    "03_summon_result.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/03_summon_result.png",
+      "size": 2323255,
+      "sha256": "c4fde1ba48ba2c33f1c753390a98201b80a5b03df5990ef61b5e9ab7ae8e0a10",
+      "timestamp": "2026-10-28T05:46:08Z",
+      "description": "Screen captured after wishing on Dragon God of Earth, revealing summon result"
+    },
+    "04_summon_dismissed.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/04_summon_dismissed.png",
+      "size": 2323283,
+      "sha256": "5205baab460efb0fc8f8a06c04c86bc93997e8ad3ff0b33a33ef1028de7a22c4",
+      "timestamp": "2026-10-28T05:46:13Z",
+      "description": "Screen captured after dismissing summon result dialog"
+    },
+    "05_lobby_post_summon.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/05_lobby_post_summon.png",
+      "size": 2300750,
+      "sha256": "874332302533c749c0fdaf679c4359e8c692aef6eff37bd7542ca07580d1148d",
+      "timestamp": "2026-10-28T05:46:17Z",
+      "description": "Main Lobby screen after returning from summon"
+    },
+    "06_formation_with_hero.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/06_formation_with_hero.png",
+      "size": 1141409,
+      "sha256": "b1feeb4639e104f00e7cec1d47dbbd360a2c12916b740e3e876f276400123553",
+      "timestamp": "2026-10-28T05:46:21Z",
+      "description": "Formation & Roster UI showing owned heroes after summon"
+    },
+    "07_formation_assigned.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_054532/07_formation_assigned.png",
+      "size": 1141409,
+      "sha256": "b1feeb4639e104f00e7cec1d47dbbd360a2c12916b740e3e876f276400123553",
+      "timestamp": "2026-10-28T05:46:27Z",
+      "description": "Final formation UI displaying assigned hero in active battle formation"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY"
+  },
+  "steps": [],
+  "action_summon": {
+    "target": "trieu_hoi",
+    "screen_coords": [
+      666,
+      1000
+    ],
+    "timestamp": "2026-10-28T05:45:55Z"
+  },
+  "action_wish": {
+    "target": "uoc_1_lan",
+    "screen_coords": [
+      520,
+      950
+    ],
+    "currency": "Dragon Balls (free non-premium)",
+    "timestamp": "2026-10-28T05:46:03Z"
+  },
+  "database_verification": "count \n-------\n     0\n(1 row)\n\n account_id | hero_id | unlocked_at | source \n------------+---------+-------------+--------\n(0 rows)\n\n id  |       name       | hero_code | level \n-----+------------------+-----------+-------\n 439 | crash_u_92566    | 10001     |     1\n 438 | contend_u_31258  | 10001     |     1\n 437 | mix_usr_49643_19 | 10001     |     1\n 436 | mix_usr_96769_18 | 10001     |     1\n 435 | mix_usr_21793_17 | 10001     |     1\n(5 rows)",
+  "status": "PASS",
+  "end_time": "2026-10-28T05:46:27Z"
+}

@@ -1,0 +1,40 @@
+{
+  "task_key": "g6-g7-staging-integrity-regression-verification",
+  "timestamp": "2026-10-27T14:04:50+07:00",
+  "project_id": "fb6880376c06404f",
+  "test_suites": [
+    {
+      "suite": "tests/test_staged_asset_integrity.py",
+      "tests_run": 6,
+      "passed": 6,
+      "failed": 0,
+      "verifications": [
+        "Source APK and SO immutability verified against SHA-256",
+        "Unified hero.xc schema compliance with 48 columns and 0 byte delta",
+        "100% preservation of all 128 original ReturnSaiyan heroes and custom entries",
+        "10 candidate DB Global heroes integrated with collision-safe IDs",
+        "160 Spine asset files validated (.xc binary skeletons, .json bone definitions)",
+        "40 PKM textures validated with ETG/PKM headers and bit-for-bit dual-placement parity"
+      ]
+    },
+    {
+      "suite": "tests/test_packaged_apk_regression.py",
+      "tests_run": 3,
+      "passed": 3,
+      "failed": 0,
+      "verifications": [
+        "classes.dex, AndroidManifest.xml, and libaos_jogo.so bitwise identical to original APK",
+        "Packaged hero.xc exactly matches staged unified table (138 heroes, 55084 bytes)",
+        "All staged Spine actor assets present in packaged APK structure"
+      ]
+    }
+  ],
+  "full_suite_result": {
+    "total_tests": 175,
+    "passed": 174,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0,
+    "status": "PASS"
+  }
+}

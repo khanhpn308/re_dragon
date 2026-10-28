@@ -1,0 +1,39 @@
+{
+  "test_suite": "tests/test_staged_asset_integrity.py",
+  "total_tests": 6,
+  "passed_tests": 6,
+  "failed_tests": 0,
+  "immutability_checks": {
+    "ReturnSaiyan-arm64.apk": {
+      "path": "/home/khanh/returnsaiyan-re/ReturnSaiyan-arm64.apk",
+      "sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+      "expected_sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+      "verified": true
+    },
+    "libaos_jogo.so": {
+      "path": "/home/khanh/returnsaiyan-re/libaos_jogo.so",
+      "sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f",
+      "expected_sha256": "5e0aefcbf1b23aa2dc74e95b22aee90c17011a4814193b8b61d305747a668c0f",
+      "verified": true
+    }
+  },
+  "hero_xc_integrity": {
+    "path": "staging/assets/data/dataBin/hero.xc",
+    "sha256": "13e73693c3d0a8d15c69008435811c9d2e7b38c1c70ff5e0f6eb0bc8a16a0bec",
+    "total_records": 138,
+    "original_records_preserved": 128,
+    "new_records_integrated": 10,
+    "roundtrip_delta_bytes": 0,
+    "schema_columns": 48
+  },
+  "spine_assets_integrity": {
+    "staged_spine_assets": 160,
+    "staged_actors_count": 21,
+    "skeleton_xc_files": 40,
+    "texture_pkm_files": 40,
+    "atlas_files": 40,
+    "json_files": 40,
+    "dual_placement_verified": true,
+    "dual_placement_count": 40
+  }
+}

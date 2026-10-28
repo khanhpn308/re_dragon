@@ -1,0 +1,355 @@
+{
+  "metadata": {
+    "returnsaiyan_apk": "ReturnSaiyan-arm64.apk",
+    "returnsaiyan_sha256": "69f500543fae0b9c301a6c871db40198dbba483ee18299081ef8b48aefb2c970",
+    "dbglobal_apk": "com.dbzmy.englobal.apk",
+    "dbglobal_sha256": "5de300eb71d37a52debfafd45f47049d590d73024ceddd7d1b061067e85a8c71"
+  },
+  "returnsaiyan_summary": {
+    "total_files": 5897,
+    "categories": {
+      "spine_actors": 1265,
+      "spine_effects": 3467,
+      "databin": 39,
+      "maps": 21,
+      "audio": 195,
+      "ui": 716,
+      "lua": 23,
+      "other": 171
+    },
+    "unique_actor_count": 96
+  },
+  "dbglobal_summary": {
+    "total_files": 5766,
+    "categories": {
+      "spine_actors": 748,
+      "spine_effects": 2934,
+      "databin": 38,
+      "maps": 21,
+      "audio": 195,
+      "ui": 777,
+      "lua": 25,
+      "other": 1028
+    },
+    "unique_actor_count": 116
+  },
+  "comparison": {
+    "shared_actor_count": 95,
+    "missing_in_rs_count": 21,
+    "missing_in_rs_actors": [
+      1062,
+      1065,
+      1066,
+      1067,
+      1068,
+      1069,
+      1070,
+      1071,
+      1072,
+      1073,
+      1074,
+      1075,
+      1076,
+      1077,
+      1078,
+      1118,
+      1125,
+      1153,
+      2043,
+      2046,
+      3033
+    ],
+    "unique_in_rs_count": 1,
+    "unique_in_rs_actors": [
+      1064
+    ],
+    "missing_actor_details": {
+      "1062": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1062.atlas",
+          "assets/data/GameData/spine/actor/data/1062.json",
+          "assets/data/GameData/spine/actor/data/1062.pkm",
+          "assets/data/GameData/spine/actor/data/1062.xc",
+          "assets/data/GameData/spine/actor/data/1062c.atlas",
+          "assets/data/GameData/spine/actor/data/1062c.json",
+          "assets/data/GameData/spine/actor/data/1062c.pkm",
+          "assets/data/GameData/spine/actor/data/1062c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1547577
+      },
+      "1065": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1065.atlas",
+          "assets/data/GameData/spine/actor/data/1065.json",
+          "assets/data/GameData/spine/actor/data/1065.pkm",
+          "assets/data/GameData/spine/actor/data/1065.xc",
+          "assets/data/GameData/spine/actor/data/1065c.atlas",
+          "assets/data/GameData/spine/actor/data/1065c.json",
+          "assets/data/GameData/spine/actor/data/1065c.pkm",
+          "assets/data/GameData/spine/actor/data/1065c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1639100
+      },
+      "1066": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1066.atlas",
+          "assets/data/GameData/spine/actor/data/1066.json",
+          "assets/data/GameData/spine/actor/data/1066.pkm",
+          "assets/data/GameData/spine/actor/data/1066.xc",
+          "assets/data/GameData/spine/actor/data/1066c.atlas",
+          "assets/data/GameData/spine/actor/data/1066c.json",
+          "assets/data/GameData/spine/actor/data/1066c.pkm",
+          "assets/data/GameData/spine/actor/data/1066c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1538547
+      },
+      "1067": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1067.atlas",
+          "assets/data/GameData/spine/actor/data/1067.json",
+          "assets/data/GameData/spine/actor/data/1067.pkm",
+          "assets/data/GameData/spine/actor/data/1067.xc",
+          "assets/data/GameData/spine/actor/data/1067c.atlas",
+          "assets/data/GameData/spine/actor/data/1067c.json",
+          "assets/data/GameData/spine/actor/data/1067c.pkm",
+          "assets/data/GameData/spine/actor/data/1067c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1496363
+      },
+      "1068": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1068.atlas",
+          "assets/data/GameData/spine/actor/data/1068.json",
+          "assets/data/GameData/spine/actor/data/1068.pkm",
+          "assets/data/GameData/spine/actor/data/1068.xc"
+        ],
+        "file_count": 4,
+        "total_bytes": 431060
+      },
+      "1069": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1069.atlas",
+          "assets/data/GameData/spine/actor/data/1069.json",
+          "assets/data/GameData/spine/actor/data/1069.pkm",
+          "assets/data/GameData/spine/actor/data/1069.xc",
+          "assets/data/GameData/spine/actor/data/1069c.atlas",
+          "assets/data/GameData/spine/actor/data/1069c.json",
+          "assets/data/GameData/spine/actor/data/1069c.pkm",
+          "assets/data/GameData/spine/actor/data/1069c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1501820
+      },
+      "1070": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1070.atlas",
+          "assets/data/GameData/spine/actor/data/1070.json",
+          "assets/data/GameData/spine/actor/data/1070.pkm",
+          "assets/data/GameData/spine/actor/data/1070.xc"
+        ],
+        "file_count": 4,
+        "total_bytes": 438287
+      },
+      "1071": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1071.atlas",
+          "assets/data/GameData/spine/actor/data/1071.json",
+          "assets/data/GameData/spine/actor/data/1071.pkm",
+          "assets/data/GameData/spine/actor/data/1071.xc",
+          "assets/data/GameData/spine/actor/data/1071c.atlas",
+          "assets/data/GameData/spine/actor/data/1071c.json",
+          "assets/data/GameData/spine/actor/data/1071c.pkm",
+          "assets/data/GameData/spine/actor/data/1071c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1485149
+      },
+      "1072": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1072.atlas",
+          "assets/data/GameData/spine/actor/data/1072.json",
+          "assets/data/GameData/spine/actor/data/1072.pkm",
+          "assets/data/GameData/spine/actor/data/1072.xc",
+          "assets/data/GameData/spine/actor/data/1072c.atlas",
+          "assets/data/GameData/spine/actor/data/1072c.json",
+          "assets/data/GameData/spine/actor/data/1072c.pkm",
+          "assets/data/GameData/spine/actor/data/1072c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1693162
+      },
+      "1073": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1073.atlas",
+          "assets/data/GameData/spine/actor/data/1073.json",
+          "assets/data/GameData/spine/actor/data/1073.pkm",
+          "assets/data/GameData/spine/actor/data/1073.xc",
+          "assets/data/GameData/spine/actor/data/1073c.atlas",
+          "assets/data/GameData/spine/actor/data/1073c.json",
+          "assets/data/GameData/spine/actor/data/1073c.pkm",
+          "assets/data/GameData/spine/actor/data/1073c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1829559
+      },
+      "1074": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1074.atlas",
+          "assets/data/GameData/spine/actor/data/1074.json",
+          "assets/data/GameData/spine/actor/data/1074.pkm",
+          "assets/data/GameData/spine/actor/data/1074.xc",
+          "assets/data/GameData/spine/actor/data/1074c.atlas",
+          "assets/data/GameData/spine/actor/data/1074c.json",
+          "assets/data/GameData/spine/actor/data/1074c.pkm",
+          "assets/data/GameData/spine/actor/data/1074c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1044115
+      },
+      "1075": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1075.atlas",
+          "assets/data/GameData/spine/actor/data/1075.json",
+          "assets/data/GameData/spine/actor/data/1075.pkm",
+          "assets/data/GameData/spine/actor/data/1075.xc",
+          "assets/data/GameData/spine/actor/data/1075c.atlas",
+          "assets/data/GameData/spine/actor/data/1075c.json",
+          "assets/data/GameData/spine/actor/data/1075c.pkm",
+          "assets/data/GameData/spine/actor/data/1075c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 681043
+      },
+      "1076": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1076.atlas",
+          "assets/data/GameData/spine/actor/data/1076.json",
+          "assets/data/GameData/spine/actor/data/1076.pkm",
+          "assets/data/GameData/spine/actor/data/1076.xc",
+          "assets/data/GameData/spine/actor/data/1076c.atlas",
+          "assets/data/GameData/spine/actor/data/1076c.json",
+          "assets/data/GameData/spine/actor/data/1076c.pkm",
+          "assets/data/GameData/spine/actor/data/1076c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1111931
+      },
+      "1077": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1077.atlas",
+          "assets/data/GameData/spine/actor/data/1077.json",
+          "assets/data/GameData/spine/actor/data/1077.pkm",
+          "assets/data/GameData/spine/actor/data/1077.xc",
+          "assets/data/GameData/spine/actor/data/1077c.atlas",
+          "assets/data/GameData/spine/actor/data/1077c.json",
+          "assets/data/GameData/spine/actor/data/1077c.pkm",
+          "assets/data/GameData/spine/actor/data/1077c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 981420
+      },
+      "1078": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1078.atlas",
+          "assets/data/GameData/spine/actor/data/1078.json",
+          "assets/data/GameData/spine/actor/data/1078.pkm",
+          "assets/data/GameData/spine/actor/data/1078.xc",
+          "assets/data/GameData/spine/actor/data/1078c.atlas",
+          "assets/data/GameData/spine/actor/data/1078c.json",
+          "assets/data/GameData/spine/actor/data/1078c.pkm",
+          "assets/data/GameData/spine/actor/data/1078c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 993897
+      },
+      "1118": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1118.atlas",
+          "assets/data/GameData/spine/actor/data/1118.json",
+          "assets/data/GameData/spine/actor/data/1118.pkm",
+          "assets/data/GameData/spine/actor/data/1118.xc",
+          "assets/data/GameData/spine/actor/data/1118c.atlas",
+          "assets/data/GameData/spine/actor/data/1118c.json",
+          "assets/data/GameData/spine/actor/data/1118c.pkm",
+          "assets/data/GameData/spine/actor/data/1118c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1235726
+      },
+      "1125": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1125.atlas",
+          "assets/data/GameData/spine/actor/data/1125.json",
+          "assets/data/GameData/spine/actor/data/1125.pkm",
+          "assets/data/GameData/spine/actor/data/1125.xc",
+          "assets/data/GameData/spine/actor/data/1125c.atlas",
+          "assets/data/GameData/spine/actor/data/1125c.json",
+          "assets/data/GameData/spine/actor/data/1125c.pkm",
+          "assets/data/GameData/spine/actor/data/1125c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1126319
+      },
+      "1153": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/1153.atlas",
+          "assets/data/GameData/spine/actor/data/1153.json",
+          "assets/data/GameData/spine/actor/data/1153.pkm",
+          "assets/data/GameData/spine/actor/data/1153.xc",
+          "assets/data/GameData/spine/actor/data/1153c.atlas",
+          "assets/data/GameData/spine/actor/data/1153c.json",
+          "assets/data/GameData/spine/actor/data/1153c.pkm",
+          "assets/data/GameData/spine/actor/data/1153c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1277246
+      },
+      "2043": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/2043.atlas",
+          "assets/data/GameData/spine/actor/data/2043.json",
+          "assets/data/GameData/spine/actor/data/2043.pkm",
+          "assets/data/GameData/spine/actor/data/2043.xc",
+          "assets/data/GameData/spine/actor/data/2043c.atlas",
+          "assets/data/GameData/spine/actor/data/2043c.json",
+          "assets/data/GameData/spine/actor/data/2043c.pkm",
+          "assets/data/GameData/spine/actor/data/2043c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1219719
+      },
+      "2046": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/2046.atlas",
+          "assets/data/GameData/spine/actor/data/2046.json",
+          "assets/data/GameData/spine/actor/data/2046.pkm",
+          "assets/data/GameData/spine/actor/data/2046.xc",
+          "assets/data/GameData/spine/actor/data/2046c.atlas",
+          "assets/data/GameData/spine/actor/data/2046c.json",
+          "assets/data/GameData/spine/actor/data/2046c.pkm",
+          "assets/data/GameData/spine/actor/data/2046c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1262130
+      },
+      "3033": {
+        "files": [
+          "assets/data/GameData/spine/actor/data/3033.atlas",
+          "assets/data/GameData/spine/actor/data/3033.json",
+          "assets/data/GameData/spine/actor/data/3033.pkm",
+          "assets/data/GameData/spine/actor/data/3033.xc",
+          "assets/data/GameData/spine/actor/data/3033c.atlas",
+          "assets/data/GameData/spine/actor/data/3033c.json",
+          "assets/data/GameData/spine/actor/data/3033c.pkm",
+          "assets/data/GameData/spine/actor/data/3033c.xc"
+        ],
+        "file_count": 8,
+        "total_bytes": 1059199
+      }
+    }
+  }
+}

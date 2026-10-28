@@ -1,0 +1,72 @@
+{
+  "task_key": "P3-chien-dau-navigation-trace",
+  "run_id": "20261028_045323",
+  "device_id": "10b3139c",
+  "start_time": "2026-10-28T04:53:23Z",
+  "artifacts": {
+    "01_main_lobby_pre.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_045323/01_main_lobby_pre.png",
+      "size": 2300657,
+      "sha256": "240fbaeb43a0667cb1cc4221c72a7b8d7c1c1f64c980057cd89dbf0d0b305481",
+      "timestamp": "2026-10-28T04:53:46Z",
+      "state": "MAIN_LOBBY",
+      "confidence": 0.92,
+      "description": "Verified Main Lobby screen before Chiến đấu navigation"
+    },
+    "01_lobby_bottom_right_buttons.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_045323/01_lobby_bottom_right_buttons.png",
+      "sha256": "9ee47b11b50a3632f00dd5af19dee668ffbd8d1764a65ec8ec430ec1f331802c",
+      "description": "Cropped bottom-right action area showing Chiến đấu button"
+    },
+    "02_chien_dau_post.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_045323/02_chien_dau_post.png",
+      "size": 1547824,
+      "sha256": "53e4e71ce5b245109002d6e2c71f5ae5260a66203405e04149c6074f0d78c219",
+      "timestamp": "2026-10-28T04:53:51Z",
+      "state": "STAGE_SELECTION",
+      "confidence": 0.94,
+      "reason": "Main Stage/Level selection interface (guanqia_page) detected with Earth orbit and chapter badge",
+      "description": "Screen captured after tapping Chiến đấu entry button, displaying Stage Selection (guanqia_page: Trái Đất / Saiyan Invasion)"
+    },
+    "02_chien_dau_header.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_045323/02_chien_dau_header.png",
+      "sha256": "84b7ea9b3259015332d9f76466df504dab501d3eb6e8d492c935eb757ea6be47",
+      "description": "Cropped header of Chiến đấu destination screen showing 'Trái Đất' and Home icon"
+    },
+    "02_chien_dau_center.png": {
+      "path": "/home/khanh/returnsaiyan-re/evidence/real_dungeon_combat/20261028_045323/02_chien_dau_center.png",
+      "sha256": "32ae834e46c0deae789b299d1c5a3009f3ab9024fb03ba81647334fd12a784f6",
+      "description": "Cropped central view of Stage Selection showing Raditz 'Saiyan Invasion' badge and 0/30 stars"
+    }
+  },
+  "states": {
+    "pre_navigation": "MAIN_LOBBY",
+    "post_navigation": "STAGE_SELECTION"
+  },
+  "cocos2d_scene_transition": {
+    "from": "main",
+    "to": "guanqia_page",
+    "logcat_timestamp": "10-28 11:53:46.261"
+  },
+  "action": {
+    "target": "chien_dau",
+    "normalized_coords": [
+      0.935,
+      0.925
+    ],
+    "screen_coords": [
+      2041,
+      999
+    ],
+    "timestamp": "2026-10-28T04:53:47Z"
+  },
+  "is_adventure_mode_substitution": false,
+  "distinct_from_adventure": true,
+  "comparison_with_pho_ban": {
+    "pho_ban_target": "(1828, 976) -> fuben_zhujiemian (Special Dungeon instances: Time Chamber, World Boss, Hall of Heroes, Spaceship, Karin Tower, Red Ribbon Army)",
+    "chien_dau_target": "(2041, 999) -> guanqia_page (Main Campaign / Story Level Selection: Chapter 1 Trái Đất / Saiyan Invasion)",
+    "adventure_mode_target": "Phieu Luu (Goku on flying cloud, Goten & Trunks fusion dance, Connecting Server..., Go button) - separate mode, NOT reached via either button"
+  },
+  "end_time": "2026-10-28T04:53:51Z",
+  "status": "PASS"
+}

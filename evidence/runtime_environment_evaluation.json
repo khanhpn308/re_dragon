@@ -1,0 +1,27 @@
+{
+  "task_key": "g6-android-runtime-environment-evaluation",
+  "timestamp": "2026-10-27T14:08:00+07:00",
+  "project_id": "fb6880376c06404f",
+  "hardware_environment": {
+    "host_os": "Linux / WSL (AArch64 / x86_64 host)",
+    "adb_installed": false,
+    "adb_devices_connected": 0,
+    "rea_adb_status": "capability_unavailable (no adb binary found in PATH)",
+    "controlled_environment_status": "OFFLINE_TEST_FIXTURE_ONLY"
+  },
+  "client_vs_server_separation": {
+    "client_resident_assets": [
+      "hero.xc binary data table with 48-column schema (138 heroes)",
+      "Spine actor skeletons (.xc, .json) for all 21 missing DB Global models",
+      "Spine texture atlases (.atlas) and PKM/ETG textures in dual-placement directories",
+      "Character audio strings, card spine definitions, and animation bindings"
+    ],
+    "server_governed_mechanics": [
+      "Player hero inventory and unlock state (delivered via network protocol opcodes)",
+      "Multiplayer matchmaking and combat state synchronization",
+      "Server-side hero stat verification and damage calculations"
+    ],
+    "live_server_isolation_policy": "Strict isolation enforced. No live game server requests, auth tokens, or network handshakes permitted or executed."
+  },
+  "operator_hardware_guidance": "To run physical device smoke testing: operator can connect an Android device via USB/ADB with developer options enabled, install dist/ReturnSaiyan-UnifiedHeroes-signed.apk, and inspect logcat with tag 'libaos_jogo'."
+}
