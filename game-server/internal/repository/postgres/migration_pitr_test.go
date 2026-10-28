@@ -39,8 +39,10 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	_ = migrator.Up(ctx)
 	ver, err := migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	if ver > 1 {
+	for ver > 1 {
 		err = migrator.Down(ctx)
+		require.NoError(t, err)
+		ver, err = migrator.CurrentVersion(ctx)
 		require.NoError(t, err)
 	}
 	ver, err = migrator.CurrentVersion(ctx)
@@ -223,6 +225,12 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 // =========================================================================
 
 func TestT11_PointInTimeRecoveryDrill(t *testing.T) {
+	// T11 invokes \"docker exec rs-postgres\" and must not run against an
+	// arbitrary CI service container; CI PostgreSQL integration is tested separately.
+	if err := exec.Command("docker", "inspect", "rs-postgres").Run(); err != nil {
+		t.Skip("PITR docker drill NOT_RUN: named rs-postgres container unavailable")
+	}
+
 	ctx := context.Background()
 
 	poolCfg := postgres.DefaultPoolConfig(testDSN)
