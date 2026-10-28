@@ -54,12 +54,6 @@ func TestMigrator_Lifecycle(t *testing.T) {
 	migrator := postgres.NewMigrator(pool)
 
 	// 1. Initial Up (through additive version 3)
-	err = migrator.Down(ctx)
-	require.NoError(t, err)
-	ver, err = migrator.CurrentVersion(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 0, ver)
-
 	err = migrator.Up(ctx)
 	require.NoError(t, err)
 
@@ -89,6 +83,12 @@ func TestMigrator_Lifecycle(t *testing.T) {
 	assert.Equal(t, 1, ver)
 
 	// 5. Down to version 0, then restore to latest version 3
+	err = migrator.Down(ctx)
+	require.NoError(t, err)
+	ver, err = migrator.CurrentVersion(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 0, ver)
+
 	err = migrator.Up(ctx)
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
