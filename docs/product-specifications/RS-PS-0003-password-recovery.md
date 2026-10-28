@@ -1,7 +1,7 @@
 | Index | Trường | Nội dung | Trạng thái |
 |---|---|---|---|
 | `F01` | Chức năng | lấy lại mật khẩu | ĐÃ CHỐT |
-| `F02` | Đầu vào | email, tên              đăng           nhập | ĐÃ CHỐT |
+| `F02` | Đầu vào | email, tên đăng nhập | ĐÃ CHỐT |
 | `F03` | Hành động | gửi code reset mật khẩu | ĐÃ CHỐT |
 | `F04` | Đầu ra | cho user nhập mật khẩu mới khi nhập code xác thực thành công | ĐÃ CHỐT |
 | `F05` | Trạng thái lỗi | email không chính xác, nhập lại mật khẩu xác thực mới không chính xác | ĐÃ CHỐT |
