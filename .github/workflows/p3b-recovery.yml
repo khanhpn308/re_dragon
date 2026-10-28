@@ -1,0 +1,29 @@
+name: P3b gacha recovery foundations
+on:
+  pull_request:
+    paths:
+      - 'game-server/**'
+      - 're_harness/**'
+      - 'scripts/blocked_rework.py'
+      - 'tests/test_blocked_rework.py'
+      - '.github/workflows/p3b-recovery.yml'
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline blocked rework tests
+        run: python -m unittest discover -s tests -p 'test_blocked_rework.py' -v
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: game-server/go.mod
+      - name: Go server unit tests
+        working-directory: game-server
+        run: go test ./internal/domain/hero/... ./internal/repository/postgres/... ./internal/session/...

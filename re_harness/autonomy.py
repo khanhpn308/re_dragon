@@ -896,3 +896,93 @@ def recover_blocked_android_device(db, pid, task_key, *, device_serial, adb_proo
     except Exception:
         db.rollback()
         raise
+
+
+def prepare_blocked_rework_audit(db, pid, key, reason, evidence_refs):
+    """Prepare a separate, reviewable remediation audit; never unblock on request alone.
+
+    This keeps the blocked work and its evidence untouched until a separate
+    reviewer approves the remediation audit and an explicit apply call follows.
+    """
+    reason = txt(reason, "blocker remediation plan", 3000)
+    refs = json_arr(evidence_refs, "remediation evidence", 40)
+    if not refs:
+        raise ValueError("Evidence is required to prepare a blocked-task audit")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        pr = project(db, pid)
+        if pr["status"] not in {"ACTIVE", "BLOCKED"}:
+            raise ValueError("Only ACTIVE/BLOCKED projects may prepare rework")
+        source = _task(db, pid, key)
+        if source["status"] != "BLOCKED":
+            raise ValueError("Source task must be BLOCKED")
+        if source["lease_token"] is not None or source["owner"] is not None:
+            raise ValueError("Blocked task has an active owner; refuse split-brain recovery")
+        digest = hashlib.sha256((key + "|" + reason).encode()).hexdigest()[:10]
+        audit_key = "audit-blocked-" + digest
+        existing = db.execute("SELECT id FROM auto_tasks WHERE project_id=? "
+                              "AND task_key=?", (pid, audit_key)).fetchone()
+        if existing is None:
+            if len(tasks(db, pid)) >= MAX_TASKS:
+                raise ValueError("Task budget exceeded")
+            db.execute(
+                "INSERT INTO auto_tasks(id,project_id,task_key,title,acceptance,"
+                "kind,priority,dependencies,status,parent_issue,updated_at)"
+                " VALUES(?,?,?,?,?,'AUDIT',100,'[]','PENDING',?,?)",
+                (ident(),pid,audit_key,"Audit blocker repair for "+key,
+                 "Independently inspect remediation source, client/server evidence, "
+                 "offline tests, and confirm original acceptance is NOT bypassed. "
+                 "Plan: "+reason,key,core.now())
+            )
+            event(db,pid,key,"BLOCKED_REMEDIATION_AUDIT_CREATED",
+                  {"audit":audit_key,"evidence":refs,"reason":reason})
+        db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? "
+                   "WHERE id=?", (core.now(),pid))
+        db.commit()
+        return {"project_id":pid,"source_task":key,"audit_task":audit_key,
+                "source_status":"BLOCKED","decision":"AUDIT_REQUIRED"}
+    except Exception:
+        db.rollback()
+        raise
+
+
+def reopen_blocked_after_audit(db, pid, key, audit_key, note):
+    """Review-gated BLOCKED -> REWORK; never mark source VERIFIED."""
+    note = txt(note,"review-approved rework note",3000)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        pr = project(db,pid)
+        if pr["status"] not in {"ACTIVE","BLOCKED"}:
+            raise ValueError("Project is not eligible for rework")
+        source = _task(db,pid,key)
+        audit = _task(db,pid,audit_key)
+        if source["status"] != "BLOCKED":
+            raise ValueError("Source task must still be BLOCKED")
+        if source["owner"] or source["lease_token"]:
+            raise ValueError("Source still has an owner or lease")
+        if (audit["parent_issue"] != key or audit["kind"] != "AUDIT"
+                or audit["status"] != "VERIFIED"):
+            raise ValueError("Matching remediation audit must be VERIFIED")
+        if (not audit["producer_session"] or not audit["reviewer_session"]
+                or audit["producer_session"] == audit["reviewer_session"]
+                or not audit["review_note"] or not audit["evidence_json"]):
+            raise ValueError("Independent audit review and evidence are required")
+        verified = {t["task_key"] for t in tasks(db,pid) if t["status"]=="VERIFIED"}
+        if not all(d in verified for d in json.loads(source["dependencies"])):
+            raise ValueError("Blocked task dependencies are not all VERIFIED")
+        db.execute(
+            "UPDATE auto_tasks SET status='REWORK',tries=0,owner=NULL,"
+            "owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=?"
+            " WHERE id=?", (core.now(),source["id"])
+        )
+        db.execute("UPDATE auto_projects SET status='ACTIVE',updated_at=? "
+                   "WHERE id=?", (core.now(),pid))
+        event(db,pid,key,"BLOCKED_REOPENED_FOR_REWORK",
+              {"audit_task":audit_key,"reviewer":audit["reviewer"],
+               "note":note,"prior_status":"BLOCKED","new_status":"REWORK"})
+        db.commit()
+        return {"task_key":key,"status":"REWORK","project_status":"ACTIVE",
+                "decision":"CONTINUE","warning":"Fresh execution and independent review required"}
+    except Exception:
+        db.rollback()
+        raise
