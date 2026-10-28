@@ -6,7 +6,7 @@
 
 | Index chức năng | F01 — Chức năng | F02 — Đầu vào | F03 — Hành động | F04 — Đầu ra | F05 — Trạng thái lỗi | F06 — Dữ liệu lưu trữ | Phê duyệt | APK/REA |
 |---|---|---|---|---|---|---|---|---|
-| [`RS-PS-0001`](./RS-PS-0001-login.md) | đăng nhập | tài khoản, mật khẩu, người dùng ấn đăng nhập | tùy vào trạng thái server: hoạt động tốt, bảo trì | hoạt động tốt - đưa vào màn hình đăng nhập, hiện danh sách server, tên nhân vật, level, vip, server | không có kết nối mạng, thông tin tài khoản mật khẩu không chính xác | thông tin người dùng ( tài khoản, mật khẩu, vip, server) | `USER_APPROVED` | `NOT_YET_VERIFIED` |
+| [`RS-PS-0001`](./RS-PS-0001-login.md) | đăng nhập | tài khoản, mật khẩu, người dùng ấn đăng nhập | tùy vào trạng thái server: hoạt động tốt, bảo trì | hoạt động tốt - đưa vào màn hình đăng nhập, hiện danh sách server, tên nhân vật, level, vip, server | không có kết nối mạng, thông tin tài khoản mật khẩu không chính xác | lưu phiên đăng nhập | `USER_APPROVED` | `NOT_YET_VERIFIED` |
 
 ## Quy ước index
 
