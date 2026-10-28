@@ -1,6 +1,17 @@
 # ReturnSaiyan Client Rebuild — Functional Slice / Work Package Registry v1
 
-Status: PROPOSED INVENTORY; not a confirmed catalog of original APK features.
+> [!CAUTION]
+> **NOT_APPROVED — DO NOT EXECUTE.**
+> The 68 Work Packages in this document were generated before feature-by-feature
+> product review. They are **unverified hypotheses, not approved game rules**.
+> No Agent or Harness may use them to create an executable DAG, implement features,
+> assert original APK behavior, infer protocol layouts, or declare acceptance.
+> Preserve this document only as a historical reference/questions backlog.
+> **The approved product design source is**
+> [FEATURE_WORKSPACE.md](../product_design/FEATURE_WORKSPACE.md).
+> Approval must be recorded individually by the user in that workspace.
+
+**Status: NOT_APPROVED — DO NOT EXECUTE.** This is a speculative planning inventory, not an accepted feature specification.
 Priority P0 = unblock real summon; P1 = playable PvE; P2 = economy/progression/PvP; P3 = extension.
 
 ## A. Rules for every leaf Work Package
