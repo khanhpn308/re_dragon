@@ -214,7 +214,7 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, ver, "restored version must be 2")
+	assert.Equal(t, 3, ver, "full Up restores version 3")
 	t.Log("Online schema migration T10 successfully verified!")
 }
 

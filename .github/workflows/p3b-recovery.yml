@@ -17,13 +17,36 @@ jobs:
           python-version: '3.12'
       - name: Offline blocked rework tests
         run: python -m unittest discover -s tests -p 'test_blocked_rework.py' -v
+      - name: Screenshot evidence gate tests
+        run: python -m unittest discover -s tests -p 'test_evidence_review.py' -v
   go:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: returnsaiyan
+          POSTGRES_PASSWORD: returnsaiyan_pass
+          POSTGRES_DB: returnsaiyan_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U returnsaiyan -d returnsaiyan_dev"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version-file: game-server/go.mod
-      - name: Go server unit tests
+      - name: Print formatted Go source for review
         working-directory: game-server
-        run: go test ./internal/domain/hero/... ./internal/repository/postgres/... ./internal/session/...
+        run: |
+          for f in internal/domain/hero/instance.go internal/domain/hero/instance_test.go internal/repository/postgres/hero_onboarding_repo.go; do
+            echo "FMT_BEGIN:$f"
+            gofmt < "$f" | base64 -w0
+            echo
+            echo "FMT_END:$f"
+          done
+      - name: Go server integration and offline tests
+        working-directory: game-server
+        run: go test -p 1 ./internal/domain/hero/... ./internal/repository/postgres/... ./internal/session/...
