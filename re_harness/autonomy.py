@@ -16,7 +16,7 @@ import time
 import uuid
 from pathlib import Path
 
-from . import core, scheduler
+from . import core, scheduler, functional_slices
 
 WORK = {"ANALYZE", "IMPLEMENT", "TEST", "AUDIT", "DOCUMENT"}
 MAX_TASKS = 250
@@ -78,6 +78,7 @@ def migrate(db):
         if col not in cols:
             db.execute("ALTER TABLE auto_tasks ADD COLUMN "+col+" TEXT")
     scheduler.migrate(db)
+    functional_slices.migrate(db)
     db.commit()
 
 
@@ -394,6 +395,7 @@ def submit(db,pid,key,actor,token,summary,evidence,artifacts,checks):
     try:
         row=_task(db,pid,key)
         _holder(row,actor,token,"RUNNING")
+        functional_slices.enforce_submission(db,row,sources,files)
         db.execute("UPDATE auto_tasks SET status='SUBMITTED',producer=?,producer_session=?,result=?,"
                    "evidence_json=?,artifacts_json=?,verification_json=?,"
                    "owner=NULL,owner_session=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=?",
