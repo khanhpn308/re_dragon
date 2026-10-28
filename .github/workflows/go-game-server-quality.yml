@@ -71,6 +71,17 @@ jobs:
     if: needs.discover.outputs.has_go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: returnsaiyan
+          POSTGRES_PASSWORD: returnsaiyan_pass
+          POSTGRES_DB: returnsaiyan_dev
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U returnsaiyan -d returnsaiyan_dev"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:
         working-directory: game-server
@@ -103,9 +114,9 @@ jobs:
           set -euo pipefail
           go mod verify
           go vet ./...
-          go test ./...
-          CGO_ENABLED=1 go test -race ./...
+          go test -p 1 ./...
+          CGO_ENABLED=1 go test -p 1 -race ./...
       - name: Report limits (not integration evidence)
         run: |
           echo "Go format, module verification, vet, unit and race have run."
-          echo "NOT_RUN: PostgreSQL integration, Android E2E, 5,000 CCU, fault/recovery; separate staged evidence required."
+          echo "PostgreSQL CI service is ephemeral; PITR docker drill is NOT_RUN without rs-postgres."\n          echo "NOT_RUN: Android E2E, 5,000 CCU, physical fault/recovery."

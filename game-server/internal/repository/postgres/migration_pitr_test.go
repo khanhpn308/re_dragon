@@ -203,12 +203,16 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "GLOBAL_DONOR", donorOrigin)
 
-	// Step 7: Verify migration rollback (Down) and re-up
-	t.Log("Testing rollback of migration V2 -> V1...")
-	err = migrator.Down(ctx)
-	require.NoError(t, err)
+	// Step 7: Full Up now reaches v3; rollback through v3 and v2 to v1.
+	t.Log("Testing rollback of migration V3 -> V2 -> V1...")
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
+	for ver > 1 {
+		err = migrator.Down(ctx)
+		require.NoError(t, err)
+		ver, err = migrator.CurrentVersion(ctx)
+		require.NoError(t, err)
+	}
 	assert.Equal(t, 1, ver, "rolled-back version must be 1")
 
 	// Restore to Version 2

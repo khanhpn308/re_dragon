@@ -38,15 +38,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: game-server/go.mod
-      - name: Print formatted Go source for review
-        working-directory: game-server
-        run: |
-          for f in internal/domain/hero/instance.go internal/domain/hero/instance_test.go internal/repository/postgres/hero_onboarding_repo.go internal/session/handler.go internal/protocol/framing_test.go; do
-            echo "FMT_BEGIN:$f"
-            gofmt < "$f" | base64 -w0
-            echo
-            echo "FMT_END:$f"
-          done
       - name: Go server integration and offline tests
         working-directory: game-server
         run: go test -p 1 ./internal/domain/hero/... ./internal/repository/postgres/... ./internal/session/...

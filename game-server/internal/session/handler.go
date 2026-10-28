@@ -233,17 +233,17 @@ func (h *AuthHandler) handleLogin(conn *tcp.ClientConn, pkt *protocol.Packet) er
 	pw.WriteU8(1) // 1 server entry
 
 	// Server Entry 1:
-	pw.WriteI32(1)                          // server_id
+	pw.WriteI32(1)                         // server_id
 	pw.WriteS2CStr("ReturnSaiyan Unified") // server_name
 	pw.WriteS2CStr(h.serverHost)           // server_ip ("127.0.0.1")
-	pw.WriteI16(int16(h.serverPort))        // server_port (30001)
-	pw.WriteU8(1)                           // status (1 = Smooth)
-	pw.WriteU8(1)                           // zoneId (1)
-	pw.WriteU8(1)                           // rolec (1)
+	pw.WriteI16(int16(h.serverPort))       // server_port (30001)
+	pw.WriteU8(1)                          // status (1 = Smooth)
+	pw.WriteU8(1)                          // zoneId (1)
+	pw.WriteU8(1)                          // rolec (1)
 	pw.WriteS2CStr("Universe 7")           // serDscr ("Universe 7")
-	pw.WriteU8(1)                           // newSev (1 = true)
-	pw.WriteU8(1)                           // recommond (1 = true, default/lastLoginSev)
-	pw.WriteI32(int32(time.Now().Unix()))   // loginCount
+	pw.WriteU8(1)                          // newSev (1 = true)
+	pw.WriteU8(1)                          // recommond (1 = true, default/lastLoginSev)
+	pw.WriteI32(int32(time.Now().Unix()))  // loginCount
 
 	// Server host string and role JSON count (i16) + role JSON array for client roleList
 	pw.WriteS2CStr(fmt.Sprintf("%s:%d", h.serverHost, h.serverPort))

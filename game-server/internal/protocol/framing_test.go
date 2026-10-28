@@ -228,4 +228,3 @@ func TestRealAndroidLoginPacket(t *testing.T) {
 		t.Errorf("expected version 'aos-arm64/1.0.17', got '%s'", version)
 	}
 }
-
