@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler
+from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler, functional_slices
 
 
 def schema(properties=None, required=None):
@@ -50,7 +50,39 @@ SPLIT_CHILDREN = {"type":"array","minItems":2,"maxItems":8,"items":{
   "required":["key","title","acceptance","targets"],
   "additionalProperties":False
 }}
-TOOLS = [
+SLICE_CONTRACT = {"type":"object","additionalProperties":False,"required":[
+"feature_id","objective","binary_sha256","entrypoints","targets",
+"questions","artifacts","acceptance","budget"],"properties":{
+"feature_id":STRING,"objective":STRING,"binary_sha256":STRING,
+"entrypoints":STRINGS,"targets":STRINGS,"questions":STRINGS,
+"artifacts":STRINGS,"acceptance":STRINGS,
+"budget":{"type":"object","additionalProperties":False,"required":[
+"max_rea_calls","max_functions","max_xref_depth","max_output_chars"],"properties":{
+"max_rea_calls":INTEGER,"max_functions":INTEGER,"max_xref_depth":INTEGER,"max_output_chars":INTEGER}}
+}}
+SLICE_TOOLS = [
+ {"name":"harness_slice_define","description":"Freeze evidence-based functional REA scope and call/output budgets; no duration deadline.",
+  "inputSchema":schema({"project_id":STRING,"task_key":STRING,"contract":SLICE_CONTRACT},
+                       ["project_id","task_key","contract"])},
+ {"name":"harness_slice_status","description":"Read frozen scope, receipts and remaining REA budget.",
+  "inputSchema":schema({"project_id":STRING,"task_key":STRING},["project_id","task_key"])},
+ {"name":"harness_slice_reserve","description":"Reserve one in-scope REA call BEFORE invoking external REA MCP; no wall-clock cutoff.",
+  "inputSchema":schema({"project_id":STRING,"task_key":STRING,"agent_id":STRING,
+     "claim_token":STRING,"tool_kind":STRING,"target":STRING,"xref_depth":INTEGER},
+     ["project_id","task_key","agent_id","claim_token","tool_kind","target","xref_depth"])},
+ {"name":"harness_slice_receipt","description":"Record bounded REA evidence reference, SHA-256 and VERIFIED/INFERRED/UNKNOWN status.",
+  "inputSchema":schema({"project_id":STRING,"task_key":STRING,"agent_id":STRING,
+    "claim_token":STRING,"ticket":STRING,"function_id":STRING,"evidence_ref":STRING,
+    "output_chars":INTEGER,"result_sha256":STRING,"confidence":STRING},
+    ["project_id","task_key","agent_id","claim_token","ticket","function_id",
+     "evidence_ref","output_chars","result_sha256","confidence"])},
+ {"name":"harness_slice_checkpoint_split","description":"Persist scope-exhausted checkpoint and request child scopes without an elapsed-time deadline.",
+  "inputSchema":schema({"project_id":STRING,"task_key":STRING,"agent_id":STRING,
+    "claim_token":STRING,"note":STRING,"evidence":STRINGS},
+    ["project_id","task_key","agent_id","claim_token","note","evidence"])}
+]
+
+TOOLS = SLICE_TOOLS + [
   {"name":"harness_auto_resources",
    "description":"Observe v0.6 global resource reservations, host CPU/RAM, heavy Ghidra slot and adaptive per-project concurrency without running processes.",
    "inputSchema":schema({"project_id":STRING},["project_id"])},
@@ -347,6 +379,20 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_slice_define":
+            return functional_slices.define(db,args["project_id"],args["task_key"],args["contract"])
+        if name == "harness_slice_status":
+            return functional_slices.status(db,args["project_id"],args["task_key"])
+        if name == "harness_slice_reserve":
+            return functional_slices.reserve(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["tool_kind"],args["target"],args["xref_depth"])
+        if name == "harness_slice_receipt":
+            return functional_slices.receipt(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["ticket"],args["function_id"],
+                args["evidence_ref"],args["output_chars"],args["result_sha256"],args["confidence"])
+        if name == "harness_slice_checkpoint_split":
+            return functional_slices.checkpoint_split(db,args["project_id"],args["task_key"],
+                args["agent_id"],args["claim_token"],args["note"],args["evidence"])
         if name == "harness_auto_resources":
             return autonomy.resource_status(db,args["project_id"])
         if name == "harness_auto_resource_config":

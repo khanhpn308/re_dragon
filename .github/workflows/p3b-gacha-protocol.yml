@@ -1,0 +1,44 @@
+name: P3b Gacha Protocol — source audit
+
+on:
+  pull_request:
+    paths:
+      - 'game-server/internal/session/**'
+      - 'game-server/internal/protocol/**'
+      - 'docs/production/P3B_*'
+      - 'scripts/check_p3b_gacha_contract.py'
+      - 'tests/test_p3b_gacha_contract.py'
+      - '.github/workflows/p3b-gacha-protocol.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p3b-gacha-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate offline audit checker
+        run: python -m unittest discover -s tests -p 'test_p3b_gacha_contract.py' -v
+      - name: Check actual drawCard RPC and S2C source contract (fail-closed)
+        run: python scripts/check_p3b_gacha_contract.py --repo . --out-dir p3b-report --fail-closed
+      - name: Publish summary even on BLOCKED
+        if: always()
+        run: |
+          if test -f p3b-report/p3b_gacha_contract.md; then
+            cat p3b-report/p3b_gacha_contract.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No audit report produced; inspect previous steps." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload machine-readable audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p3b-gacha-contract-report
+          path: p3b-report/
+          if-no-files-found: warn

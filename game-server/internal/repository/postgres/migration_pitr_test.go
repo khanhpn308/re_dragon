@@ -39,8 +39,10 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	_ = migrator.Up(ctx)
 	ver, err := migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	if ver > 1 {
+	for ver > 1 {
 		err = migrator.Down(ctx)
+		require.NoError(t, err)
+		ver, err = migrator.CurrentVersion(ctx)
 		require.NoError(t, err)
 	}
 	ver, err = migrator.CurrentVersion(ctx)
@@ -201,12 +203,16 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "GLOBAL_DONOR", donorOrigin)
 
-	// Step 7: Verify migration rollback (Down) and re-up
-	t.Log("Testing rollback of migration V2 -> V1...")
-	err = migrator.Down(ctx)
-	require.NoError(t, err)
+	// Step 7: Full Up now reaches v3; rollback through v3 and v2 to v1.
+	t.Log("Testing rollback of migration V3 -> V2 -> V1...")
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
+	for ver > 1 {
+		err = migrator.Down(ctx)
+		require.NoError(t, err)
+		ver, err = migrator.CurrentVersion(ctx)
+		require.NoError(t, err)
+	}
 	assert.Equal(t, 1, ver, "rolled-back version must be 1")
 
 	// Restore to Version 2
@@ -214,7 +220,7 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, ver, "restored version must be 2")
+	assert.Equal(t, 3, ver, "full Up restores version 3")
 	t.Log("Online schema migration T10 successfully verified!")
 }
 
@@ -223,6 +229,12 @@ func TestT10_OnlineSchemaMigrationUnderLoad(t *testing.T) {
 // =========================================================================
 
 func TestT11_PointInTimeRecoveryDrill(t *testing.T) {
+	// T11 invokes \"docker exec rs-postgres\" and must not run against an
+	// arbitrary CI service container; CI PostgreSQL integration is tested separately.
+	if err := exec.Command("docker", "inspect", "rs-postgres").Run(); err != nil {
+		t.Skip("PITR docker drill NOT_RUN: named rs-postgres container unavailable")
+	}
+
 	ctx := context.Background()
 
 	poolCfg := postgres.DefaultPoolConfig(testDSN)

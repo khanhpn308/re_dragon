@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -84,7 +83,7 @@ func (h *AuthHandler) HandlePacket(conn *tcp.ClientConn, pkt *protocol.Packet) e
 	case protocol.OpcodeEntityMoveSync:
 		return h.handleMovement(conn, pkt)
 	case protocol.OpcodeSkillCast:
-		return h.handleSkillCast(conn, pkt)
+		return h.handleOpcode25(conn, pkt)
 	case protocol.OpcodeChatMessage:
 		return h.handleChatMessage(conn, pkt)
 	default:
@@ -233,17 +232,17 @@ func (h *AuthHandler) handleLogin(conn *tcp.ClientConn, pkt *protocol.Packet) er
 	pw.WriteU8(1) // 1 server entry
 
 	// Server Entry 1:
-	pw.WriteI32(1)                          // server_id
+	pw.WriteI32(1)                         // server_id
 	pw.WriteS2CStr("ReturnSaiyan Unified") // server_name
 	pw.WriteS2CStr(h.serverHost)           // server_ip ("127.0.0.1")
-	pw.WriteI16(int16(h.serverPort))        // server_port (30001)
-	pw.WriteU8(1)                           // status (1 = Smooth)
-	pw.WriteU8(1)                           // zoneId (1)
-	pw.WriteU8(1)                           // rolec (1)
+	pw.WriteI16(int16(h.serverPort))       // server_port (30001)
+	pw.WriteU8(1)                          // status (1 = Smooth)
+	pw.WriteU8(1)                          // zoneId (1)
+	pw.WriteU8(1)                          // rolec (1)
 	pw.WriteS2CStr("Universe 7")           // serDscr ("Universe 7")
-	pw.WriteU8(1)                           // newSev (1 = true)
-	pw.WriteU8(1)                           // recommond (1 = true, default/lastLoginSev)
-	pw.WriteI32(int32(time.Now().Unix()))   // loginCount
+	pw.WriteU8(1)                          // newSev (1 = true)
+	pw.WriteU8(1)                          // recommond (1 = true, default/lastLoginSev)
+	pw.WriteI32(int32(time.Now().Unix()))  // loginCount
 
 	// Server host string and role JSON count (i16) + role JSON array for client roleList
 	pw.WriteS2CStr(fmt.Sprintf("%s:%d", h.serverHost, h.serverPort))
@@ -550,22 +549,8 @@ func (h *AuthHandler) handleMovement(conn *tcp.ClientConn, pkt *protocol.Packet)
 	return conn.SendPacket(pw)
 }
 
-// handleSkillCast processes Opcode 0x25: skill invocation against targets or language settings.
+// handleSkillCast processes the binary combat form of Opcode 0x25.
 func (h *AuthHandler) handleSkillCast(conn *tcp.ClientConn, pkt *protocol.Packet) error {
-	if len(pkt.Body) >= 2 {
-		prTest := protocol.NewPacketReader(pkt.Body)
-		if str, err := prTest.ReadStr(); err == nil {
-			if strings.HasPrefix(str, "player:lang:") {
-				h.logger.Info("client language setting received", slog.String("lang", str))
-				return nil
-			}
-			if strings.Contains(str, ":") || strings.HasPrefix(str, "drawCard") || strings.HasPrefix(str, "activity") || strings.HasPrefix(str, "guide") || strings.HasPrefix(str, "mobai") || strings.HasPrefix(str, "tong") || strings.HasPrefix(str, "vip") || strings.HasPrefix(str, "pop") || strings.HasPrefix(str, "aos") {
-				h.logger.Info("client command RPC received", slog.String("cmd", str))
-				return nil
-			}
-		}
-	}
-
 	pr := protocol.NewPacketReader(pkt.Body)
 	targetID, err := pr.ReadI32()
 	if err != nil {

@@ -53,41 +53,47 @@ func TestMigrator_Lifecycle(t *testing.T) {
 
 	migrator := postgres.NewMigrator(pool)
 
-	// 1. Initial Up
+	// 1. Initial Up (through additive version 3)
 	err = migrator.Up(ctx)
 	require.NoError(t, err)
 
 	ver, err := migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, ver)
+	assert.Equal(t, 3, ver)
 
 	// 2. Idempotent Up
 	err = migrator.Up(ctx)
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
+	assert.Equal(t, 3, ver)
+
+	// 3. Down (Rollback version 3 -> version 2)
+	err = migrator.Down(ctx)
+	require.NoError(t, err)
+	ver, err = migrator.CurrentVersion(ctx)
+	require.NoError(t, err)
 	assert.Equal(t, 2, ver)
 
-	// 3. Down (Rollback version 2 -> version 1)
+	// 4. Down (Rollback version 2 -> version 1)
 	err = migrator.Down(ctx)
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, ver)
 
-	// 4. Down again (Rollback version 1 -> version 0)
+	// 5. Down to version 0, then restore to latest version 3
 	err = migrator.Down(ctx)
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, ver)
 
-	// 5. Up again (Restore all migrations to latest version 2)
 	err = migrator.Up(ctx)
 	require.NoError(t, err)
 	ver, err = migrator.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 2, ver)
+	assert.Equal(t, 3, ver)
 }
 
 func TestAccountRepository(t *testing.T) {
