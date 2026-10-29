@@ -8,8 +8,9 @@
 |---|---|---|---|---|---|---|---|---|
 | [`RS-PS-0001`](./RS-PS-0001-login.md) | đăng nhập | tài khoản, mật khẩu, người dùng ấn đăng nhập | tùy vào trạng thái server: hoạt động tốt, bảo trì | hoạt động tốt - đưa vào màn hình đăng nhập, hiện danh sách server, tên nhân vật, level, vip, server | không có kết nối mạng, thông tin tài khoản mật khẩu không chính xác | lưu phiên đăng nhập | `USER_APPROVED` | `NOT_YET_VERIFIED` |
 | [`RS-PS-0002`](./RS-PS-0002-register.md) | đăng ký | email (optional), tài khoản, mật khẩu, xác thực lại mật khẩu, chữ cái từ a-z, A-Z, số từ 0-9 | ấn nút đăng ký, gửi code xác thực đến email, nhập code vào để hoàn tất đăng ký | đăng ký thành công, dữ liệu được lưu vào database, | tài khoản mật khẩu không nằm trong khoảng từ 8 đến 12 ký tự, không được sử dụng ký tự đặc biệt, sai định dạng @gmail.com | tài khoản, mật khẩu, email | `USER_APPROVED` | `NOT_YET_VERIFIED` |
-
 | [`RS-PS-0003`](./RS-PS-0003-password-recovery.md) | lấy lại mật khẩu | email, tên đăng nhập | gửi code reset mật khẩu | cho user nhập mật khẩu mới khi nhập code xác thực thành công | email không chính xác, nhập lại mật khẩu xác thực mới không chính xác | ghi đè vào trường mật khẩu cũ của user | `USER_APPROVED` | `NOT_YET_VERIFIED` |
+
+| [`RS-PS-0004`](./RS-PS-0004-character-select.md) | chọn nhan vat dang nhap | dang nhap thanh cong | truy xuat database cac nhan vat cua tai khoan | hien thi cac danh sach nhan vat trong database gom co: ten, avatar, vip. luc chien, server | dang nhap that bai | database la bảng nhan vat tham chieu theo tai khoan dang nhap | `USER_APPROVED` | `NOT_YET_VERIFIED` |
 
 ## Quy ước index
 
