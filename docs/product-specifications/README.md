@@ -11,6 +11,8 @@
 | [`RS-PS-0003`](./RS-PS-0003-password-recovery.md) | lấy lại mật khẩu | email, tên đăng nhập | gửi code reset mật khẩu | cho user nhập mật khẩu mới khi nhập code xác thực thành công | email không chính xác, nhập lại mật khẩu xác thực mới không chính xác | ghi đè vào trường mật khẩu cũ của user | `USER_APPROVED` | `NOT_YET_VERIFIED` |
 | [`RS-PS-0004`](./RS-PS-0004-character-select.md) | chọn nhân vật đăng nhập | đăng nhập thành công | truy xuất database các nhân vật của tài khoản | hiển thị các danh sách nhân vật trong database gồm có: tên, avatar, vip. lực chiến, server | đăng nhập thất bại | database là bảng nhân vật tham chiếu theo tài khoản đăng nhập | `USER_APPROVED` | `NOT_YET_VERIFIED` |
 
+| [`RS-PS-0005`](./RS-PS-0005-new-player-tutorial.md) | hướng dẫn tân thủ | chọn nhân vật thành công | có thể bỏ qua, khi mới vào sẽ có một phần chơi hướng dẫn ngắn, có thể có dữ liệu trong app, yêu cầu agent dịch ngược | hoàn thành phần chơi hướng dẫn, người chơi có thể thao tác và bắt đầu chơi một cách bình thường | không có | trạng thái tài khoản: đã qua giai đoạn hướng dẫn | `USER_APPROVED` | `NOT_YET_VERIFIED` |
+
 ## Quy ước index
 
 | Index | Ý nghĩa |
