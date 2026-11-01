@@ -6,6 +6,7 @@ Hai lệnh **chỉ đọc**, chỉ áp dụng cho private chat đã được RE 
 |---|---|---|
 | `/account` | Danh tính phiên Watchdog nếu ID trùng; nếu khác, hiện danh tính CLI tương tác **có nhãn chưa xác minh Watchdog** | AGY statusLine hook đã gửi dữ liệu mới trong 15 phút |
 | `/usage` | Phần trăm quota còn lại theo nhóm và thời điểm reset | Ưu tiên statusLine đúng phiên; nếu agent không chạy, đọc `agy -p /usage --output-format json` trên CLI hỗ trợ |
+| `/audit` | Tình trạng nghiệm thu project, reviewer metadata và tham chiếu bằng chứng (chỉ đọc, không tự chấp nhận) | Harness SQLite và project pin đọc được |
 | `/help` | Danh sách lệnh hiện có | Bot đã tải phiên bản mới |
 
 ## Đồng bộ và kích hoạt tại WSL2
@@ -31,3 +32,7 @@ CLI đang chạy có thể chưa tự nhận thay đổi `settings.json` cho đ�
 **Cảnh báo:** không nhầm `/usage` của bot với số `Quota hits` trong `/status`. Quota hits là số sự kiện Watchdog phát hiện, không phải phần trăm quota Antigravity.
 
 Nguồn: https://antigravity.google/docs/cli/statusline/ và https://antigravity.google/docs/cli/reference/
+
+## Kiểm tra final review / MISSING_MARKER
+
+Nếu toàn bộ task đã `VERIFIED` nhưng project vẫn `ACTIVE`, chạy `/audit`. Kết quả **Final ACCEPTED: NO** yêu cầu kiểm chứng bằng chứng thực tế và gọi quy trình `harness_auto_final_review` có thẩm quyền. Bản vá Watchdog sẽ dừng với lý do `final project review required` thay vì lặp lỗi `MISSING_MARKER` trong trường hợp này. Lệnh `/audit` chỉ xem metadata, không xác thực danh tính reviewer thực tế hoặc chứng minh tính đúng đắn của ảnh/PCAP.
