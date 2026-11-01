@@ -162,6 +162,41 @@ class QuotaWatchdogTests(unittest.TestCase):
         self.assertEqual(third["project_id"], pid)
         self.assertEqual(third["attempts"], 3)
 
+    def test_all_verified_requires_final_acceptance_not_marker_retries(self):
+        """VERIFIED task metadata cannot turn a project into ACCEPTED."""
+        from re_harness import autonomy, core
+        directory = self.root / ".re_harness_mvp"
+        with core.database(directory) as db:
+            autonomy.migrate(db)
+            pid = autonomy.start(db, "Final review pilot", "Externally audited")["project_id"]
+            autonomy.plan(db, pid, [
+                {"key": "evidence", "title": "Evidence captured",
+                 "acceptance": "Real evidence from Android", "kind": "TEST",
+                 "depends_on": []}
+            ])
+            with db:
+                db.execute("UPDATE auto_tasks SET status='VERIFIED',"
+                           "producer='agent-1',producer_session='session-A',"
+                           "reviewer='agent-2',reviewer_session='session-B'"
+                           " WHERE project_id=?", (pid,))
+        state = q.load(self.state)
+        state.update(project_id=pid, conversation_id="pinned-session-12345678")
+        q.save(self.state, state)
+        output = {
+            "code": 0,
+            "data": {"status": "SUCCESS",
+                     "conversation_id": "pinned-session-12345678",
+                     "response": "Six tasks verified but final project review missing"},
+            "stderr": "",
+        }
+        result = q.once(self.root, self.state, self.prompt, clock=1000,
+                        runner=lambda *a, **kw: output, harness_state_dir=directory)
+        self.assertEqual(result["status"], "NEEDS_USER")
+        self.assertIn("final project review", result["last_reason"])
+        self.assertEqual(result["missing_marker_recoveries"], 0)
+        with core.database(directory) as db:
+            self.assertEqual(autonomy.project(db, pid)["status"], "ACTIVE")
+
     def test_missing_marker_bounded_recovery_resets_after_good_turn(self):
         from re_harness import autonomy, core
         directory = self.root / ".re_harness_mvp"
