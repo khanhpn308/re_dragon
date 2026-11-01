@@ -94,6 +94,57 @@ class AgyTelemetryTests(unittest.TestCase):
                 telemetry.install(self.workspace)
         self.assertEqual(json.loads(config.read_text())["statusLine"]["command"], "existing-hook")
 
+    def test_install_chains_existing_statusline_without_replacing_it(self):
+        home = self.workspace / "home-chained"
+        config = home / ".gemini" / "antigravity-cli" / "settings.json"
+        config.parent.mkdir(parents=True)
+        config.write_text(json.dumps({"statusLine": {
+            "type": "command", "command": "printf ORIGINAL",
+            "padding": 2, "stack_with_default": False}}), encoding="utf-8")
+        with patch.object(Path, "home", return_value=home):
+            result = telemetry.install(self.workspace, chain_existing=True)
+        self.assertIn("giữ nguyên", result)
+        current = json.loads(config.read_text())["statusLine"]
+        self.assertEqual(current["padding"], 2)
+        self.assertEqual(current["stack_with_default"], False)
+        self.assertIn(" relay ", current["command"])
+        original_path = config.parent / "re-dragon-original-statusline.json"
+        self.assertEqual(json.loads(original_path.read_text())["command"], "printf ORIGINAL")
+        self.assertEqual(original_path.stat().st_mode & 0o777, 0o600)
+        self.assertTrue((config.parent / "settings.json.before-re-dragon").exists())
+        payload = json.dumps({"product": "antigravity",
+                              "conversation_id": "abc123", "email": "demo@example.com"})
+        rendered = telemetry.relay(self.workspace, original_path, payload)
+        self.assertEqual(rendered, "ORIGINAL")
+        self.assertIn("de***o@example.com", telemetry.account_text(self.workspace))
+        with patch.object(Path, "home", return_value=home):
+            repeated = telemetry.install(self.workspace, chain_existing=True)
+        self.assertIn("không cài lặp lại", repeated)
+
+    def test_chain_requires_explicit_opt_in(self):
+        home = self.workspace / "home-optin"
+        config = home / ".gemini" / "antigravity-cli" / "settings.json"
+        config.parent.mkdir(parents=True)
+        initial = {"statusLine": {"type": "command", "command": "echo unchanged"}}
+        config.write_text(json.dumps(initial), encoding="utf-8")
+        with patch.object(Path, "home", return_value=home):
+            with self.assertRaisesRegex(ValueError, "chain-existing"):
+                telemetry.install(self.workspace)
+        self.assertEqual(json.loads(config.read_text()), initial)
+
+    def test_chain_rejects_disabled_or_invalid_statusline(self):
+        home = self.workspace / "home-disabled"
+        config = home / ".gemini" / "antigravity-cli" / "settings.json"
+        config.parent.mkdir(parents=True)
+        initial = {"statusLine": {"type": "command", "command": "echo disabled",
+                                  "enabled": False}}
+        config.write_text(json.dumps(initial), encoding="utf-8")
+        with patch.object(Path, "home", return_value=home):
+            with self.assertRaisesRegex(ValueError, "không khả dụng"):
+                telemetry.install(self.workspace, chain_existing=True)
+        self.assertEqual(json.loads(config.read_text()), initial)
+
+
 
 if __name__ == "__main__":
     unittest.main()
