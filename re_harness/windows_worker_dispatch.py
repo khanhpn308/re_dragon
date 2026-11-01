@@ -34,8 +34,20 @@ def convert_script_path(path, *, windows=None, runner=subprocess.run):
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise RuntimeError("WSL path conversion unavailable; run in WSL2 with wslpath") from exc
     value = (result.stdout or "").strip()
-    if result.returncode or not re.match(r"^[A-Za-z]:\\", value):
-        raise RuntimeError("Unable to convert worker script to a Windows path")
+    # A script on /mnt/c/... maps to C:\\..., but a normal WSL2 repo under
+    # /home/... maps to \\\\wsl.localhost\\<distro>\\home\\... instead.
+    # Both are valid Windows paths. The old drive-only guard made every local
+    # WSL ext4 checkout fail before PowerShell was invoked.
+    drive_path = bool(re.match(r"^[A-Za-z]:\\", value))
+    wsl_unc_path = bool(re.match(
+        r"^\\\\(?:wsl\\.localhost|wsl\\$)\\[^\\/]+\\", value, re.IGNORECASE
+    ))
+    if result.returncode or not (drive_path or wsl_unc_path):
+        raise RuntimeError(
+            "Unable to convert worker script to a Windows path "
+            "(expected drive path or WSL UNC path; wslpath exit="
+            + str(result.returncode) + ")"
+        )
     return value
 
 
