@@ -125,16 +125,29 @@ def fresh_for_watchdog(workspace, data):
 
 
 def account_text(workspace):
+    """Distinguish Watchdog session identity from another local AGY session."""
     data = read_cache(workspace)
-    if not fresh_for_watchdog(workspace, data):
-        return ("RE Dragon — /account\nTài khoản: UNKNOWN\n"
-                "Chưa có statusLine telemetry mới khớp phiên Watchdog.\n"
-                "Thiết lập: python3 -m re_harness.agy_telemetry install")
+    if fresh_for_watchdog(workspace, data):
+        return ("RE Dragon — /account\n"
+                f"Tài khoản phiên Watchdog: {data.get('email') or 'UNKNOWN'}\n"
+                f"Gói: {data.get('plan_tier') or 'UNKNOWN'}\n"
+                f"Model: {data.get('model') or 'UNKNOWN'}\n"
+                "Nguồn: statusLine cùng conversation_id, mới trong 15 phút.\n"
+                "Không phải xác thực đăng nhập trực tuyến.")
+    if (data and isinstance(data.get("observed_at"), (int, float)) and
+            0 <= time.time() - data["observed_at"] <= MAX_CACHE_AGE and
+            data.get("email") not in (None, "", "UNKNOWN")):
+        return ("RE Dragon — /account\n"
+                "Tài khoản phiên Watchdog: UNKNOWN\n"
+                f"Tài khoản AGY cục bộ (phiên khác): {data['email']}\n"
+                f"Gói: {data.get('plan_tier') or 'UNKNOWN'}\n"
+                "Nguồn: statusLine CLI tương tác; KHÔNG xác minh tài khoản "
+                "đang chạy trong Watchdog.")
     return ("RE Dragon — /account\n"
-            f"Tài khoản: {data.get('email') or 'UNKNOWN'}\n"
-            f"Gói: {data.get('plan_tier') or 'UNKNOWN'}\n"
-            f"Model: {data.get('model') or 'UNKNOWN'}\n"
-            "Nguồn: AGY statusLine gần nhất; không xác nhận đăng nhập trực tuyến.")
+            "Tài khoản phiên Watchdog: UNKNOWN\n"
+            "Chưa có statusLine telemetry mới. Hook này chạy trong CLI tương tác; "
+            "headless có thể không phát dữ liệu.\n"
+            "Thiết lập: python3 -m re_harness.agy_telemetry install")
 
 
 def format_buckets(rows, source):
