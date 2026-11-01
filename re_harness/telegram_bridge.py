@@ -576,7 +576,9 @@ def task_detail_text(workspace, task_key, db_dir=None):
                 "SELECT event,details,timestamp FROM auto_events "
                 "WHERE project_id=? AND task_key=? AND event IN "
                 "('CLAIMED','WINDOWS_SURVEY_STARTED','WINDOWS_SURVEY_OBSERVED',"
-                "'WINDOWS_SURVEY_BLOCKED','SUBMITTED') "
+                "'WINDOWS_SURVEY_BLOCKED','WINDOWS_BACKGROUND_STARTED',"
+                "'WINDOWS_BACKGROUND_OBSERVED','WINDOWS_BACKGROUND_BLOCKED',"
+                "'SUBMITTED') "
                 "ORDER BY id DESC LIMIT 8",
                 (pid, task_key.strip()),
             ).fetchall()
@@ -597,7 +599,7 @@ def task_detail_text(workspace, task_key, db_dir=None):
         f"Verification Checks: {detail.get('verification_json') if detail.get('verification_json') else 'None'}",
     ]
     if timeline:
-        if not any(str(item[0]).startswith("WINDOWS_SURVEY_") for item in timeline):
+        if not any(str(item[0]).startswith(("WINDOWS_SURVEY_", "WINDOWS_BACKGROUND_")) for item in timeline):
             lines.append("\nWindows Worker calls: 0 recorded so far.")
         lines.append("\nRecent task actions (newest first):")
         for event_name, raw, when in timeline:
@@ -608,7 +610,7 @@ def task_detail_text(workspace, task_key, db_dir=None):
             if not isinstance(info, dict):
                 info = {}
             fields = [str(when)[:24], str(event_name)[:40]]
-            if event_name.startswith("WINDOWS_SURVEY_"):
+            if event_name.startswith(("WINDOWS_SURVEY_", "WINDOWS_BACKGROUND_")):
                 for key in ("action", "status", "error"):
                     value = info.get(key)
                     if isinstance(value, str) and value:
