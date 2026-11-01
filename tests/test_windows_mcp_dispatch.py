@@ -77,6 +77,39 @@ class LeasedWindowsWorkerMCPTests(unittest.TestCase):
             self.assertIs(details["input_dispatched"], False)
             self.assertEqual(details["foreground_pid"], 5678)
 
+    def test_background_mcp_allows_capture_but_never_marks_gameplay_verified(self):
+        observed = {"status":"OBSERVED", "action":"capture",
+                    "gameplay_verified":False,
+                    "acceptance_status":"NOT_VERIFIED"}
+        with patch("re_harness.mcp.windows_background_dispatch.run_once",
+                   return_value=observed) as worker:
+            output = mcp.call_tool("harness_windows_background",
+                                   dict(self.args, action="capture"), self.state)
+        worker.assert_called_once_with("capture")
+        self.assertIs(output["gameplay_verified"], False)
+        with core.database(self.state) as db:
+            events = [r[0] for r in db.execute(
+                "SELECT event FROM auto_events WHERE project_id=?",
+                (self.pid,))]
+            self.assertIn("WINDOWS_BACKGROUND_STARTED", events)
+            self.assertIn("WINDOWS_BACKGROUND_OBSERVED", events)
+            self.assertEqual(autonomy._task(db,self.pid,"survey-win")["status"],
+                             "RUNNING")
+
+    def test_background_mcp_never_dispatches_click(self):
+        with patch("re_harness.mcp.windows_background_dispatch.run_once") as worker:
+            with self.assertRaises(ValueError):
+                mcp.call_tool("harness_windows_background",
+                              dict(self.args, action="click"), self.state)
+            worker.assert_not_called()
+
+    def test_background_mcp_requires_valid_lease(self):
+        with patch("re_harness.mcp.windows_background_dispatch.run_once") as worker:
+            with self.assertRaises(ValueError):
+                mcp.call_tool("harness_windows_background",
+                              dict(self.args, claim_token="not-the-lease"), self.state)
+            worker.assert_not_called()
+
     def test_stolen_lease_prevents_windows_action(self):
         invalid = dict(self.args, claim_token="bad")
         with patch("re_harness.mcp.windows_worker_dispatch.run_once") as worker:
