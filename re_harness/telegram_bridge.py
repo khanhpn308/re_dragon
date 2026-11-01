@@ -597,6 +597,8 @@ def task_detail_text(workspace, task_key, db_dir=None):
         f"Verification Checks: {detail.get('verification_json') if detail.get('verification_json') else 'None'}",
     ]
     if timeline:
+        if not any(str(item[0]).startswith("WINDOWS_SURVEY_") for item in timeline):
+            lines.append("\nWindows Worker calls: 0 recorded so far.")
         lines.append("\nRecent task actions (newest first):")
         for event_name, raw, when in timeline:
             try:
