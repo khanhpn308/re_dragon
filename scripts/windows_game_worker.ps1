@@ -27,6 +27,7 @@ public static class REWindows {
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
@@ -72,6 +73,39 @@ function New-Frame($handle, $directory, $stem) {
     }
 }
 
+function Assert-GameForeground($handle, $result) {
+    # Do not call SetForegroundWindow when game is already active:
+    # Windows may refuse redundant activation or transfer focus asynchronously.
+    $beforeHandle = [REWindows]::GetForegroundWindow()
+    $result.foreground_before = ($beforeHandle -eq $handle)
+    if ($beforeHandle -ne $handle) {
+        $result.activation_requested = $true
+        $result.activation_granted = [REWindows]::SetForegroundWindow($handle)
+    } else {
+        $result.activation_requested = $false
+    }
+
+    # Bound only the activation handshake, never the overall Harness task.
+    for ($attempt=0; $attempt -lt 12; $attempt++) {
+        if ([REWindows]::GetForegroundWindow() -eq $handle) {
+            Start-Sleep -Milliseconds 75
+            if ([REWindows]::GetForegroundWindow() -eq $handle) {
+                $result.foreground_confirmed = $true
+                return
+            }
+        }
+        Start-Sleep -Milliseconds 125
+    }
+    $actualHandle = [REWindows]::GetForegroundWindow()
+    $otherPid = [uint32]0
+    if ($actualHandle -ne [IntPtr]::Zero) {
+        [void][REWindows]::GetWindowThreadProcessId($actualHandle, [ref]$otherPid)
+    }
+    $result.foreground_confirmed = $false
+    $result.foreground_pid = [int]$otherPid
+    throw "FOREGROUND_BUSY: game was not focused; other_pid=$otherPid; input NOT dispatched"
+}
+
 $stamp = [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssfffZ")
 if (-not $EvidenceDirectory) {
     $EvidenceDirectory = Join-Path $env:LOCALAPPDATA "REDragon\WindowsSurvey"
@@ -82,6 +116,7 @@ $result = @{
     action = $Action
     process_name = $ProcessName
     status = "BLOCKED"
+    input_dispatched = $false
 }
 $lock = $null
 try {
@@ -147,13 +182,7 @@ try {
         $result.foreground = ([REWindows]::GetForegroundWindow() -eq $handle)
         $result.status = "OBSERVED"
     } else {
-        if (-not [REWindows]::SetForegroundWindow($handle)) {
-            throw "FOREGROUND_DENIED: Windows refused to focus game"
-        }
-        Start-Sleep -Milliseconds 300
-        if ([REWindows]::GetForegroundWindow() -ne $handle) {
-            throw "FOREGROUND_MISMATCH: do not capture or click"
-        }
+        Assert-GameForeground $handle $result
         $folder = Join-Path $EvidenceDirectory $stamp
         New-Item -ItemType Directory -Path $folder -Force | Out-Null
         $before = New-Frame $handle $folder "before"
@@ -176,6 +205,13 @@ try {
             if (-not [REWindows]::SetCursorPos($point.X,$point.Y)) {
                 throw "SetCursorPos failed"
             }
+            # Revalidate at dispatch time. Fail closed if another app took focus.
+            if ([REWindows]::GetForegroundWindow() -ne $handle) {
+                throw "FOCUS_CHANGED_BEFORE_INPUT: input NOT dispatched"
+            }
+            $result.client_click = @{x = $X; y = $Y}
+            # Once mouse-down happens the action is potentially non-idempotent.
+            $result.input_dispatched = $true
             [REWindows]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero)
             Start-Sleep -Milliseconds 70
             [REWindows]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)
@@ -198,12 +234,18 @@ try {
     if ($lock) { $lock.Dispose() }
 }
 
-# Preserve single-output JSON protocol; never turn a failed action into PASS.
-if ($result.status -ne "BLOCKED") {
-    $line = ConvertTo-Json -InputObject $result -Compress -Depth 8
-    Add-Content -LiteralPath (Join-Path $EvidenceDirectory "events.jsonl") -Value $line -Encoding UTF8
-} else {
-    $line = ConvertTo-Json -InputObject $result -Compress -Depth 8
+# Journal BLOCKED attempts as well. Without this, a click that was actually
+# dispatched but failed later would be lost and may be repeated accidentally.
+$line = ConvertTo-Json -InputObject $result -Compress -Depth 8
+if (Test-Path -LiteralPath $EvidenceDirectory -PathType Container) {
+    try {
+        Add-Content -LiteralPath (Join-Path $EvidenceDirectory "events.jsonl") -Value $line -Encoding UTF8
+    } catch {
+        # Do not suppress the observation, but do not claim success without a log.
+        $result.status = "BLOCKED"
+        $result.error = "JOURNAL_WRITE_FAILED: " + [string]$_.Exception.Message
+        $line = ConvertTo-Json -InputObject $result -Compress -Depth 8
+    }
 }
 Write-Output $line
 if ($result.status -eq "BLOCKED") { exit 2 }
