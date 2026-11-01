@@ -363,6 +363,12 @@ def call_tool(name, args, state):
                 raise ValueError("Project must be ACTIVE with a leased executor task")
             task = autonomy._task(db, args["project_id"], args["task_key"])
             autonomy._holder(task, args["agent_id"], args["claim_token"], "RUNNING")
+            # Persist dispatch start before entering Win32 interop. A claimed task
+            # is not evidence that the tool was invoked or that any click happened.
+            autonomy.event(db, args["project_id"], args["task_key"],
+                           "WINDOWS_SURVEY_STARTED",
+                           {"action": args["action"], "status": "DISPATCHING"})
+            db.commit()
             outcome = windows_worker_dispatch.run_once(
                 args["action"], process_name="DragonBall",
                 x=args.get("x"), y=args.get("y")
