@@ -572,6 +572,14 @@ def task_detail_text(workspace, task_key, db_dir=None):
         try:
             res = autonomy.task_detail(db, pid, task_key.strip())
             detail = res["task"]
+            timeline = db.execute(
+                "SELECT event,details,timestamp FROM auto_events "
+                "WHERE project_id=? AND task_key=? AND event IN "
+                "('CLAIMED','WINDOWS_SURVEY_STARTED','WINDOWS_SURVEY_OBSERVED',"
+                "'WINDOWS_SURVEY_BLOCKED','SUBMITTED') "
+                "ORDER BY id DESC LIMIT 8",
+                (pid, task_key.strip()),
+            ).fetchall()
         except Exception as exc:
             return f"Task '{task_key}' not found or error: {str(exc)}"
 
@@ -588,6 +596,25 @@ def task_detail_text(workspace, task_key, db_dir=None):
         f"Artifacts: {detail.get('artifacts_json') if detail.get('artifacts_json') else 'None'}",
         f"Verification Checks: {detail.get('verification_json') if detail.get('verification_json') else 'None'}",
     ]
+    if timeline:
+        lines.append("\nRecent task actions (newest first):")
+        for event_name, raw, when in timeline:
+            try:
+                info = json.loads(raw or "{}")
+            except (ValueError, TypeError):
+                info = {}
+            if not isinstance(info, dict):
+                info = {}
+            fields = [str(when)[:24], str(event_name)[:40]]
+            if event_name.startswith("WINDOWS_SURVEY_"):
+                for key in ("action", "status", "error"):
+                    value = info.get(key)
+                    if isinstance(value, str) and value:
+                        fields.append(key + "=" + value[:90].replace("\\n", " "))
+            lines.append(" · ".join(fields)[:260])
+    else:
+        lines.append("\nWindows Worker events: NONE recorded for this task.")
+        lines.append("RUNNING only means task claimed; it does not prove GUI input.")
     if detail.get("review_note"):
         lines.append(f"\nReview Note: {detail['review_note']}")
     if detail.get("result"):
