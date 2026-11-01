@@ -45,7 +45,7 @@ function Get-ClientSize([IntPtr]$handle) {
 
 function Get-BackgroundFrame([IntPtr]$handle, [string]$folder, [string]$stem) {
     $size = Get-ClientSize $handle
-    $bitmap = New-Object System.Drawing.Bitmap($size.width, $size.height)
+    $bitmap = [System.Drawing.Bitmap]::new([int]$size.width, [int]$size.height)
     $ok = $false
     try {
         $g = [System.Drawing.Graphics]::FromImage($bitmap)
@@ -160,11 +160,12 @@ try {
                                                    [UIntPtr]::Zero, $param)) {
                 throw "WM_MOUSEMOVE_NOT_QUEUED"
             }
-            $result.input_dispatched = $true
             if (-not [REBackground]::PostMessage($handle, [uint32]0x0201,
                                                    [UIntPtr]([uint32]1), $param)) {
                 throw "WM_LBUTTONDOWN_NOT_QUEUED"
             }
+            # A mouse-down message is now queued; retrying could duplicate effects.
+            $result.input_dispatched = $true
             Start-Sleep -Milliseconds 65
             if (-not [REBackground]::PostMessage($handle, [uint32]0x0202,
                                                    [UIntPtr]::Zero, $param)) {
