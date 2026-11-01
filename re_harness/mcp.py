@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler
+from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler, windows_worker_dispatch
 
 
 def schema(properties=None, required=None):
@@ -51,6 +51,16 @@ SPLIT_CHILDREN = {"type":"array","minItems":2,"maxItems":8,"items":{
   "additionalProperties":False
 }}
 TOOLS = [
+  {
+    "name":"harness_windows_survey",
+    "description":"Dispatch one Win32 DragonBall UI survey primitive from a CLAIMED Harness task. Requires valid task lease. No gameplay PASS is inferred; raw evidence remains on the Windows host.",
+    "inputSchema":schema({
+      "project_id":STRING,"task_key":STRING,"agent_id":STRING,
+      "claim_token":STRING,
+      "action":{"type":"string","enum":["probe","fingerprint","capture","click"]},
+      "x":INTEGER,"y":INTEGER
+    },["project_id","task_key","agent_id","claim_token","action"]),
+  },
   {"name":"harness_auto_resources",
    "description":"Observe v0.6 global resource reservations, host CPU/RAM, heavy Ghidra slot and adaptive per-project concurrency without running processes.",
    "inputSchema":schema({"project_id":STRING},["project_id"])},
@@ -347,6 +357,24 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_windows_survey":
+            project = autonomy.project(db, args["project_id"])
+            if project["status"] != "ACTIVE":
+                raise ValueError("Project must be ACTIVE with a leased executor task")
+            task = autonomy._task(db, args["project_id"], args["task_key"])
+            autonomy._holder(task, args["agent_id"], args["claim_token"], "RUNNING")
+            outcome = windows_worker_dispatch.run_once(
+                args["action"], process_name="DragonBall",
+                x=args.get("x"), y=args.get("y")
+            )
+            autonomy.event(db, args["project_id"], args["task_key"],
+                           "WINDOWS_SURVEY_OBSERVED" if outcome.get("status") == "OBSERVED"
+                           else "WINDOWS_SURVEY_BLOCKED",
+                           {"action": args["action"], "status": outcome.get("status"),
+                            "evidence_dir": outcome.get("evidence_dir"),
+                            "error": outcome.get("error")})
+            db.commit()
+            return outcome
         if name == "harness_auto_resources":
             return autonomy.resource_status(db,args["project_id"])
         if name == "harness_auto_resource_config":
