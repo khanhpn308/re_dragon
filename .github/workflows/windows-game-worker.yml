@@ -49,4 +49,6 @@ jobs:
           if ($result.schema -ne 're-dragon.windows-worker.v1' -or $result.status -ne 'BLOCKED') {
             throw "Windows worker must return structured BLOCKED, not synthetic PASS"
           }
+          # Expected worker exit=2 is a successful negative test, not a job failure.
+          $global:LASTEXITCODE = 0
           Write-Output "Win32 script startup/JSON/fail-closed smoke: PASS"
