@@ -13,7 +13,7 @@ Hai lệnh **chỉ đọc**, chỉ áp dụng cho private chat đã được RE 
 ```bash
 cd /home/khanh/returnsaiyan-re
 git pull --ff-only
-python3 -m unittest tests.test_agy_telemetry -v
+python3 -m unittest discover -s tests -p 'test_agy_telemetry.py' -v
 python3 -m re_harness.agy_telemetry install
 ./dragon telegram stop
 ./dragon telegram start
