@@ -67,6 +67,34 @@ class WindowsWorkerDispatchTests(unittest.TestCase):
                 script, windows=False, runner=runner), r"C:\work\worker.ps1")
             self.assertEqual(seen[0][0:2], ["wslpath", "-w"])
 
+    def test_wsl_home_path_maps_to_unc_share(self):
+        # WSL rootfs (/home/khanh/...) maps to \\wsl.localhost\Ubuntu\...
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "windows_game_worker.ps1"
+            script.write_text("# test", encoding="utf-8")
+            unc = r"\\wsl.localhost\Ubuntu\home\khanh\returnsaiyan-re\scripts\windows_game_worker.ps1"
+            def runner(args, **kwargs):
+                return subprocess.CompletedProcess(args, 0, unc + "\n", "")
+            self.assertEqual(
+                worker.convert_script_path(script, windows=False, runner=runner), unc
+            )
+
+    def test_wsl_legacy_share_and_invalid_unc_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "worker.ps1"
+            script.write_text("# test", encoding="utf-8")
+            def runner_for(value):
+                return lambda args, **kwargs: subprocess.CompletedProcess(
+                    args, 0, value + "\n", ""
+                )
+            legacy = r"\\wsl$\Ubuntu\home\khanh\returnsaiyan-re\scripts\worker.ps1"
+            self.assertEqual(worker.convert_script_path(
+                script, windows=False, runner=runner_for(legacy)), legacy)
+            with self.assertRaises(RuntimeError):
+                worker.convert_script_path(
+                    script, windows=False,
+                    runner=runner_for(r"\\attacker-host\share\worker.ps1"))
+
     def test_no_shell_string_interpolation(self):
         argv = worker.command("capture", r"C:\Game Files\worker.ps1",
                               process_name="DragonBall")
