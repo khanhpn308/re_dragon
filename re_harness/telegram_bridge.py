@@ -613,6 +613,10 @@ def task_detail_text(workspace, task_key, db_dir=None):
                     value = info.get(key)
                     if isinstance(value, str) and value:
                         fields.append(key + "=" + value[:90].replace("\\n", " "))
+                if isinstance(info.get("input_dispatched"), bool):
+                    fields.append("input_dispatched=" + str(info["input_dispatched"]))
+                if type(info.get("foreground_pid")) is int:
+                    fields.append("foreground_pid=" + str(info["foreground_pid"]))
             lines.append(" · ".join(fields)[:260])
     else:
         lines.append("\nWindows Worker events: NONE recorded for this task.")
