@@ -40,7 +40,7 @@ def convert_script_path(path, *, windows=None, runner=subprocess.run):
     # WSL ext4 checkout fail before PowerShell was invoked.
     drive_path = bool(re.match(r"^[A-Za-z]:\\", value))
     wsl_unc_path = bool(re.match(
-        r"^\\\\(?:wsl\\.localhost|wsl\\$)\\[^\\/]+\\", value, re.IGNORECASE
+        r"^\\\\(?:wsl\.localhost|wsl\$)\\[^\\/]+\\", value, re.IGNORECASE
     ))
     if result.returncode or not (drive_path or wsl_unc_path):
         raise RuntimeError(
