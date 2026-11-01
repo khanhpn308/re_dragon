@@ -227,50 +227,137 @@ def usage_text(workspace, *, running=False, runner=subprocess.run, which=shutil.
     return format_buckets(rows, "AGY /usage")
 
 
-def install(workspace):
-    """Explicit one-time opt-in; never overwrite the user's existing statusLine."""
+def _write_json_private(path, data):
+    path = Path(path)
+    fd, tmp = tempfile.mkstemp(prefix=".re-dragon-", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            os.fchmod(output.fileno(), 0o600)
+            json.dump(data, output, ensure_ascii=False, indent=2)
+            output.write("\n")
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def _telemetry_command(workspace, *, action, original_config=None):
+    pieces = [sys.executable, str(Path(__file__).resolve()), action,
+              "--workspace", str(Path(workspace).resolve())]
+    if original_config is not None:
+        pieces += ["--original-config", str(original_config)]
+    return " ".join(shlex.quote(piece) for piece in pieces)
+
+
+def install(workspace, *, chain_existing=False):
+    """Opt-in statusLine installation; preserve existing scripts via explicit chaining."""
     settings = Path.home() / ".gemini" / "antigravity-cli" / "settings.json"
     settings.parent.mkdir(parents=True, exist_ok=True)
     try:
         data = json.loads(settings.read_text(encoding="utf-8")) if settings.exists() else {}
     except ValueError:
         raise ValueError("settings.json không hợp lệ, không sửa file") from None
-    if not isinstance(data, dict) or "statusLine" in data:
-        raise ValueError("Đã có statusLine hoặc settings không hợp lệ; không ghi đè")
-    command = (shlex.quote(sys.executable) + " " + shlex.quote(str(Path(__file__).resolve()))
-               + " capture --workspace " + shlex.quote(str(Path(workspace).resolve())))
-    data["statusLine"] = {"type": "command", "command": command, "stack_with_default": True}
+    if not isinstance(data, dict):
+        raise ValueError("settings.json không phải JSON object; không sửa file")
+    original = data.get("statusLine")
+    if original is None:
+        if chain_existing:
+            raise ValueError("Không có statusLine để nối; dùng lệnh install thông thường")
+        data["statusLine"] = {
+            "type": "command",
+            "command": _telemetry_command(workspace, action="capture"),
+            "stack_with_default": True,
+        }
+    else:
+        if not chain_existing:
+            raise ValueError("Đã có statusLine; dùng install --chain-existing để giữ hook cũ")
+        if not isinstance(original, dict):
+            raise ValueError("statusLine không phải object; không sửa file")
+        command = original.get("command")
+        if (original.get("type", "command") != "command" or
+                original.get("enabled", True) is False or
+                not isinstance(command, str) or not command.strip() or
+                len(command) > 4096):
+            raise ValueError("statusLine hiện tại không khả dụng; không thay đổi")
+        if "agy_telemetry.py" in command or "re_harness.agy_telemetry" in command:
+            return "statusLine đã chứa telemetry hook; không cài lặp lại."
+        original_config = settings.parent / "re-dragon-original-statusline.json"
+        if original_config.exists():
+            # Never overwrite prior backup or create recursive wrappers.
+            raise ValueError("Đã có bản gốc statusLine từ lần nối trước; cần kiểm tra thủ công")
+        command_to_chain = _telemetry_command(
+            workspace, action="relay", original_config=original_config)
+        new_line = dict(original)
+        new_line["command"] = command_to_chain
+        data["statusLine"] = new_line
     if settings.exists():
         backup = settings.with_name(settings.name + ".before-re-dragon")
-        if not backup.exists():
-            shutil.copy2(settings, backup)
-    fd, temp = tempfile.mkstemp(prefix=".agy-settings-", dir=str(settings.parent))
+        if backup.exists():
+            backup = settings.with_name(settings.name + ".before-re-dragon-2")
+        if backup.exists():
+            raise ValueError("Hai bản sao lưu đã tồn tại; dừng để tránh ghi đè")
+        shutil.copy2(settings, backup)
+        os.chmod(backup, 0o600)
+    if original is not None:
+        _write_json_private(original_config, {"command": command})
+    _write_json_private(settings, data)
+    return ("Đã nối telemetry và giữ nguyên statusLine cũ."
+            if original is not None else
+            "Đã cài statusLine mới.")
+
+
+def relay(workspace, original_config, raw, *, runner=subprocess.run):
+    """Pass original JSON to prior renderer; forward its unchanged stdout."""
+    path = Path(original_config)
+    if path.is_symlink() or (path.stat().st_mode & 0o077):
+        raise ValueError("Original hook configuration is not private")
+    prior = json.loads(path.read_text(encoding="utf-8"))
+    command = prior.get("command") if isinstance(prior, dict) else None
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError("Missing original statusLine command")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            os.fchmod(handle.fileno(), 0o600)
-            json.dump(data, handle, ensure_ascii=False, indent=2)
-            handle.write("\n")
-        os.replace(temp, settings)
-    finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
-    return "Đã thiết lập statusLine cho phiên agy khởi động hoặc reload sau này."
+        result = runner(["sh", "-c", command], input=raw, text=True,
+                        capture_output=True, timeout=3, check=False)
+        original_output = (result.stdout or "")[:8192]
+    except (OSError, subprocess.TimeoutExpired):
+        original_output = ""
+    try:
+        capture(workspace, json.loads(raw))
+    except (ValueError, TypeError):
+        pass
+    return original_output
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("capture", "install"))
+    parser.add_argument("action", choices=("capture", "install", "relay"))
     parser.add_argument("--workspace", default=".")
+    parser.add_argument("--chain-existing", action="store_true")
+    parser.add_argument("--original-config")
     args = parser.parse_args(argv)
     if args.action == "install":
-        print(install(args.workspace))
-        return 0
+        try:
+            print(install(args.workspace, chain_existing=args.chain_existing))
+            return 0
+        except (OSError, ValueError) as exc:
+            print("Không cài telemetry: " + str(exc), file=sys.stderr)
+            return 2
     raw = sys.stdin.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         return 2
+    if args.action == "relay":
+        if not args.original_config:
+            return 2
+        try:
+            sys.stdout.write(relay(args.workspace, args.original_config, raw))
+        except (OSError, ValueError):
+            return 2
+        return 0
     try:
         capture(args.workspace, json.loads(raw))
-    except ValueError:
+    except (ValueError, TypeError):
         return 2
     print("RS")
     return 0
