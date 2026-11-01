@@ -517,6 +517,24 @@ def once(workspace, state_path, prompt_path, binary="agy", mode="auto",
                         missing_marker_recoveries=0,
                         last_reason="Harness ACCEPTED with verified tasks; CLI omitted marker",
                     )
+                elif (
+                    fresh["project_id"] == current.get("project_id")
+                    and fresh["project_status"] in quota_guard.ACTIVE
+                    and sum(fresh["task_status_counts"].values()) > 0
+                    and set(fresh["task_status_counts"]) == {"VERIFIED"}
+                ):
+                    # All tasks reviewed != project accepted. Do not consume
+                    # no-progress retries waiting for a missing model marker:
+                    # final acceptance requires a separate judgment.
+                    updated.update(
+                        status="NEEDS_USER", next_at=0,
+                        missing_marker_recoveries=0,
+                        last_reason=(
+                            "All tasks VERIFIED; final project review and "
+                            "explicit ACCEPTED checkpoint still required. "
+                            "Do not retry MISSING_MARKER or auto-accept."
+                        ),
+                    )
                 else:
                     safe = (
                         fresh["project_id"] == current.get("project_id")
