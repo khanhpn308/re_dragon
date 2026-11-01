@@ -7,6 +7,8 @@ on:
       - 're_harness/mcp.py'
       - 're_harness/project_audit.py'
       - 'scripts/windows_game_worker.ps1'
+      - 'scripts/windows_background_worker.ps1'
+      - 're_harness/windows_background_dispatch.py'
       - 'tests/test_windows*.py'
       - 'tests/test_project_audit.py'
       - 'tests/test_telegram_live_status.py'
@@ -29,9 +31,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Python syntax
-        run: python -m compileall -q re_harness/windows_worker_dispatch.py re_harness/mcp.py re_harness/project_audit.py
+        run: python -m compileall -q re_harness/windows_worker_dispatch.py re_harness/windows_background_dispatch.py re_harness/mcp.py re_harness/project_audit.py
       - name: Windows worker mock and leased MCP tests
         run: python -m unittest discover -s tests -p 'test_windows*.py' -v
+      - name: Background dispatch and safety tests
+        run: python -m unittest discover -s tests -p 'test_windows_background*.py' -v
       - name: Read-only audit regression
         run: python -m unittest discover -s tests -p 'test_project_audit.py' -v
       - name: Telegram worker action telemetry regression
@@ -66,3 +70,24 @@ jobs:
           # Expected worker exit=2 is a successful negative test, not a job failure.
           $global:LASTEXITCODE = 0
           Write-Output "Win32 script startup/JSON/fail-closed smoke: PASS"
+          $psSource = Get-Content -Raw .\scripts\windows_background_worker.ps1
+          foreach ($forbidden in @('SetForegroundWindow', 'SetCursorPos', 'mouse_event', 'CopyFromScreen')) {
+            if ($psSource.Contains($forbidden)) { throw "Background worker uses forbidden global input/capture: $forbidden" }
+          }
+          $bgTokens = $null
+          $bgErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path .\scripts\windows_background_worker.ps1).Path,
+            [ref]$bgTokens, [ref]$bgErrors
+          )
+          if ($bgErrors.Count -gt 0) {
+            throw ("Background PowerShell syntax invalid: " + ($bgErrors -join '; '))
+          }
+          $bgResult = & .\scripts\windows_background_worker.ps1 -Action probe -ProcessName DragonBall
+          if ($LASTEXITCODE -ne 2) { throw "Expected background probe to BLOCK when game absent" }
+          $parsed = ($bgResult | Select-Object -Last 1) | ConvertFrom-Json
+          if ($parsed.status -ne 'BLOCKED' -or $parsed.gameplay_verified -ne $false) {
+            throw "Background probe must fail closed without a game"
+          }
+          $global:LASTEXITCODE = 0
+          Write-Output "Background worker safe Win32 compatibility smoke: PASS"
