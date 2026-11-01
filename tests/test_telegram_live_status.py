@@ -115,6 +115,37 @@ class TelegramInboxTests(unittest.TestCase):
         self.assertEqual(result["status"],"WAIT_QUOTA")
         self.assertEqual(telegram_inbox.summary(self.root,self.pid),{"QUEUED":1})
 
+    def test_task_detail_displays_worker_action_timeline_while_running(self):
+        with core.database(self.dbdir) as db:
+            autonomy.plan(db, self.pid, [{
+                "key": "win-gameplay-inventory", "title": "Inventory interaction",
+                "kind": "TEST", "acceptance": "Real before and after screenshots",
+                "depends_on": [],
+            }])
+            with patch("re_harness.scheduler.read_host") as host:
+                from re_harness import scheduler
+                host.return_value = scheduler.Host(8, 16384, 0.0)
+                claim = autonomy.tick(db, self.pid, "executor-agent",
+                                      "session-123", role="executor")
+            self.assertEqual(claim["decision"], "EXECUTE")
+            # Claim alone cannot be presented as GUI activity.
+        initial = tg.task_detail_text(self.root, "win-gameplay-inventory")
+        self.assertIn("CLAIMED", initial)
+        self.assertNotIn("WINDOWS_SURVEY_OBSERVED", initial)
+        with core.database(self.dbdir) as db:
+            autonomy.event(db, self.pid, "win-gameplay-inventory",
+                           "WINDOWS_SURVEY_STARTED",
+                           {"action": "click", "status": "DISPATCHING"})
+            autonomy.event(db, self.pid, "win-gameplay-inventory",
+                           "WINDOWS_SURVEY_BLOCKED",
+                           {"action": "click", "status": "BLOCKED",
+                            "error": "FOREGROUND_DENIED"})
+            db.commit()
+        updated = tg.task_detail_text(self.root, "win-gameplay-inventory")
+        self.assertIn("WINDOWS_SURVEY_STARTED", updated)
+        self.assertIn("WINDOWS_SURVEY_BLOCKED", updated)
+        self.assertIn("FOREGROUND_DENIED", updated)
+
     def test_project_closed_rejects_remote_task(self):
         with sqlite3.connect(self.dbdir/"state.sqlite3") as db:
             db.execute("UPDATE auto_projects SET status='ACCEPTED' WHERE id=?",
