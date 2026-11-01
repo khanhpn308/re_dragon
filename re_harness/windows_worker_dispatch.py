@@ -89,8 +89,17 @@ def parse_result(stdout, returncode):
         return {"status": "BLOCKED", "error": "WINDOWS_WORKER_WRONG_SCHEMA",
                 "exit_code": returncode}
     if returncode != 0 or payload.get("status") != "OBSERVED":
-        return {"status": "BLOCKED", "error": str(payload.get("error") or
-                "WINDOWS_WORKER_FAILED")[:250], "exit_code": returncode}
+        # Preserve whether mouse input was dispatched before a subsequent
+        # screenshot/error; blind retries could repeat non-idempotent actions.
+        return {
+            "status": "BLOCKED",
+            "error": str(payload.get("error") or "WINDOWS_WORKER_FAILED")[:250],
+            "exit_code": returncode,
+            "action": payload.get("action") if payload.get("action") in ACTIONS else "UNKNOWN",
+            "input_dispatched": payload.get("input_dispatched") is True,
+            "foreground_pid": payload.get("foreground_pid")
+                if type(payload.get("foreground_pid")) is int else None,
+        }
     if payload.get("action") not in ACTIONS or type(payload.get("pid")) is not int:
         return {"status": "BLOCKED", "error": "WINDOWS_WORKER_INVALID_PROVENANCE",
                 "exit_code": returncode}
