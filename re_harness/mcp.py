@@ -378,7 +378,9 @@ def call_tool(name, args, state):
                            else "WINDOWS_SURVEY_BLOCKED",
                            {"action": args["action"], "status": outcome.get("status"),
                             "evidence_dir": outcome.get("evidence_dir"),
-                            "error": outcome.get("error")})
+                            "error": outcome.get("error"),
+                            "input_dispatched": outcome.get("input_dispatched", False),
+                            "foreground_pid": outcome.get("foreground_pid")})
             db.commit()
             return outcome
         if name == "harness_auto_resources":
