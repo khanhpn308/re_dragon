@@ -20,7 +20,7 @@ def audit_text(workspace):
             return "RE Dragon — /audit\nProject: UNKNOWN (Watchdog chưa pin project)"
         info = quota_guard.inspect(root / ".re_harness_mvp", pid)
     except (OSError, ValueError, AttributeError) as exc:
-        return "RE Dragon — /audit\nKhông đọc được checkpoint hiện tại; không thay đổi dữ liệu."
+        return "RE Dragon — /audit\nProject: UNKNOWN — không đọc được checkpoint hiện tại; không thay đổi dữ liệu."
 
     try:
         import sqlite3
