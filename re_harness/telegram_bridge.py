@@ -34,6 +34,7 @@ from . import (
     runtime_state,
     telegram_inbox,
     notification_delivery,
+    project_audit,
     telegram_control,
 )
 
@@ -890,12 +891,18 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 "  /status — Live watchdog and agent telemetry\n"
                 "  /account — Current AGY account (masked; pinned session)\n"
                 "  /usage — AGY quota snapshot (read-only)\n"
+                "  /audit — Pinned project final review diagnostics (read-only)\n"
             )
             await update.message.reply_text(msg[:3900])
             return
 
         if name == "/status":
             await update.message.reply_text(status_text(root)[:3900])
+            return
+
+        if name == "/audit":
+            result = await asyncio.to_thread(project_audit.audit_text, root)
+            await update.message.reply_text(result[:3900])
             return
 
         if name == "/account":
@@ -1189,7 +1196,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                         )
 
     command_names = [
-        "start", "help", "status", "account", "usage", "projects", "project", "activate",
+        "start", "help", "status", "account", "usage", "audit", "projects", "project", "activate",
         "newgoal", "tasks", "task", "progress", "taskdetail",
         "approvals", "propose", "report",
         "incidents", "incident", "retry", "pause", "resume",
