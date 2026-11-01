@@ -10,7 +10,7 @@ import json
 import sqlite3
 import sys
 
-from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler, windows_worker_dispatch
+from . import core, stable, agent_api, investigation, autonomy, pilot, scheduler, windows_worker_dispatch, windows_background_dispatch
 
 
 def schema(properties=None, required=None):
@@ -51,6 +51,15 @@ SPLIT_CHILDREN = {"type":"array","minItems":2,"maxItems":8,"items":{
   "additionalProperties":False
 }}
 TOOLS = [
+  {
+    "name":"harness_windows_background",
+    "description":"Experimental Win32 background compatibility probe/capture ONLY (NO mouse input). Requires ACTIVE project + leased RUNNING task. Does not imply Unity supports background interaction or gameplay acceptance.",
+    "inputSchema":schema({
+      "project_id":STRING,"task_key":STRING,"agent_id":STRING,
+      "claim_token":STRING,
+      "action":{"type":"string","enum":["probe","capture"]}
+    },["project_id","task_key","agent_id","claim_token","action"]),
+  },
   {
     "name":"harness_windows_survey",
     "description":"Dispatch one Win32 DragonBall UI survey primitive from a CLAIMED Harness task. Requires valid task lease. No gameplay PASS is inferred; raw evidence remains on the Windows host.",
@@ -357,6 +366,28 @@ def call_tool(name, args, state):
         stable.migrate(db)
         investigation.migrate(db)
         autonomy.migrate(db)
+        if name == "harness_windows_background":
+            project = autonomy.project(db, args["project_id"])
+            if project["status"] != "ACTIVE":
+                raise ValueError("Background survey requires ACTIVE project")
+            task = autonomy._task(db, args["project_id"], args["task_key"])
+            autonomy._holder(task, args["agent_id"], args["claim_token"], "RUNNING")
+            if args["action"] not in {"probe", "capture"}:
+                raise ValueError("MCP background click disabled until actual Unity pilot passes")
+            autonomy.event(db, args["project_id"], args["task_key"],
+                           "WINDOWS_BACKGROUND_STARTED",
+                           {"action":args["action"],"status":"EXPERIMENTAL"})
+            db.commit()
+            outcome = windows_background_dispatch.run_once(args["action"])
+            autonomy.event(db,args["project_id"],args["task_key"],
+                           "WINDOWS_BACKGROUND_OBSERVED" if outcome.get("status")=="OBSERVED"
+                           else "WINDOWS_BACKGROUND_BLOCKED",
+                           {"action":args["action"],"status":outcome.get("status"),
+                            "error":outcome.get("error"),
+                            "evidence_dir":outcome.get("evidence_dir"),
+                            "gameplay_verified":False})
+            db.commit()
+            return outcome
         if name == "harness_windows_survey":
             project = autonomy.project(db, args["project_id"])
             if project["status"] != "ACTIVE":
