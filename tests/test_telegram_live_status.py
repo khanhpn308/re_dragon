@@ -145,6 +145,15 @@ class TelegramInboxTests(unittest.TestCase):
         self.assertIn("WINDOWS_SURVEY_STARTED", updated)
         self.assertIn("WINDOWS_SURVEY_BLOCKED", updated)
         self.assertIn("FOREGROUND_DENIED", updated)
+        with core.database(self.dbdir) as db:
+            autonomy.event(db, self.pid, "win-gameplay-inventory",
+                           "WINDOWS_BACKGROUND_OBSERVED",
+                           {"action":"capture", "status":"OBSERVED",
+                            "gameplay_verified":False})
+            db.commit()
+        background = tg.task_detail_text(self.root, "win-gameplay-inventory")
+        self.assertIn("WINDOWS_BACKGROUND_OBSERVED", background)
+        self.assertIn("action=capture", background)
 
     def test_project_closed_rejects_remote_task(self):
         with sqlite3.connect(self.dbdir/"state.sqlite3") as db:
