@@ -9,6 +9,8 @@ on:
       - 'scripts/windows_game_worker.ps1'
       - 'tests/test_windows*.py'
       - 'tests/test_project_audit.py'
+      - 'tests/test_telegram_live_status.py'
+      - 're_harness/telegram_bridge.py'
       - '.github/workflows/windows-game-worker.yml'
   workflow_dispatch:
 
@@ -32,6 +34,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_windows*.py' -v
       - name: Read-only audit regression
         run: python -m unittest discover -s tests -p 'test_project_audit.py' -v
+      - name: Telegram worker action telemetry regression
+        run: python -m unittest discover -s tests -p 'test_telegram_live_status.py' -v
 
   powershell-smoke:
     runs-on: windows-latest
