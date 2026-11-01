@@ -14,15 +14,15 @@ Hai lệnh **chỉ đọc**, chỉ áp dụng cho private chat đã được RE 
 cd /home/khanh/returnsaiyan-re
 git pull --ff-only
 python3 -m unittest discover -s tests -p 'test_agy_telemetry.py' -v
-python3 -m re_harness.agy_telemetry install
+python3 -m re_harness.agy_telemetry install --chain-existing
 ./dragon telegram stop
 ./dragon telegram start
 ./dragon telegram status
 ```
 
-`install` chỉ thêm `statusLine` nếu chưa có. Nếu đã có statusLine, báo lỗi và **không ghi đè** cấu hình; cần tích hợp thủ công vào hook hiện tại. Có bản sao `settings.json.before-re-dragon` trước lần thay đổi đầu tiên.
+`install --chain-existing` chỉ hoạt động khi đã có statusLine kiểu command, đang bật. Nó tạo bản sao lưu cấu hình, lưu lệnh gốc trong file riêng chmod 600, rồi nối bộ thu thập telemetry và **giữ nguyên stdout, padding, stack_with_default của lệnh gốc**. Nếu statusLine không có, hãy dùng `install` không có `--chain-existing`. Nếu statusLine đang tắt hoặc không hợp lệ, công cụ từ chối sửa. Không tự cài lặp lại.
 
-**Khi /account = UNKNOWN nhưng /usage có số liệu:** `/usage` có thể dùng headless CLI, còn `/account` cần statusLine từ TUI. Thực hiện `install` (nếu chưa có), mở `agy` tương tác trên cùng WSL user để statusLine phát dữ liệu, rồi kiểm tra `/account`. Nếu session ID khác, bot hiển thị tài khoản CLI cục bộ với nhãn **không xác minh được tài khoản phiên Watchdog**. Đừng `/resume` hay xóa checkpoint chỉ để kiểm tra tài khoản. Nếu cấu hình đã có statusLine, không chạy cài đè; cần tích hợp vào hook hiện tại.
+**Khi /account = UNKNOWN nhưng /usage có số liệu:** `/usage` có thể dùng headless CLI, còn `/account` cần statusLine từ TUI. Thực hiện `install` hoặc `install --chain-existing` tùy cấu hình, mở `agy` tương tác trên cùng WSL user để statusLine phát dữ liệu, rồi kiểm tra `/account`. Nếu session ID khác, bot hiển thị tài khoản CLI cục bộ với nhãn **không xác minh được tài khoản phiên Watchdog**. Đừng `/resume` hay xóa checkpoint chỉ để kiểm tra tài khoản. Nếu đã có statusLine, dùng tùy chọn nối có lưu bản sao `--chain-existing`; không xóa cấu hình gốc.
 
 AGY CLI cung cấp thông tin `email`, `plan_tier`, `quota`, `conversation_id` qua statusLine JSON. Hook lưu **email đã che**, không lưu token/khóa truy cập, vào file cục bộ `.re_harness/agy-telemetry.json` (mode 600). Đây là số liệu quan sát gần nhất, không phải phép xác thực đăng nhập từ xa.
 
