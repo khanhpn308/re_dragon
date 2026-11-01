@@ -24,6 +24,7 @@ from pathlib import Path
 
 from . import (
     autonomy,
+    agy_telemetry,
     core,
     environment_recovery,
     incidents,
@@ -887,12 +888,24 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                 "Reports & Status:\n"
                 "  /report — Export summary and redacted report\n"
                 "  /status — Live watchdog and agent telemetry\n"
+                "  /account — Current AGY account (masked; pinned session)\n"
+                "  /usage — AGY quota snapshot (read-only)\n"
             )
             await update.message.reply_text(msg[:3900])
             return
 
         if name == "/status":
             await update.message.reply_text(status_text(root)[:3900])
+            return
+
+        if name == "/account":
+            await update.message.reply_text(agy_telemetry.account_text(root)[:3900])
+            return
+
+        if name == "/usage":
+            active = bool(runtime_state.snapshot(root / ".re_harness" / "agent-runtime.json"))
+            result = await asyncio.to_thread(agy_telemetry.usage_text, root, running=active)
+            await update.message.reply_text(result[:3900])
             return
 
         if name == "/projects":
@@ -1176,7 +1189,7 @@ def _serve_impl(workspace, ApplicationBuilder, CommandHandler, CallbackQueryHand
                         )
 
     command_names = [
-        "start", "help", "status", "projects", "project", "activate",
+        "start", "help", "status", "account", "usage", "projects", "project", "activate",
         "newgoal", "tasks", "task", "progress", "taskdetail",
         "approvals", "propose", "report",
         "incidents", "incident", "retry", "pause", "resume",
