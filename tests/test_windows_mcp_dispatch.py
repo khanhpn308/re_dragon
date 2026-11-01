@@ -55,6 +55,28 @@ class LeasedWindowsWorkerMCPTests(unittest.TestCase):
             self.assertLess(events.index("WINDOWS_SURVEY_STARTED"),
                             events.index("WINDOWS_SURVEY_OBSERVED"))
 
+    def test_blocked_click_marks_whether_input_was_dispatched(self):
+        blocked = {
+            "status": "BLOCKED", "action": "click",
+            "error": "FOREGROUND_BUSY: input NOT dispatched",
+            "input_dispatched": False, "foreground_pid": 5678,
+        }
+        params = dict(self.args, action="click", x=10, y=20)
+        with patch("re_harness.mcp.windows_worker_dispatch.run_once",
+                   return_value=blocked):
+            output = mcp.call_tool("harness_windows_survey", params, self.state)
+        self.assertEqual(output["status"], "BLOCKED")
+        with core.database(self.state) as db:
+            row = db.execute(
+                "SELECT details FROM auto_events WHERE project_id=? "
+                "AND task_key=? AND event='WINDOWS_SURVEY_BLOCKED' "
+                "ORDER BY id DESC LIMIT 1", (self.pid, "survey-win")
+            ).fetchone()
+            import json
+            details = json.loads(row[0])
+            self.assertIs(details["input_dispatched"], False)
+            self.assertEqual(details["foreground_pid"], 5678)
+
     def test_stolen_lease_prevents_windows_action(self):
         invalid = dict(self.args, claim_token="bad")
         with patch("re_harness.mcp.windows_worker_dispatch.run_once") as worker:
