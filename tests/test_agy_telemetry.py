@@ -39,8 +39,16 @@ class AgyTelemetryTests(unittest.TestCase):
         telemetry.capture(self.workspace, {
             "product": "antigravity", "conversation_id": "different",
             "email": "other@example.com"})
-        self.assertIn("UNKNOWN", telemetry.account_text(self.workspace))
-        self.assertNotIn("other@example.com", telemetry.account_text(self.workspace))
+        message = telemetry.account_text(self.workspace)
+        self.assertIn("Tài khoản phiên Watchdog: UNKNOWN", message)
+        self.assertIn("ot***r@example.com", message)
+        self.assertIn("KHÔNG xác minh", message)
+        self.assertNotIn("other@example.com", message)
+
+    def test_missing_statusline_reports_unknown(self):
+        message = telemetry.account_text(self.workspace)
+        self.assertIn("UNKNOWN", message)
+        self.assertIn("headless", message)
 
     def test_other_product_rejected(self):
         self.assertFalse(telemetry.capture(self.workspace, {
