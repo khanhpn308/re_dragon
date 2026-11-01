@@ -1,0 +1,52 @@
+name: Windows Game Worker Adapter (isolated)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 're_harness/windows_worker_dispatch.py'
+      - 're_harness/mcp.py'
+      - 're_harness/project_audit.py'
+      - 'scripts/windows_game_worker.ps1'
+      - 'tests/test_windows*.py'
+      - 'tests/test_project_audit.py'
+      - '.github/workflows/windows-game-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge-unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Python syntax
+        run: python -m compileall -q re_harness/windows_worker_dispatch.py re_harness/mcp.py re_harness/project_audit.py
+      - name: Windows worker mock and leased MCP tests
+        run: python -m unittest discover -s tests -p 'test_windows*.py' -v
+      - name: Read-only audit regression
+        run: python -m unittest discover -s tests -p 'test_project_audit.py' -v
+
+  powershell-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PowerShell 5.1 Win32 interop smoke (no game in CI)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = & .\scripts\windows_game_worker.ps1 -Action probe -ProcessName DragonBall
+          if ($LASTEXITCODE -ne 2) {
+            throw "Expected fail-closed exit=2 because game is absent from CI desktop"
+          }
+          $result = ($output | Select-Object -Last 1) | ConvertFrom-Json
+          if ($result.schema -ne 're-dragon.windows-worker.v1' -or $result.status -ne 'BLOCKED') {
+            throw "Windows worker must return structured BLOCKED, not synthetic PASS"
+          }
+          Write-Output "Win32 script startup/JSON/fail-closed smoke: PASS"
