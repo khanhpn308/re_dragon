@@ -50,6 +50,22 @@ class WindowsWorkerDispatchTests(unittest.TestCase):
         self.assertEqual(result["evidence_status"], "AGENT_OBSERVED")
         self.assertEqual(result["acceptance_status"], "NOT_VERIFIED")
 
+    def test_blocked_click_preserves_mouse_dispatch_truth(self):
+        base = {"schema": "re-dragon.windows-worker.v1",
+                "status": "BLOCKED", "action": "click", "pid": 222,
+                "error": "FOREGROUND_BUSY: input NOT dispatched",
+                "foreground_pid": 444, "input_dispatched": False}
+        before = worker.parse_result(json.dumps(base), 2)
+        self.assertEqual(before["status"], "BLOCKED")
+        self.assertIs(before["input_dispatched"], False)
+        self.assertEqual(before["foreground_pid"], 444)
+        base["error"] = "TARGET_NOT_FOREGROUND: after click"
+        base["input_dispatched"] = True
+        after = worker.parse_result(json.dumps(base), 2)
+        self.assertEqual(after["status"], "BLOCKED")
+        self.assertIs(after["input_dispatched"], True)
+        self.assertNotEqual(before["error"], after["error"])
+
     def test_missing_process_provenance_blocks(self):
         raw = json.dumps({"schema": "re-dragon.windows-worker.v1",
                           "status": "OBSERVED", "action": "probe"})
