@@ -50,7 +50,10 @@ class LeasedWindowsWorkerMCPTests(unittest.TestCase):
                              "RUNNING")
             events = [r[0] for r in db.execute(
                 "SELECT event FROM auto_events WHERE project_id=?", (self.pid,))]
+            self.assertIn("WINDOWS_SURVEY_STARTED", events)
             self.assertIn("WINDOWS_SURVEY_OBSERVED", events)
+            self.assertLess(events.index("WINDOWS_SURVEY_STARTED"),
+                            events.index("WINDOWS_SURVEY_OBSERVED"))
 
     def test_stolen_lease_prevents_windows_action(self):
         invalid = dict(self.args, claim_token="bad")
